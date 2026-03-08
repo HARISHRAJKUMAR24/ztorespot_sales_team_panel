@@ -1,0 +1,22 @@
+RewriteEngine On
+RewriteBase /ztorespot_sales_team_panel/
+
+# Remove .php extension from URL (only for GET requests)
+RewriteCond %{THE_REQUEST} \.php
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^(.+)\.php$ /ztorespot_sales_team_panel/$1 [R=301,L]
+
+# If request is not file or folder
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Load .php automatically (for all requests)
+RewriteRule ^(.+)$ $1.php [L,QSA]
+
+# Default homepage
+RewriteRule ^$ index.php [L]
+
+# Don't rewrite AJAX requests to /ajax/ directory
+RewriteCond %{REQUEST_URI} ^/ztorespot_sales_team_panel/ajax/
+RewriteCond %{REQUEST_METHOD} POST
+RewriteRule .* - [L]
