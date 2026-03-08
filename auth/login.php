@@ -20,7 +20,7 @@ if (isset($_COOKIE['remember_token'])) {
         $_SESSION['user_phone'] = $user['phone'];
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['logged_in'] = true;
-        
+
         header("Location: " . BASE_URL . "index.php");
         exit;
     }
@@ -75,6 +75,9 @@ if (isset($_COOKIE['remember_token'])) {
 
                             <div class="text-center mt-3">
                                 <a href="<?= BASE_URL ?>auth/register.php">Don't have an account? Register</a>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="<?= BASE_URL ?>auth/forgot_password.php">Forgot Password?</a>
                             </div>
                         </form>
                     </div>
