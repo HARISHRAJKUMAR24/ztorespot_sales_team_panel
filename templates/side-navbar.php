@@ -53,7 +53,7 @@
             <hr class="my-1" />
             <h6
               class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
-              <span>Customers</span>
+              <span>Sellers</span>
 
             </h6>
             <ul class="nav flex-column mb-auto">
@@ -63,19 +63,19 @@
                   <svg class="bi" aria-hidden="true">
                     <use xlink:href="#people"></use>
                   </svg>
-                  Customers
+                  Sellers
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>sellers/registered_sellers.php">
                   <svg class="bi" aria-hidden="true">
-                    <use xlink:href="#register"></use>
+                    <use xlink:href="#register-customer"></use>
                   </svg>
-                  Registered Customers
+                  Registered Sellers
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>sellers/whatsapp_customers.php">
                   <svg class="bi" aria-hidden="true">
                     <use xlink:href="#whatsapp"></use>
                   </svg>
@@ -88,7 +88,7 @@
                   <svg class="bi" aria-hidden="true">
                     <use xlink:href="#share-fill"></use>
                   </svg>
-                  Share Customer Data
+                  Share Seller Data
                 </a>
               </li>
 
@@ -155,6 +155,15 @@
                     <use xlink:href="#target"></use>
                   </svg>
                   Whatsapp Bulk Upload
+                </a>
+              </li>
+
+               <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>bulk-upload/register-sellers-bulk-upload.php">
+                  <svg class="bi" aria-hidden="true">
+                    <use xlink:href="#register-customer"></use>
+                  </svg>
+                  Register Seller Bulk Upload
                 </a>
               </li>
 
