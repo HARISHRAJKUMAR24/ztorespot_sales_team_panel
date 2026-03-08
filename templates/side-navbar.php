@@ -100,6 +100,15 @@
                   Organic Sellers
                 </a>
               </li>
+
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                  <svg class="bi" aria-hidden="true">
+                    <use xlink:href="#upgrade-sellers"></use>
+                  </svg>
+                  Upgrade Sellers
+                </a>
+              </li>
             </ul>
 
             <hr class="my-1" />
@@ -158,12 +167,21 @@
                 </a>
               </li>
 
-               <li class="nav-item">
+              <li class="nav-item">
                 <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>bulk-upload/register-sellers-bulk-upload.php">
                   <svg class="bi" aria-hidden="true">
                     <use xlink:href="#register-customer"></use>
                   </svg>
                   Register Seller Bulk Upload
+                </a>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>bulk-upload/upgrade-sellers-bulk-upload.php">
+                  <svg class="bi" aria-hidden="true">
+                    <use xlink:href="#upgrade-sellers"></use>
+                  </svg>
+                  Upgrade Sellers Bulk Upload
                 </a>
               </li>
 
