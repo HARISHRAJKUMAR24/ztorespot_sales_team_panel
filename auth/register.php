@@ -72,7 +72,7 @@ require_once dirname(__DIR__) . "/config/config.php";
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
     </script>
-    <script src="<?= BASE_URL ?>js/register.js"></script>
+    <script src="<?= BASE_URL ?>js/auth/register.js"></script>
 </body>
 
 </html>

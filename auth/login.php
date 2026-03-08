@@ -88,7 +88,7 @@ if (isset($_COOKIE['remember_token'])) {
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
-    <script src="<?= BASE_URL ?>js/auth.js"></script>
+    <script src="<?= BASE_URL ?>js/auth/auth.js"></script>
 </body>
 
 </html>

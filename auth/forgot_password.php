@@ -179,7 +179,7 @@ require_once "../config/config.php";
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
     </script>
-    <script src="<?= BASE_URL ?>js/forgot-password.js"></script>
+    <script src="<?= BASE_URL ?>js/auth/forgot-password.js"></script>
 </body>
 
 </html>

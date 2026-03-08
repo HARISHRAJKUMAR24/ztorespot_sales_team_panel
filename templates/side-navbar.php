@@ -23,7 +23,7 @@
                 <a
                   class="nav-link d-flex align-items-center gap-2 active"
                   aria-current="page"
-                  href="#">
+                  href="<?= BASE_URL ?>index.php">
                   <svg class="bi" aria-hidden="true">
                     <use xlink:href="#house-fill"></use>
                   </svg>
@@ -46,6 +46,18 @@
                   Products
                 </a>
               </li>
+
+
+            </ul>
+
+            <hr class="my-1" />
+            <h6
+              class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
+              <span>Customers</span>
+
+            </h6>
+            <ul class="nav flex-column mb-auto">
+
               <li class="nav-item">
                 <a class="nav-link d-flex align-items-center gap-2" href="#">
                   <svg class="bi" aria-hidden="true">
@@ -57,47 +69,60 @@
               <li class="nav-item">
                 <a class="nav-link d-flex align-items-center gap-2" href="#">
                   <svg class="bi" aria-hidden="true">
-                    <use xlink:href="#graph-up"></use>
+                    <use xlink:href="#register"></use>
                   </svg>
-                  Reports
+                  Registered Customers
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link d-flex align-items-center gap-2" href="#">
                   <svg class="bi" aria-hidden="true">
-                    <use xlink:href="#puzzle"></use>
+                    <use xlink:href="#whatsapp"></use>
                   </svg>
-                  Integrations
+                  Whatsapp Customers
+                </a>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                  <svg class="bi" aria-hidden="true">
+                    <use xlink:href="#share-fill"></use>
+                  </svg>
+                  Share Customer Data
+                </a>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                  <svg class="bi" aria-hidden="true">
+                    <use xlink:href="#organic-sellers"></use>
+                  </svg>
+                  Organic Sellers
                 </a>
               </li>
             </ul>
+
+            <hr class="my-1" />
             <h6
               class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
-              <span>Saved reports</span>
-              <a
-                class="link-secondary"
-                href="#"
-                aria-label="Add a new report">
-                <svg class="bi" aria-hidden="true">
-                  <use xlink:href="#plus-circle"></use>
-                </svg>
-              </a>
+              <span>About Team</span>
             </h6>
             <ul class="nav flex-column mb-auto">
               <li class="nav-item">
                 <a class="nav-link d-flex align-items-center gap-2" href="#">
                   <svg class="bi" aria-hidden="true">
-                    <use xlink:href="#file-earmark-text"></use>
+                    <use xlink:href="#target"></use>
                   </svg>
-                  Current month
+                  Targets
                 </a>
               </li>
+
               <li class="nav-item">
                 <a class="nav-link d-flex align-items-center gap-2" href="#">
                   <svg class="bi" aria-hidden="true">
-                    <use xlink:href="#file-earmark-text"></use>
+                    <use xlink:href="#graph-up"></use>
                   </svg>
-                  Last quarter
+                  Sales Team Reports
                 </a>
               </li>
               <li class="nav-item">
@@ -117,10 +142,28 @@
                 </a>
               </li>
             </ul>
+
+            <hr class="my-1" />
+            <h6
+              class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
+              <span>Bluk Upload</span>
+            </h6>
+            <ul class="nav flex-column mb-auto">
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>bulk-upload/whatsapp-bulk-upload.php">
+                  <svg class="bi" aria-hidden="true">
+                    <use xlink:href="#target"></use>
+                  </svg>
+                  Whatsapp Bulk Upload
+                </a>
+              </li>
+
+            </ul>
+
             <hr class="my-3" />
             <ul class="nav flex-column mb-auto">
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>settings/settings.php">
                   <svg class="bi" aria-hidden="true">
                     <use xlink:href="#gear-wide-connected"></use>
                   </svg>
