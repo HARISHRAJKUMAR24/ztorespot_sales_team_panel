@@ -59,7 +59,7 @@
             <ul class="nav flex-column mb-auto">
 
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>sellers/sales_person_sellers.php">
                   <svg class="bi" aria-hidden="true">
                     <use xlink:href="#people"></use>
                   </svg>
@@ -184,7 +184,14 @@
                   Upgrade Sellers Bulk Upload
                 </a>
               </li>
-
+              <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>bulk-upload/sales_person_sellers_bulk_upload.php">
+                  <svg class="bi" aria-hidden="true">
+                    <use xlink:href="#upgrade-sellers"></use>
+                  </svg>
+                  Sales Sellers Bulk Upload
+                </a>
+              </li>
             </ul>
 
             <hr class="my-3" />
