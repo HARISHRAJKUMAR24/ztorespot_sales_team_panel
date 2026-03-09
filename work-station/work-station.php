@@ -27,12 +27,12 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     <!-- Navigation -->
     <?php template('top-navbar'); ?>
-    
+
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
             <?php template('side-navbar'); ?>
-            
+
             <!-- Main Content - WIDER DESKTOP LAYOUT -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-3 px-md-4 py-4">
                 <!-- Header -->
@@ -69,9 +69,9 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                                 <span class="input-group-text bg-light border-end-0">
                                                     <i class="bi bi-building"></i>
                                                 </span>
-                                                <input type="text" class="form-control border-start-0" 
-                                                       placeholder="Enter seller name, store name or business name"
-                                                       id="businessName">
+                                                <input type="text" class="form-control border-start-0"
+                                                    placeholder="Enter seller name, store name or business name"
+                                                    id="businessName">
                                             </div>
                                             <div class="form-text text-muted">
                                                 <i class="bi bi-info-circle me-1"></i>
@@ -109,9 +109,9 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                                 <span class="input-group-text bg-light border-end-0">
                                                     <i class="bi bi-phone"></i>
                                                 </span>
-                                                <input type="tel" class="form-control border-start-0" 
-                                                       placeholder="10 digit mobile number"
-                                                       id="phoneNumber" maxlength="10">
+                                                <input type="tel" class="form-control border-start-0"
+                                                    placeholder="10 digit mobile number"
+                                                    id="phoneNumber" maxlength="10">
                                             </div>
                                         </div>
                                     </div>
@@ -121,7 +121,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                         <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-star text-primary me-1"></i>
-                                                Plans Interested
+                                                Seller Interested
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-light border-end-0">
@@ -129,6 +129,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                                 </span>
                                                 <select class="form-select border-start-0" id="plansInterested">
                                                     <option value="" selected disabled>Select plan</option>
+                                                    <option value="plan-interested">Plans Interested</option>
                                                     <option value="Welcome">Welcome Plan</option>
                                                     <option value="Starter">Starter Plan</option>
                                                     <option value="Professional">Professional Plan</option>
@@ -175,9 +176,9 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                                 <span class="input-group-text bg-light border-end-0" style="align-items: flex-start; padding-top: 0.75rem;">
                                                     <i class="bi bi-pencil-square"></i>
                                                 </span>
-                                                <textarea class="form-control border-start-0" 
-                                                          placeholder="Enter customer questions or queries..."
-                                                          id="customerQueries" rows="3"></textarea>
+                                                <textarea class="form-control border-start-0"
+                                                    placeholder="Enter customer questions or queries..."
+                                                    id="customerQueries" rows="3"></textarea>
                                             </div>
                                             <div class="form-text text-muted">
                                                 <i class="bi bi-info-circle me-1"></i>
@@ -215,9 +216,9 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                                 <span class="input-group-text bg-light border-end-0">
                                                     <i class="bi bi-stopwatch"></i>
                                                 </span>
-                                                <input type="text" class="form-control border-start-0" 
-                                                       placeholder="e.g., 15 mins, 30 mins, 1 hour"
-                                                       id="callDuration">
+                                                <input type="text" class="form-control border-start-0"
+                                                    placeholder="e.g., 15 mins, 30 mins, 1 hour"
+                                                    id="callDuration">
                                             </div>
                                             <div class="form-text text-muted">
                                                 <i class="bi bi-info-circle me-1"></i>
@@ -226,131 +227,23 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                         </div>
                                     </div>
 
-                                    <!-- Additional Information Section - Full width accordion -->
-                                    <div class="accordion mb-4" id="additionalInfoAccordion">
-                                        <div class="accordion-item border-0">
-                                            <h2 class="accordion-header">
-                                                <button class="accordion-button collapsed bg-light" type="button" 
-                                                        data-bs-toggle="collapse" data-bs-target="#additionalInfo">
-                                                    <i class="bi bi-three-dots me-2"></i>
-                                                    Additional Information (Optional)
-                                                </button>
-                                            </h2>
-                                            <div id="additionalInfo" class="accordion-collapse collapse" 
-                                                 data-bs-parent="#additionalInfoAccordion">
-                                                <div class="accordion-body px-0">
-                                                    <!-- Remembering Notes - Full width -->
-                                                    <div class="row mb-3">
-                                                        <div class="col-12">
-                                                            <label class="form-label fw-semibold">
-                                                                <i class="bi bi-pencil text-secondary me-1"></i>
-                                                                Remembering Notes
-                                                            </label>
-                                                            <textarea class="form-control" 
-                                                                      placeholder="Additional notes to remember about this seller..."
-                                                                      id="rememberingNotes" rows="2"></textarea>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <!-- Latest Update - Full width -->
-                                                    <div class="row mb-3">
-                                                        <div class="col-12">
-                                                            <label class="form-label fw-semibold">
-                                                                <i class="bi bi-arrow-up-circle text-secondary me-1"></i>
-                                                                Latest Update
-                                                            </label>
-                                                            <input type="text" class="form-control" 
-                                                                   placeholder="Latest update from conversation"
-                                                                   id="latestUpdate">
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <!-- Row: Registration Status and Call Timing -->
-                                                    <div class="row mb-3">
-                                                        <div class="col-12 col-md-6">
-                                                            <label class="form-label fw-semibold">
-                                                                <i class="bi bi-check-square text-secondary me-1"></i>
-                                                                Registration Status
-                                                            </label>
-                                                            <select class="form-select" id="registrationStatus">
-                                                                <option value="">Select status</option>
-                                                                <option value="Yes">Yes (Registered)</option>
-                                                                <option value="No">No (Not Registered)</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-12 col-md-6">
-                                                            <label class="form-label fw-semibold">
-                                                                <i class="bi bi-calendar text-secondary me-1"></i>
-                                                                Call Timing
-                                                            </label>
-                                                            <input type="text" class="form-control" 
-                                                                   placeholder="When to call back (e.g., tomorrow 5pm)"
-                                                                   id="callTiming">
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <!-- Row: Video/Canva and Remarks -->
-                                                    <div class="row">
-                                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                                            <label class="form-label fw-semibold">
-                                                                <i class="bi bi-youtube text-secondary me-1"></i>
-                                                                Video/Canva Link
-                                                            </label>
-                                                            <input type="url" class="form-control" 
-                                                                   placeholder="https://..."
-                                                                   id="videoCanva">
-                                                        </div>
-                                                        <div class="col-12 col-md-6">
-                                                            <label class="form-label fw-semibold">
-                                                                <i class="bi bi-chat-text text-secondary me-1"></i>
-                                                                Remarks
-                                                            </label>
-                                                            <input type="text" class="form-control" 
-                                                                   placeholder="Any additional remarks"
-                                                                   id="remarks">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Entry Date - Left aligned -->
-                                    <div class="row mb-4">
-                                        <div class="col-12">
-                                            <label class="form-label fw-semibold">
-                                                <i class="bi bi-calendar-date text-primary me-1"></i>
-                                                Entry Date
-                                            </label>
-                                            <div class="input-group" style="max-width: 300px;">
-                                                <span class="input-group-text bg-light border-end-0">
-                                                    <i class="bi bi-calendar"></i>
-                                                </span>
-                                                <input type="date" class="form-control border-start-0" 
-                                                       id="entryDate" value="<?php echo date('Y-m-d'); ?>">
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <!-- Form Actions - Centered and larger buttons -->
                                     <div class="d-flex flex-column flex-sm-row justify-content-center gap-2 gap-sm-3 pt-3 border-top">
-                                        <button type="submit" class="btn btn-primary px-5 py-2">
-                                            <i class="bi bi-save me-2"></i>
-                                            Save Seller
-                                        </button>
                                         <button type="reset" class="btn btn-outline-secondary px-5 py-2">
                                             <i class="bi bi-arrow-counterclockwise me-2"></i>
                                             Reset
                                         </button>
-                                        <a href="sales_person_sellers_list.php" class="btn btn-light px-5 py-2">
-                                            <i class="bi bi-x-circle me-2"></i>
-                                            Cancel
-                                        </a>
+                                        <button type="submit" class="btn btn-primary px-5 py-2">
+                                            <i class="bi bi-save me-2"></i>
+                                            Save Seller
+                                        </button>
+
+
                                     </div>
                                 </form>
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
             </main>
@@ -363,32 +256,32 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
             font-size: 0.9rem;
             margin-bottom: 0.35rem;
         }
-        
+
         .input-group-text {
             background-color: #f8f9fa;
         }
-        
+
         .input-group .form-control:focus,
         .input-group .form-select:focus {
             border-color: #86b7fe;
             box-shadow: none;
         }
-        
-        .input-group .form-control:focus + .input-group-text,
-        .input-group .form-select:focus + .input-group-text {
+
+        .input-group .form-control:focus+.input-group-text,
+        .input-group .form-select:focus+.input-group-text {
             border-color: #86b7fe;
         }
-        
+
         .accordion-button:not(.collapsed) {
             background-color: #e7f1ff;
             color: #0d6efd;
         }
-        
+
         .accordion-button:focus {
             box-shadow: none;
-            border-color: rgba(0,0,0,.125);
+            border-color: rgba(0, 0, 0, .125);
         }
-        
+
         /* Desktop specific styles - WIDER LAYOUT */
         @media (min-width: 992px) {
             .container-fluid {
@@ -396,88 +289,88 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 padding-left: 1.5rem;
                 padding-right: 1.5rem;
             }
-            
+
             .card-body {
                 padding: 2rem !important;
             }
-            
+
             .form-label {
                 font-size: 1rem;
             }
-            
+
             .btn {
                 padding: 0.6rem 2rem !important;
                 font-size: 1rem;
             }
-            
-            .input-group-text, 
-            .form-control, 
+
+            .input-group-text,
+            .form-control,
             .form-select {
                 font-size: 1rem;
                 padding: 0.6rem 1rem;
             }
-            
+
             .accordion-button {
                 font-size: 1rem;
                 padding: 1rem;
             }
         }
-        
+
         /* Extra large screens - even wider */
         @media (min-width: 1400px) {
             .card-body {
                 padding: 2.5rem !important;
             }
-            
+
             .col-12 {
                 padding-left: 2rem;
                 padding-right: 2rem;
             }
         }
-        
+
         @media (max-width: 576px) {
             .card-body {
                 padding: 1rem;
             }
-            
+
             .btn {
                 padding: 0.5rem 1rem;
             }
-            
+
             .form-label {
                 font-size: 0.85rem;
             }
-            
+
             .input-group-text {
                 padding: 0.375rem 0.5rem;
             }
         }
-        
+
         /* Hover effects */
         .card {
             transition: all 0.2s ease-in-out;
         }
-        
+
         .card:hover {
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
         }
-        
+
         .btn {
             transition: all 0.2s;
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
         }
-        
+
         /* Input focus effects */
         .form-control:focus,
         .form-select:focus {
             border-color: #86b7fe;
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
         }
-        
+
         /* Toast container for future notifications */
         .toast-container {
             position: fixed;
@@ -492,4 +385,5 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>
+
 </html>

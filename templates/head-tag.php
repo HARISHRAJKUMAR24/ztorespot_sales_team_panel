@@ -101,5 +101,59 @@
     .bd-mode-toggle .dropdown-menu .active .bi {
       display: block !important;
     }
+
+    /* Accordion customization */
+    .accordion-item {
+        background-color: transparent;
+    }
+    
+    .accordion-button {
+        box-shadow: none;
+        color: inherit;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: rgba(13, 110, 253, 0.05);
+        color: #0d6efd;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: transparent;
+    }
+    
+    .accordion-button::after {
+        background-size: 1rem;
+        width: 1rem;
+        height: 1rem;
+        margin-left: auto;
+    }
+    
+    /* Style for nested nav items */
+    .nav-link.ps-4 {
+        padding-left: 2.5rem !important;
+        font-size: 0.9rem;
+    }
+    
+    .nav-link.ps-4:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    /* Active state for nested items */
+    .nav-link.ps-4.active {
+        color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    
+    /* Smaller icons for nested items */
+    .nav-link.ps-4 svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    /* Hover effect for accordion button */
+    .accordion-button:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
   </style>
 </head>
