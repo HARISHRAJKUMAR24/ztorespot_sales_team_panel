@@ -50,6 +50,7 @@ if (!isset($_FILES['excel_file'])) {
 }
 
 $file = $_FILES['excel_file'];
+$current_month = $_POST['current_month'] ?? date('F Y');
 
 // Check for upload errors
 if ($file['error'] !== UPLOAD_ERR_OK) {
@@ -82,17 +83,6 @@ try {
     $pdo = db();
     $pdo->beginTransaction();
 
-    /* --------------------------------
-       OPTION 1: DELETE OLD DATA
-       Uncomment the line below to truncate table before import
-    -------------------------------- */
-    // $pdo->exec("TRUNCATE TABLE upgrade_sellers");
-
-    /* --------------------------------
-       OPTION 2: INSERT ONLY (DEFAULT)
-       Keep existing data, just add new records
-    -------------------------------- */
-
     // Load file data
     if ($ext === 'csv') {
         $data = parseCSV($file['tmp_name']);
@@ -112,50 +102,40 @@ try {
     $total_rows = count($data);
     $success_count = 0;
     $error_count = 0;
-    $duplicates_count = 0;
     $errors = [];
 
     // Prepare SQL statement
     $sql = "INSERT INTO upgrade_sellers (
-                date,
-                seller_name_id,
-                work_details_update,
-                source_type,
-                registration_status,
-                cs_mobile,
-                plans_interested,
-                customer_responses,
-                remembering,
-                latest_update,
-                current_status,
-                customer_queries,
-                video_canva,
-                timings,
-                remarks,
-                created_by,
+                store_id,
+                seller_name,
+                seller_contact,
+                phone_number,
+                seller_response,
+                product_uploads,
+                plan_name,
+                plan_status,
+                assigned_by,
+                platform_come,
+                platform_known,
+                month_name,
                 created_at
             ) VALUES (
-                :date,
-                :seller_name_id,
-                :work_details_update,
-                :source_type,
-                :registration_status,
-                :cs_mobile,
-                :plans_interested,
-                :customer_responses,
-                :remembering,
-                :latest_update,
-                :current_status,
-                :customer_queries,
-                :video_canva,
-                :timings,
-                :remarks,
-                :created_by,
+                :store_id,
+                :seller_name,
+                :seller_contact,
+                :phone_number,
+                :seller_response,
+                :product_uploads,
+                :plan_name,
+                :plan_status,
+                :assigned_by,
+                :platform_come,
+                :platform_known,
+                :month_name,
                 NOW()
             )";
 
     $stmt = $pdo->prepare($sql);
-    $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM upgrade_sellers WHERE seller_name_id = ?");
 
     $row_num = 1; // Start from row 1 (header row)
 
@@ -167,75 +147,50 @@ try {
             continue;
         }
 
-        // Extract and clean data
-        $seller_name_id = trim($row['seller_name_id'] ?? '');
+        // Extract data with proper column mapping
+        $seller_name = trim($row['seller_name'] ?? $row['seller_name_id'] ?? $row['store_name'] ?? '');
         
         // Check if required field is empty
-        if (empty($seller_name_id)) {
+        if (empty($seller_name)) {
             $error_count++;
             $errors[] = [
                 'row' => $row_num,
                 'seller' => '-',
-                'error' => 'Seller Name/ID is required'
+                'error' => 'Seller Name is required (Column B)'
             ];
             continue;
-        }
-
-        // Check for duplicates (optional - remove if you want to allow duplicates)
-        $checkStmt->execute([$seller_name_id]);
-        if ($checkStmt->fetchColumn() > 0) {
-            $duplicates_count++;
-            $errors[] = [
-                'row' => $row_num,
-                'seller' => $seller_name_id,
-                'error' => 'Duplicate seller entry (skipped)'
-            ];
-            continue;
-        }
-
-        // Process date field
-        $date_val = null;
-        if (!empty($row['date'])) {
-            if (is_numeric($row['date'])) {
-                // Excel serial date
-                try {
-                    $date_val = Date::excelToDateTimeObject($row['date'])->format('Y-m-d');
-                } catch (Exception $e) {
-                    $date_val = null;
-                }
-            } else {
-                // Try to parse string date
-                $timestamp = strtotime($row['date']);
-                if ($timestamp !== false) {
-                    $date_val = date('Y-m-d', $timestamp);
-                }
-            }
         }
 
         // Clean phone number
-        $cs_mobile = preg_replace('/[^0-9]/', '', trim($row['cs_mobile'] ?? ''));
-        if (strlen($cs_mobile) > 10) {
-            $cs_mobile = substr($cs_mobile, -10);
+        $phone = preg_replace('/[^0-9]/', '', trim($row['phone_number'] ?? $row['phone'] ?? $row['mobile'] ?? ''));
+        if (strlen($phone) > 10) {
+            $phone = substr($phone, -10);
         }
+
+        // Convert product uploads to integer
+        $product_uploads = 0;
+        if (!empty($row['product_uploads'] ?? $row['product_upload'] ?? '')) {
+            $product_uploads = intval(preg_replace('/[^0-9]/', '', $row['product_uploads'] ?? $row['product_upload'] ?? ''));
+        }
+
+        // Handle month detection from special rows
+        $detected_month = detectMonthInRow($row);
+        $final_month = $detected_month ?: $current_month;
 
         try {
             $stmt->execute([
-                ':date' => $date_val,
-                ':seller_name_id' => substr($seller_name_id, 0, 255),
-                ':work_details_update' => substr($row['work_details_update'] ?? '', 0, 500),
-                ':source_type' => substr($row['source_type'] ?? '', 0, 50),
-                ':registration_status' => substr($row['registration_status'] ?? '', 0, 10),
-                ':cs_mobile' => $cs_mobile ?: null,
-                ':plans_interested' => substr($row['plans_interested'] ?? '', 0, 100),
-                ':customer_responses' => $row['customer_responses'] ?? null,
-                ':remembering' => $row['remembering'] ?? null,
-                ':latest_update' => $row['latest_update'] ?? null,
-                ':current_status' => substr($row['current_status'] ?? '', 0, 100),
-                ':customer_queries' => $row['customer_queries'] ?? null,
-                ':video_canva' => $row['video_canva'] ?? null,
-                ':timings' => $row['timings'] ?? null,
-                ':remarks' => $row['remarks'] ?? null,
-                ':created_by' => $user_uid
+                ':store_id' => substr(trim($row['store_id'] ?? $row['a'] ?? ''), 0, 50) ?: null,
+                ':seller_name' => substr($seller_name, 0, 255),
+                ':seller_contact' => substr(trim($row['seller_contact'] ?? $row['contact'] ?? $row['c'] ?? ''), 0, 255) ?: null,
+                ':phone_number' => $phone ?: null,
+                ':seller_response' => substr(trim($row['seller_response'] ?? $row['response'] ?? $row['e'] ?? ''), 0, 100) ?: null,
+                ':product_uploads' => $product_uploads,
+                ':plan_name' => substr(trim($row['plan_name'] ?? $row['plan'] ?? $row['g'] ?? ''), 0, 100) ?: null,
+                ':plan_status' => substr(trim($row['plan_status'] ?? $row['status'] ?? $row['h'] ?? ''), 0, 50) ?: null,
+                ':assigned_by' => substr(trim($row['assigned_by'] ?? $row['assigned'] ?? $row['i'] ?? ''), 0, 100) ?: null,
+                ':platform_come' => substr(trim($row['platform_come'] ?? $row['platform'] ?? $row['j'] ?? ''), 0, 100) ?: null,
+                ':platform_known' => trim($row['platform_known'] ?? $row['notes'] ?? $row['k'] ?? $row['l'] ?? '') ?: null,
+                ':month_name' => $final_month
             ]);
             
             $success_count++;
@@ -244,7 +199,7 @@ try {
             $error_count++;
             $errors[] = [
                 'row' => $row_num,
-                'seller' => $seller_name_id,
+                'seller' => $seller_name,
                 'error' => $e->getMessage()
             ];
         }
@@ -264,7 +219,6 @@ try {
             'total_rows' => $total_rows,
             'success_count' => $success_count,
             'error_count' => $error_count,
-            'duplicates_count' => $duplicates_count,
             'errors' => $errors
         ]
     ];
@@ -272,7 +226,7 @@ try {
     // If no records were inserted, return error
     if ($success_count === 0 && $total_rows > 0) {
         $response['status'] = 'error';
-        $response['message'] = 'No records were inserted. Please check your data.';
+        $response['message'] = 'No records were inserted. Please check your data format.';
         unset($response['data']);
     }
 
@@ -291,15 +245,50 @@ try {
 }
 
 /* ---------------------------
+   DETECT MONTH HEADER
+--------------------------- */
+function detectMonthInRow($row) {
+    $row_string = implode(' ', array_values($row));
+    $row_string = strtoupper($row_string);
+    
+    $months = [
+        'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+        'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+    ];
+    
+    foreach ($months as $month) {
+        if (strpos($row_string, $month . ' MONTH') !== false || 
+            strpos($row_string, $month . ' UPGRADE') !== false) {
+            
+            // Extract year if present
+            preg_match('/\b(20\d{2})\b/', $row_string, $year_matches);
+            $year = $year_matches[1] ?? date('Y');
+            
+            return $month . ' ' . $year . ' UPGRADE';
+        }
+    }
+    
+    return null;
+}
+
+/* ---------------------------
    CSV PARSER
 --------------------------- */
 function parseCSV($file)
 {
     $data = [];
     $header = null;
+    $current_month = null;
 
     if (($handle = fopen($file, 'r')) !== false) {
         while (($row = fgetcsv($handle)) !== false) {
+            // Check for month header
+            $row_string = implode(' ', $row);
+            if (preg_match('/\b(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+MONTH\b/i', $row_string)) {
+                $current_month = trim($row_string);
+                continue;
+            }
+            
             if (!$header) {
                 // Normalize headers
                 $header = array_map(function ($h) {
@@ -311,16 +300,16 @@ function parseCSV($file)
                     
                     // Map common variations
                     $map = [
-                        'seller_name_id' => ['sellernameid', 'seller_name_id', 'seller_name', 'sellerid', 'seller_id'],
-                        'cs_mobile' => ['csmobile', 'cs_mobile', 'cs_mobile_number', 'mobile_number', 'phone'],
-                        'work_details_update' => ['workdetailsupdate', 'work_details_update', 'work_details', 'work_update'],
-                        'source_type' => ['sourcetype', 'source_type', 'aiseny_organic_direct', 'source'],
-                        'registration_status' => ['registrationstatus', 'registration_status', 'reg_not_reg', 'reg_status'],
-                        'plans_interested' => ['plansinterested', 'plans_interested', 'plans'],
-                        'customer_responses' => ['customerresponses', 'customer_responses', 'responses'],
-                        'current_status' => ['currentstatus', 'current_status', 'status'],
-                        'customer_queries' => ['customerqueries', 'customer_queries', 'queries'],
-                        'video_canva' => ['videocanva', 'video_canva', 'video'],
+                        'store_id' => ['store_id', 'a', 'col_a', 'storeid'],
+                        'seller_name' => ['seller_name', 'b', 'col_b', 'sellername', 'store_name'],
+                        'seller_contact' => ['seller_contact', 'c', 'col_c', 'contact'],
+                        'phone_number' => ['phone_number', 'd', 'col_d', 'phone', 'mobile'],
+                        'seller_response' => ['seller_response', 'e', 'col_e', 'response'],
+                        'product_uploads' => ['product_uploads', 'f', 'col_f', 'uploads', 'product_upload'],
+                        'plan_name' => ['plan_name', 'g', 'col_g', 'plan'],
+                        'plan_status' => ['plan_status', 'h', 'col_h', 'status'],
+                        'assigned_by' => ['assigned_by', 'i', 'col_i', 'assigned'],
+                        'platform_come' => ['platform_come', 'j', 'col_j', 'platform'],
                     ];
                     
                     foreach ($map as $standard => $variations) {
@@ -336,6 +325,12 @@ function parseCSV($file)
                 foreach ($header as $k => $header_name) {
                     $row_data[$header_name] = $row[$k] ?? '';
                 }
+                
+                // Add month if detected
+                if ($current_month) {
+                    $row_data['month_name'] = $current_month;
+                }
+                
                 $data[] = $row_data;
             }
         }
@@ -353,53 +348,95 @@ function parseExcel($file)
     $spreadsheet = IOFactory::load($file);
     $sheet = $spreadsheet->getActiveSheet();
     $rows = $sheet->toArray();
+    $current_month = null;
 
     if (empty($rows)) {
         return $data;
     }
 
-    // Normalize headers
-    $headers = array_map(function ($h) {
-        $h = strtolower(trim($h));
-        $h = str_replace(' ', '_', $h);
-        $h = str_replace('/', '_', $h);
-        $h = str_replace('-', '_', $h);
-        $h = preg_replace('/[^a-z0-9_]/', '', $h);
+    // Find header row (skip month headers)
+    $header_row_index = 0;
+    $headers = [];
+    
+    for ($i = 0; $i < min(10, count($rows)); $i++) {
+        $row_string = implode(' ', $rows[$i]);
         
-        // Map common variations
-        $map = [
-            'seller_name_id' => ['sellernameid', 'seller_name_id', 'seller_name', 'sellerid', 'seller_id'],
-            'cs_mobile' => ['csmobile', 'cs_mobile', 'cs_mobile_number', 'mobile_number', 'phone'],
-            'work_details_update' => ['workdetailsupdate', 'work_details_update', 'work_details', 'work_update'],
-            'source_type' => ['sourcetype', 'source_type', 'aiseny_organic_direct', 'source'],
-            'registration_status' => ['registrationstatus', 'registration_status', 'reg_not_reg', 'reg_status'],
-            'plans_interested' => ['plansinterested', 'plans_interested', 'plans'],
-            'customer_responses' => ['customerresponses', 'customer_responses', 'responses'],
-            'current_status' => ['currentstatus', 'current_status', 'status'],
-            'customer_queries' => ['customerqueries', 'customer_queries', 'queries'],
-            'video_canva' => ['videocanva', 'video_canva', 'video'],
-        ];
+        // Check for month header
+        if (preg_match('/\b(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+MONTH\b/i', $row_string)) {
+            $current_month = trim($row_string);
+            continue;
+        }
         
-        foreach ($map as $standard => $variations) {
-            if (in_array($h, $variations)) {
-                return $standard;
+        // Look for header row (contains 'Store ID' or similar)
+        if (preg_match('/store|seller|name|phone|plan/i', $row_string)) {
+            $header_row_index = $i;
+            $headers = array_map(function ($h) {
+                $h = strtolower(trim($h));
+                $h = str_replace(' ', '_', $h);
+                $h = str_replace('/', '_', $h);
+                $h = str_replace('-', '_', $h);
+                $h = preg_replace('/[^a-z0-9_]/', '', $h);
+                
+                // Map common variations
+                $map = [
+                    'store_id' => ['store_id', 'a', 'col_a', 'storeid'],
+                    'seller_name' => ['seller_name', 'b', 'col_b', 'sellername', 'store_name'],
+                    'seller_contact' => ['seller_contact', 'c', 'col_c', 'contact'],
+                    'phone_number' => ['phone_number', 'd', 'col_d', 'phone', 'mobile'],
+                    'seller_response' => ['seller_response', 'e', 'col_e', 'response'],
+                    'product_uploads' => ['product_uploads', 'f', 'col_f', 'uploads', 'product_upload'],
+                    'plan_name' => ['plan_name', 'g', 'col_g', 'plan'],
+                    'plan_status' => ['plan_status', 'h', 'col_h', 'status'],
+                    'assigned_by' => ['assigned_by', 'i', 'col_i', 'assigned'],
+                    'platform_come' => ['platform_come', 'j', 'col_j', 'platform'],
+                ];
+                
+                foreach ($map as $standard => $variations) {
+                    if (in_array($h, $variations)) {
+                        return $standard;
+                    }
+                }
+                
+                return $h;
+            }, $rows[$i]);
+            break;
+        }
+    }
+
+    // If no header found, use default column mapping
+    if (empty($headers)) {
+        $headers = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'];
+        $header_row_index = -1;
+    }
+
+    // Parse data rows
+    for ($i = $header_row_index + 1; $i < count($rows); $i++) {
+        $row_data = [];
+        
+        // Check if this row is a month header
+        $row_string = implode(' ', $rows[$i]);
+        if (preg_match('/\b(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+MONTH\b/i', $row_string)) {
+            $current_month = trim($row_string);
+            continue;
+        }
+        
+        // Skip if row is empty
+        if (empty(array_filter($rows[$i]))) {
+            continue;
+        }
+        
+        foreach ($headers as $index => $header_name) {
+            if (isset($rows[$i][$index])) {
+                $row_data[$header_name] = $rows[$i][$index];
             }
         }
         
-        return $h;
-    }, $rows[0]);
-
-    // Parse data rows
-    for ($i = 1; $i < count($rows); $i++) {
-        $row_data = [];
-        foreach ($headers as $k => $header) {
-            $row_data[$header] = $rows[$i][$k] ?? '';
+        // Add month if detected
+        if ($current_month) {
+            $row_data['month_name'] = $current_month;
         }
         
-        // Only add if not empty
-        if (!empty(array_filter($row_data))) {
-            $data[] = $row_data;
-        }
+        $data[] = $row_data;
     }
 
     return $data;

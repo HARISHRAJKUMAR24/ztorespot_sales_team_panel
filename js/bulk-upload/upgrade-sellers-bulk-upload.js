@@ -2,6 +2,14 @@ $(document).ready(function () {
 
 let selectedFile = null;
 let isUploading = false;
+let currentMonth = '';
+
+// Get current month for display
+const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
+const d = new Date();
+currentMonth = monthNames[d.getMonth()] + ' ' + d.getFullYear();
 
 /* -----------------------------
    LOAD INITIAL STATS
@@ -15,7 +23,7 @@ function loadStats() {
             if (response.status === 'success') {
                 $('#totalCount').text(response.data.total);
                 $('#activeCount').text(response.data.active);
-                $('#pendingCount').text(response.data.pending);
+                $('#monthCount').text(response.data.month_count || '-');
                 $('#lastUpload').text(response.data.last_upload || '-');
             }
         }
@@ -133,7 +141,6 @@ $('#bulkUploadForm').on('submit', function (e) {
     $('#totalRows').text('0');
     $('#successRows').text('0');
     $('#errorRows').text('0');
-    $('#duplicateRows').text('0');
     
     // Hide previous results
     $('#resultsCard').addClass('d-none');
@@ -142,6 +149,7 @@ $('#bulkUploadForm').on('submit', function (e) {
     const formData = new FormData();
     formData.append('action', 'bulk_upload');
     formData.append('excel_file', selectedFile);
+    formData.append('current_month', currentMonth);
 
     isUploading = true;
 
@@ -173,7 +181,6 @@ $('#bulkUploadForm').on('submit', function (e) {
                 $('#totalRows').text(data.total_rows);
                 $('#successRows').text(data.success_count);
                 $('#errorRows').text(data.error_count);
-                $('#duplicateRows').text(data.duplicates_count || 0);
                 
                 $('#resultsCard').removeClass('d-none');
                 
@@ -183,14 +190,6 @@ $('#bulkUploadForm').on('submit', function (e) {
                         <i class="bi bi-check-circle-fill me-2"></i>
                         <strong>Success!</strong> ${data.success_count} records imported successfully.
                     </div>`;
-                
-                if (data.duplicates_count > 0) {
-                    resultsHtml += `
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            <strong>${data.duplicates_count} duplicate entries</strong> were skipped.
-                        </div>`;
-                }
                 
                 if (data.error_count > 0) {
                     $('#viewErrorsBtn').show();
@@ -317,7 +316,6 @@ function showToast(type, title, message) {
     const toast = new bootstrap.Toast(document.getElementById(id));
     toast.show();
     
-    // Remove from DOM after hidden
     $(`#${id}`).on('hidden.bs.toast', function () {
         $(this).remove();
     });

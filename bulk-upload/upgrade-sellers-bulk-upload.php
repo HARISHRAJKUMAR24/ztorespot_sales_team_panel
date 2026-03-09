@@ -65,7 +65,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     <div class="col-md-3">
                         <div class="card bg-success text-white">
                             <div class="card-body">
-                                <h6 class="card-title">Active</h6>
+                                <h6 class="card-title">Active Plans</h6>
                                 <h2 class="mb-0" id="activeCount">-</h2>
                             </div>
                         </div>
@@ -73,8 +73,8 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     <div class="col-md-3">
                         <div class="card bg-warning text-dark">
                             <div class="card-body">
-                                <h6 class="card-title">Pending</h6>
-                                <h2 class="mb-0" id="pendingCount">-</h2>
+                                <h6 class="card-title">This Month</h6>
+                                <h2 class="mb-0" id="monthCount">-</h2>
                             </div>
                         </div>
                     </div>
@@ -145,21 +145,17 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                          id="uploadProgress" role="progressbar" style="width: 0%">0%</div>
                                 </div>
                                 <div class="row text-center">
-                                    <div class="col-3">
+                                    <div class="col-4">
                                         <h4 class="mb-0" id="totalRows">0</h4>
                                         <small class="text-muted">Total</small>
                                     </div>
-                                    <div class="col-3">
+                                    <div class="col-4">
                                         <h4 class="mb-0 text-success" id="successRows">0</h4>
                                         <small class="text-muted">Success</small>
                                     </div>
-                                    <div class="col-3">
+                                    <div class="col-4">
                                         <h4 class="mb-0 text-danger" id="errorRows">0</h4>
                                         <small class="text-muted">Errors</small>
-                                    </div>
-                                    <div class="col-3">
-                                        <h4 class="mb-0 text-warning" id="duplicateRows">0</h4>
-                                        <small class="text-muted">Duplicates</small>
                                     </div>
                                 </div>
                             </div>
@@ -194,35 +190,30 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                     <table class="table table-sm table-bordered">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>#</th>
                                                 <th>Excel Column</th>
                                                 <th>Database Field</th>
                                                 <th>Required</th>
-                                                <th>Description</th>
+                                                <th>Example</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td>1</td><td>Date</td><td><code>date</code></td><td>No</td><td>Upgrade date</td></tr>
-                                            <tr><td>2</td><td>Seller Name/ID</td><td><code>seller_name_id</code></td><td><span class="text-danger">Yes</span></td><td>Seller identifier</td></tr>
-                                            <tr><td>3</td><td>Work Details Update</td><td><code>work_details_update</code></td><td>No</td><td>Work update details</td></tr>
-                                            <tr><td>4</td><td>Aiseny/Organic/Direct</td><td><code>source_type</code></td><td>No</td><td>Source type</td></tr>
-                                            <tr><td>5</td><td>Reg/Not Reg</td><td><code>registration_status</code></td><td>No</td><td>Yes/No</td></tr>
-                                            <tr><td>6</td><td>CS Mobile Number</td><td><code>cs_mobile</code></td><td>No</td><td>CS contact number</td></tr>
-                                            <tr><td>7</td><td>Plans Interested</td><td><code>plans_interested</code></td><td>No</td><td>Plan type</td></tr>
-                                            <tr><td>8</td><td>Customer Responses</td><td><code>customer_responses</code></td><td>No</td><td>Response text</td></tr>
-                                            <tr><td>9</td><td>Remembering</td><td><code>remembering</code></td><td>No</td><td>Remembering notes</td></tr>
-                                            <tr><td>10</td><td>Latest Update</td><td><code>latest_update</code></td><td>No</td><td>Latest update</td></tr>
-                                            <tr><td>11</td><td>Current Status</td><td><code>current_status</code></td><td>No</td><td>Current status</td></tr>
-                                            <tr><td>12</td><td>Customer Queries</td><td><code>customer_queries</code></td><td>No</td><td>Customer questions</td></tr>
-                                            <tr><td>13</td><td>Video/Canva</td><td><code>video_canva</code></td><td>No</td><td>Video/Canva details</td></tr>
-                                            <tr><td>14</td><td>Timings</td><td><code>timings</code></td><td>No</td><td>Call timings</td></tr>
-                                            <tr><td>15</td><td>Remarks</td><td><code>remarks</code></td><td>No</td><td>Additional remarks</td></tr>
+                                            <tr><td><strong>A</strong> - Store ID</td><td><code>store_id</code></td><td>No</td><td>161</td></tr>
+                                            <tr><td><strong>B</strong> - Seller Name</td><td><code>seller_name</code></td><td><span class="text-danger">Yes</span></td><td>Jaihind Enterprises India</td></tr>
+                                            <tr><td><strong>C</strong> - Seller Contact</td><td><code>seller_contact</code></td><td>No</td><td>Vivekanandan Palanisamy</td></tr>
+                                            <tr><td><strong>D</strong> - Phone Number</td><td><code>phone_number</code></td><td>No</td><td>9629850366</td></tr>
+                                            <tr><td><strong>E</strong> - Seller Response</td><td><code>seller_response</code></td><td>No</td><td>10</td></tr>
+                                            <tr><td><strong>F</strong> - Product Uploads</td><td><code>product_uploads</code></td><td>No</td><td>10</td></tr>
+                                            <tr><td><strong>G</strong> - Plan Name</td><td><code>plan_name</code></td><td>No</td><td>Professional</td></tr>
+                                            <tr><td><strong>H</strong> - Plan Status</td><td><code>plan_status</code></td><td>No</td><td>Active</td></tr>
+                                            <tr><td><strong>I</strong> - Assigned By</td><td><code>assigned_by</code></td><td>No</td><td>Prabha</td></tr>
+                                            <tr><td><strong>J</strong> - Platform Come</td><td><code>platform_come</code></td><td>No</td><td>FB (Ads)</td></tr>
+                                            <tr><td><strong>K/L</strong> - Platform Known</td><td><code>platform_known</code></td><td>No</td><td>Additional notes</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
                                 <div class="alert alert-info mt-3 mb-0">
                                     <i class="bi bi-lightbulb-fill me-2"></i>
-                                    <strong>Tip:</strong> Download the sample file to see the exact format. The first row must contain headers matching the column names above.
+                                    <strong>Tip:</strong> The system automatically detects month headers (e.g., "SEPTEMBER MONTH UPGRADE LIST") and assigns them to the <code>month_name</code> field.
                                 </div>
                             </div>
                         </div>
@@ -328,7 +319,6 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Pass BASE_URL to JavaScript
         const BASE_URL = '<?= BASE_URL ?>';
     </script>
     <script src="<?= BASE_URL ?>js/bulk-upload/upgrade-sellers-bulk-upload.js"></script>
