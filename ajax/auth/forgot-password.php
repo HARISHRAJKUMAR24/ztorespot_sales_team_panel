@@ -4,11 +4,15 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 header('Content-Type: application/json');
 
-// Set default timezone to Asia/Kolkata (or your local timezone)
+// Set default timezone
 date_default_timezone_set('Asia/Kolkata');
+
+// Start session at the beginning
+session_start();
 
 require_once "../../config/config.php";
 require_once "../../lib/functions.php";
+
 try {
     $action = $_POST['action'] ?? '';
     
@@ -34,13 +38,15 @@ try {
             exit;
         }
         
-        // Create table
+        // Create table with proper timezone handling
         $pdo->exec("CREATE TABLE IF NOT EXISTS otp_verifications (
             id INT AUTO_INCREMENT PRIMARY KEY,
             email VARCHAR(150) NOT NULL,
             otp VARCHAR(6) NOT NULL,
             expires_at DATETIME NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX (email),
+            INDEX (expires_at)
         )");
         
         // Delete old OTPs
@@ -50,8 +56,8 @@ try {
         // Set OTP to 987654
         $otp = '987654';
         
-        // Calculate expiry using PHP time (10 minutes from now)
-        $expires = date('Y-m-d H:i:s', time() + 600); // 600 seconds = 10 minutes
+        // Calculate expiry using PHP time
+        $expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
         
         $insert = $pdo->prepare("INSERT INTO otp_verifications (email, otp, expires_at) VALUES (?, ?, ?)");
         $insert->execute([$email, $otp, $expires]);
@@ -80,7 +86,15 @@ try {
         // Get current server time
         $now = date('Y-m-d H:i:s');
         
-        // Check if OTP is valid (using string comparison since dates are in same format)
+        // Debug: Check what's in the database
+        $debugStmt = $pdo->prepare("SELECT * FROM otp_verifications WHERE email = ? ORDER BY created_at DESC");
+        $debugStmt->execute([$email]);
+        $debugResult = $debugStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        error_log("OTP Verification Debug - Email: $email, OTP Entered: $otp, Current Time: $now");
+        error_log("Database Records: " . print_r($debugResult, true));
+        
+        // Check if OTP is valid (using string comparison)
         $stmt = $pdo->prepare("SELECT * FROM otp_verifications 
                                WHERE email = ? AND otp = ? AND expires_at >= ? 
                                ORDER BY created_at DESC LIMIT 1");
@@ -92,7 +106,6 @@ try {
             $delete = $pdo->prepare("DELETE FROM otp_verifications WHERE id = ?");
             $delete->execute([$result['id']]);
             
-            session_start();
             $_SESSION['otp_verified'] = $email;
             
             echo json_encode([
@@ -100,28 +113,29 @@ try {
                 'message' => 'OTP verified successfully'
             ]);
         } else {
-            // Check if OTP exists but expired
-            $expiredStmt = $pdo->prepare("SELECT * FROM otp_verifications 
-                                         WHERE email = ? AND otp = ? ORDER BY created_at DESC");
-            $expiredStmt->execute([$email, $otp]);
-            $expired = $expiredStmt->fetch(PDO::FETCH_ASSOC);
+            // Check if OTP exists (maybe expired)
+            $checkStmt = $pdo->prepare("SELECT * FROM otp_verifications 
+                                       WHERE email = ? AND otp = ? ORDER BY created_at DESC");
+            $checkStmt->execute([$email, $otp]);
+            $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($expired) {
+            if ($existing) {
                 echo json_encode([
                     'status' => 'error',
-                    'message' => 'OTP expired. Please request a new one.'
+                    'message' => 'OTP expired. Please request a new one.',
+                    'debug_expired' => $existing['expires_at'],
+                    'debug_now' => $now
                 ]);
             } else {
                 echo json_encode([
                     'status' => 'error',
-                    'message' => 'Invalid OTP. Please try again.'
+                    'message' => 'Invalid OTP. Please try again.',
+                    'debug_note' => 'No matching OTP found in database'
                 ]);
             }
         }
         
     } elseif ($action === 'reset_password') {
-        session_start();
-        
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $confirm = $_POST['confirm_password'] ?? '';
