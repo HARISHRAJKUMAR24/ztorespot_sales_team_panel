@@ -41,7 +41,6 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap flex-md-nowrap pt-3 pb-2 mb-4 border-bottom gap-2">
                     <h1 class="h2 mb-2 mb-sm-0">Registered Sellers</h1>
                     <div class="d-flex gap-2 w-100 w-sm-auto">
-                        
                         <button class="btn btn-primary flex-fill flex-sm-grow-0" id="exportBtn">
                             <i class="bi bi-download me-1"></i><span class="d-none d-sm-inline">Export</span><span class="d-sm-none">Export</span>
                         </button>
@@ -128,17 +127,17 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                         <option value="Suvalakshmi">Suvalakshmi</option>
                                         <option value="Harini">Harini</option>
                                         <option value="Gowsika">Gowsika</option>
+                                        <option value="deleted">Deleted</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-sm-6 col-md-3">
                                     <label class="form-label small fw-bold">Lead Source</label>
                                     <select class="form-select form-select-sm" id="filterSource">
                                         <option value="">All Sources</option>
-                                        <option value="FB">FB (Ads)</option>
-                                        <option value="Instagram">Instagram</option>
-                                        <option value="Google">Google</option>
+                                        <option value="FB (Ads)">FB (Ads)</option>
                                         <option value="Youtube">Youtube</option>
-                                        <option value="Quora">Quora</option>
+                                        <option value="Org">Org</option>
+                                        <option value="-">-</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-sm-6 col-md-3">
@@ -203,15 +202,15 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th class="sortable d-none d-md-table-cell" data-sort="s_no">S.No <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th class="sortable" data-sort="id">S.No <i class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th class="sortable" data-sort="date">Date <i class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th class="sortable" data-sort="store_name">Store <i class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th class="sortable d-none d-lg-table-cell" data-sort="customer_name">Customer <i class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th class="sortable" data-sort="phone_number">Phone <i class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th class="sortable" data-sort="status">Status <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                            <th class="d-none d-xl-table-cell">Source</th>
-                                            <th class="d-none d-sm-table-cell">Assigned</th>
-                                            <th class="text-center">Calls</th>
+                                            <th class="d-none d-xl-table-cell">Lead Source</th>
+                                            <th class="d-none d-sm-table-cell" data-sort="assigned_by">Assigned By <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th class="text-center">Created At</th>
                                             <th class="text-center">Actions</th>
                                         </tr>
                                     </thead>
@@ -270,7 +269,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                         <input type="hidden" id="editId">
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Store Name</label>
-                            <input type="text" class="form-control" id="editStoreName">
+                            <input type="text" class="form-control" id="editStoreName" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Customer Name</label>
@@ -288,8 +287,20 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-bold">Notes</label>
-                            <textarea class="form-control" id="editNotes" rows="3"></textarea>
+                            <label class="form-label small fw-bold">Lead Source</label>
+                            <input type="text" class="form-control" id="editLeadSourceLink" placeholder="e.g., FB (Ads), Youtube, etc.">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Assigned By</label>
+                            <select class="form-select" id="editAssignedBy">
+                                <option value="">Select</option>
+                                <option value="Prabha">Prabha</option>
+                                <option value="Sivagami">Sivagami</option>
+                                <option value="Suvalakshmi">Suvalakshmi</option>
+                                <option value="Harini">Harini</option>
+                                <option value="Gowsika">Gowsika</option>
+                                <option value="deleted">Deleted</option>
+                            </select>
                         </div>
                     </form>
                 </div>
@@ -389,6 +400,9 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        var BASE_URL = '<?= BASE_URL ?>';
+    </script>
     <script src="<?= BASE_URL ?>js/sellers/registered_sellers.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>

@@ -16,15 +16,15 @@ if (!isset($_SESSION['user_uid'])) {
 $pdo = db();
 $page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
 $per_page = isset($_POST['per_page']) ? (int)$_POST['per_page'] : 10;
-$sort_column = isset($_POST['sort_column']) ? $_POST['sort_column'] : 'seller_name';
-$sort_order = isset($_POST['sort_order']) ? $_POST['sort_order'] : 'ASC';
+$sort_column = isset($_POST['sort_column']) ? $_POST['sort_column'] : 'id';
+$sort_order = isset($_POST['sort_order']) ? $_POST['sort_order'] : 'DESC';
 $search = isset($_POST['search']) ? trim($_POST['search']) : '';
 $filters = isset($_POST['filters']) ? $_POST['filters'] : [];
 
 // Validate sort column
-$allowed_columns = ['seller_name', 'phone_number', 'seller_id', 'store_name', 'status', 'assigned_by'];
+$allowed_columns = ['id', 'entry_date', 'seller_name', 'phone_number', 'assigned_by'];
 if (!in_array($sort_column, $allowed_columns)) {
-    $sort_column = 'seller_name';
+    $sort_column = 'id';
 }
 
 $offset = ($page - 1) * $per_page;
@@ -34,23 +34,48 @@ $where = [];
 $params = [];
 
 if (!empty($search)) {
-    $where[] = "(seller_name LIKE :search OR phone_number LIKE :search OR seller_id LIKE :search OR store_name LIKE :search)";
+    $where[] = "(seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)";
     $params[':search'] = "%$search%";
 }
 
-if (!empty($filters['status'])) {
-    $where[] = "status = :status";
-    $params[':status'] = $filters['status'];
-}
-
 if (!empty($filters['assigned_by'])) {
-    $where[] = "assigned_by = :assigned_by";
-    $params[':assigned_by'] = $filters['assigned_by'];
+    $where[] = "assigned_by LIKE :assigned_by";
+    $params[':assigned_by'] = "%" . $filters['assigned_by'] . "%";
 }
 
-if (!empty($filters['lead_source'])) {
-    $where[] = "lead_source LIKE :lead_source";
-    $params[':lead_source'] = "%" . $filters['lead_source'] . "%";
+// Update 1 filter
+if (!empty($filters['update1'])) {
+    if ($filters['update1'] === 'yes') {
+        $where[] = "(update_1 IS NOT NULL AND update_1 != '')";
+    } else if ($filters['update1'] === 'no') {
+        $where[] = "(update_1 IS NULL OR update_1 = '')";
+    }
+}
+
+// Update 2 filter
+if (!empty($filters['update2'])) {
+    if ($filters['update2'] === 'yes') {
+        $where[] = "(update_2 IS NOT NULL AND update_2 != '')";
+    } else if ($filters['update2'] === 'no') {
+        $where[] = "(update_2 IS NULL OR update_2 = '')";
+    }
+}
+
+// Update 3 filter
+if (!empty($filters['update3'])) {
+    if ($filters['update3'] === 'yes') {
+        $where[] = "(update_3 IS NOT NULL AND update_3 != '')";
+    } else if ($filters['update3'] === 'no') {
+        $where[] = "(update_3 IS NULL OR update_3 = '')";
+    }
+}
+
+if (!empty($filters['has_date'])) {
+    if ($filters['has_date'] === 'yes') {
+        $where[] = "entry_date IS NOT NULL";
+    } else if ($filters['has_date'] === 'no') {
+        $where[] = "entry_date IS NULL";
+    }
 }
 
 if (!empty($filters['date_range'])) {
@@ -93,12 +118,12 @@ $stmt->bindValue(':per_page', $per_page, PDO::PARAM_INT);
 $stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get stats
+// Get stats - count customers with updates
 $stats_sql = "SELECT 
                 COUNT(*) as total,
-                SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN status = 'Inactive' THEN 1 ELSE 0 END) as inactive,
-                SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending
+                SUM(CASE WHEN (update_1 IS NOT NULL AND update_1 != '') THEN 1 ELSE 0 END) as update1_count,
+                SUM(CASE WHEN (update_2 IS NOT NULL AND update_2 != '') THEN 1 ELSE 0 END) as update2_count,
+                SUM(CASE WHEN (update_3 IS NOT NULL AND update_3 != '') THEN 1 ELSE 0 END) as update3_count
               FROM whatsapp_customers";
 $stats_stmt = $pdo->query($stats_sql);
 $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
@@ -113,3 +138,4 @@ echo json_encode([
         'stats' => $stats
     ]
 ]);
+?>

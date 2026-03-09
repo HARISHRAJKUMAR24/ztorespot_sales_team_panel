@@ -29,12 +29,12 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     <!-- Navigation -->
     <?php template('top-navbar'); ?>
-    
+
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
             <?php template('side-navbar'); ?>
-            
+
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
@@ -67,7 +67,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                             <i class="bi bi-folder2-open me-1"></i>Select File
                                         </button>
                                     </div>
-                                    
+
                                     <div id="fileInfo" class="mt-3 d-none">
                                         <div class="alert alert-info d-flex align-items-center">
                                             <i class="bi bi-file-earmark-excel fs-4 me-3"></i>
@@ -96,8 +96,8 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                             </div>
                             <div class="card-body">
                                 <div class="progress mb-3" style="height: 25px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                                         id="uploadProgress" role="progressbar" style="width: 0%">0%</div>
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                        id="uploadProgress" role="progressbar" style="width: 0%">0%</div>
                                 </div>
                                 <div class="row text-center">
                                     <div class="col-4">
@@ -142,29 +142,51 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                                 <th>Excel Column</th>
                                                 <th>Database Field</th>
                                                 <th>Required</th>
-                                                <th>Description</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td>S.No</td><td><code>s_no</code></td><td>No</td><td>Serial number</td></tr>
-                                            <tr><td>Date</td><td><code>date</code></td><td>No</td><td>Registration date</td></tr>
-                                            <tr><td>Store Name</td><td><code>store_name</code></td><td>No</td><td>Name of the store</td></tr>
-                                            <tr><td>Customer Name</td><td><code>customer_name</code></td><td>No</td><td>Customer/Owner name</td></tr>
-                                            <tr><td>Phone Number</td><td><code>phone_number</code></td><td><span class="text-danger">Yes</span></td><td>Contact number</td></tr>
-                                            <tr><td>Status</td><td><code>status</code></td><td>No</td><td>Active/Inactive status</td></tr>
-                                            <tr><td>Lead Source Link</td><td><code>lead_source_link</code></td><td>No</td><td>Source of lead</td></tr>
-                                            <tr><td>Assigned By</td><td><code>assigned_by</code></td><td>No</td><td>Who assigned this seller</td></tr>
-                                            <tr><td>Deleted By</td><td><code>deleted_by</code></td><td>No</td><td>Who deleted/marked inactive</td></tr>
-                                            <tr><td>Lead Source</td><td><code>lead_source</code></td><td>No</td><td>Detailed lead source</td></tr>
-                                            <tr><td>Before/After Registered</td><td><code>before_after_registered</code></td><td>No</td><td>Registration status</td></tr>
-                                            <tr><td>Store Status</td><td><code>store_status</code></td><td>No</td><td>Current store status</td></tr>
-                                            <tr><td>Major Reasons</td><td><code>major_reasons</code></td><td>No</td><td>Main reasons for status</td></tr>
+                                            <tr>
+                                                <td>Date</td>
+                                                <td><code>date</code></td>
+                                                <td>No</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Store Name</td>
+                                                <td><code>store_name</code></td>
+                                                <td>No</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Customer Name</td>
+                                                <td><code>customer_name</code></td>
+                                                <td>No</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Phone Number</td>
+                                                <td><code>phone_number</code></td>
+                                                <td><span class="text-danger">Yes</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Status</td>
+                                                <td><code>status</code></td>
+                                                <td>No</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Lead Source Link</td>
+                                                <td><code>lead_source_link</code></td>
+                                                <td>No</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Assigned By</td>
+                                                <td><code>assigned_by</code></td>
+                                                <td>No</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
                                 <div class="alert alert-info mt-3 mb-0">
                                     <i class="bi bi-info-circle-fill me-2"></i>
-                                    The Excel file should have headers matching the column names above.
+                                    The Excel file should have these exact headers: Date, Store Name, Customer Name, Phone Number, Status, Lead Source Link, Assigned By
+                                    <br><small class="text-muted">Note: S.No column will be ignored automatically</small>
                                 </div>
                             </div>
                         </div>
@@ -209,6 +231,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
             right: 20px;
             z-index: 1060;
         }
+
         .upload-area {
             border: 2px dashed #dee2e6;
             border-radius: 10px;
@@ -218,10 +241,12 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
             cursor: pointer;
             transition: all 0.3s;
         }
+
         .upload-area:hover {
             border-color: #0d6efd;
             background-color: #e9ecef;
         }
+
         .upload-area.dragover {
             border-color: #0d6efd;
             background-color: #cfe2ff;
@@ -233,4 +258,5 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
     <script src="<?= BASE_URL ?>js/bulk-upload/register-seller-bulk-upload.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>
+
 </html>

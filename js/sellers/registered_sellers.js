@@ -3,13 +3,13 @@ $(document).ready(function () {
 let currentPage = 1;
 let perPage = 10;
 let totalPages = 1;
-let sortColumn = 's_no';
+let sortColumn = 'id';
 let sortOrder = 'DESC';
 let searchTerm = '';
 let filters = {
     status: '',
     assigned_by: '',
-    lead_source: '',
+    lead_source_link: '', // Changed to match database column
     date_range: ''
 };
 
@@ -67,7 +67,7 @@ $('#applyFilters').on('click', function () {
     filters = {
         status: $('#filterStatus').val(),
         assigned_by: $('#filterAssigned').val(),
-        lead_source: $('#filterSource').val(),
+        lead_source_link: $('#filterSource').val(), // Changed to match database
         date_range: $('#filterDate').val()
     };
     currentPage = 1;
@@ -86,7 +86,7 @@ $('#clearFilters').on('click', function () {
     filters = {
         status: '',
         assigned_by: '',
-        lead_source: '',
+        lead_source_link: '', // Changed to match database
         date_range: ''
     };
     currentPage = 1;
@@ -141,9 +141,11 @@ function loadData() {
                 showToast('danger', 'Error!', response.message);
             }
         },
-        error: function () {
+        error: function(xhr, status, error) {
             $('#loadingSpinner').hide();
             $('#noData').show();
+            console.error('AJAX Error:', error);
+            console.error('Response:', xhr.responseText);
             showToast('danger', 'Error!', 'Failed to load data');
         }
     });
@@ -158,27 +160,30 @@ function renderTable(rows) {
     rows.forEach(function (row) {
         const statusClass = row.status === 'Active' ? 'status-active' : 'status-inactive';
         const date = row.date ? new Date(row.date).toLocaleDateString('en-IN') : '-';
+        const created_at = row.created_at ? new Date(row.created_at).toLocaleString('en-IN') : '-';
         
         html += '<tr>';
-        html += `<td>${row.s_no || '-'}</td>`;
+        html += `<td class="fw-bold">${row.id || '-'}</td>`;
         html += `<td>${date}</td>`;
         html += `<td>${escapeHtml(row.store_name || '-')}</td>`;
-        html += `<td>${escapeHtml(row.customer_name || '-')}</td>`;
+        html += `<td class="d-none d-lg-table-cell">${escapeHtml(row.customer_name || '-')}</td>`;
         html += `<td>${row.phone_number || '-'}</td>`;
         html += `<td><span class="status-badge ${statusClass}">${row.status || 'Unknown'}</span></td>`;
-        html += `<td>${escapeHtml(row.lead_source || '-')}</td>`;
-        html += `<td>${escapeHtml(row.assigned_by || '-')}</td>`;
-        html += `<td><span class="badge bg-secondary">${row.call_attempts || 0}</span></td>`;
-        html += `<td>
-            <button class="btn btn-sm btn-outline-primary view-btn" data-id="${row.id}" title="View">
-                <i class="bi bi-eye"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-warning edit-btn" data-id="${row.id}" title="Edit">
-                <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${row.id}" title="Delete">
-                <i class="bi bi-trash"></i>
-            </button>
+        html += `<td class="d-none d-xl-table-cell">${escapeHtml(row.lead_source_link || '-')}</td>`;
+        html += `<td class="d-none d-sm-table-cell">${escapeHtml(row.assigned_by || '-')}</td>`;
+        html += `<td class="text-center"><small>${created_at}</small></td>`;
+        html += `<td class="text-center">
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-primary view-btn" data-id="${row.id}" title="View">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-outline-warning edit-btn" data-id="${row.id}" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-danger delete-btn" data-id="${row.id}" title="Delete">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
         </td>`;
         html += '</tr>';
     });
@@ -230,6 +235,7 @@ function renderPagination(total, page, perPage) {
     }
     
     $('#pagination').html(html);
+    $('#paginationInfo').text(`Showing ${((page-1)*perPage)+1} to ${Math.min(page*perPage, total)} of ${total} entries`);
 }
 
 /* -----------------------------
@@ -261,6 +267,10 @@ $(document).on('click', '.view-btn', function () {
             } else {
                 showToast('danger', 'Error!', response.message);
             }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error:', error);
+            showToast('danger', 'Error!', 'Failed to load seller details');
         }
     });
 });
@@ -272,31 +282,23 @@ function showSellerDetails(seller) {
     let html = '<div class="row">';
     
     const fields = [
-        ['S.No', seller.s_no],
+        ['ID', seller.id],
         ['Date', seller.date ? new Date(seller.date).toLocaleDateString('en-IN') : '-'],
         ['Store Name', seller.store_name],
         ['Customer Name', seller.customer_name],
         ['Phone Number', seller.phone_number],
         ['Status', seller.status],
-        ['Lead Source Link', seller.lead_source_link],
+        ['Lead Source', seller.lead_source_link], // Using lead_source_link
         ['Assigned By', seller.assigned_by],
-        ['Deleted By', seller.deleted_by],
-        ['Lead Source', seller.lead_source],
-        ['Before/After Registered', seller.before_after_registered],
-        ['Store Status', seller.store_status],
-        ['Major Reasons', seller.major_reasons],
-        ['Call Attempts', seller.call_attempts],
-        ['Follow Up Date', seller.follow_up_date ? new Date(seller.follow_up_date).toLocaleDateString('en-IN') : '-'],
-        ['Created At', seller.created_at ? new Date(seller.created_at).toLocaleString() : '-'],
-        ['Notes', seller.notes]
+        ['Created At', seller.created_at ? new Date(seller.created_at).toLocaleString() : '-']
     ];
     
     fields.forEach(function (field) {
-        if (field[1]) {
+        if (field[1] && field[1] !== '' && field[1] !== null) {
             html += `
                 <div class="col-md-6 mb-3">
                     <strong>${field[0]}:</strong><br>
-                    <span class="text-muted">${escapeHtml(field[1])}</span>
+                    <span class="text-muted">${escapeHtml(field[1].toString())}</span>
                 </div>
             `;
         }
@@ -325,13 +327,18 @@ $(document).on('click', '.edit-btn', function () {
                 $('#editCustomerName').val(seller.customer_name || '');
                 $('#editPhone').val(seller.phone_number || '');
                 $('#editStatus').val(seller.status || 'Active');
-                $('#editNotes').val(seller.notes || '');
+                $('#editLeadSourceLink').val(seller.lead_source_link || ''); // Using lead_source_link
+                $('#editAssignedBy').val(seller.assigned_by || '');
                 
                 const modal = new bootstrap.Modal(document.getElementById('editModal'));
                 modal.show();
             } else {
                 showToast('danger', 'Error!', response.message);
             }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error:', error);
+            showToast('danger', 'Error!', 'Failed to load seller data');
         }
     });
 });
@@ -340,14 +347,25 @@ $(document).on('click', '.edit-btn', function () {
    SAVE EDIT
 ----------------------------- */
 $('#saveEdit').on('click', function () {
+    // Validate required fields
+    if (!$('#editStoreName').val().trim()) {
+        showToast('warning', 'Warning!', 'Store name is required');
+        return;
+    }
+    
     const data = {
         id: $('#editId').val(),
-        store_name: $('#editStoreName').val(),
-        customer_name: $('#editCustomerName').val(),
-        phone_number: $('#editPhone').val(),
+        store_name: $('#editStoreName').val().trim(),
+        customer_name: $('#editCustomerName').val().trim(),
+        phone_number: $('#editPhone').val().trim(),
         status: $('#editStatus').val(),
-        notes: $('#editNotes').val()
+        lead_source_link: $('#editLeadSourceLink').val().trim(), // Using lead_source_link
+        assigned_by: $('#editAssignedBy').val()
     };
+    
+    // Show loading state
+    const $btn = $(this);
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving...');
     
     $.ajax({
         url: BASE_URL + 'ajax/registered_sellers/update_seller.php',
@@ -362,6 +380,14 @@ $('#saveEdit').on('click', function () {
             } else {
                 showToast('danger', 'Error!', response.message);
             }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            console.error('Response:', xhr.responseText);
+            showToast('danger', 'Error!', 'Failed to update seller');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).text('Save Changes');
         }
     });
 });
@@ -373,6 +399,9 @@ $(document).on('click', '.delete-btn', function () {
     const id = $(this).data('id');
     
     if (confirm('Are you sure you want to delete this seller?')) {
+        const $btn = $(this);
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+        
         $.ajax({
             url: BASE_URL + 'ajax/registered_sellers/delete_seller.php',
             type: 'POST',
@@ -384,7 +413,12 @@ $(document).on('click', '.delete-btn', function () {
                     loadData();
                 } else {
                     showToast('danger', 'Error!', response.message);
+                    $btn.prop('disabled', false).html('<i class="bi bi-trash"></i>');
                 }
+            },
+            error: function() {
+                showToast('danger', 'Error!', 'Failed to delete seller');
+                $btn.prop('disabled', false).html('<i class="bi bi-trash"></i>');
             }
         });
     }
@@ -402,6 +436,7 @@ $('#exportBtn').on('click', function () {
 ----------------------------- */
 function escapeHtml(text) {
     if (!text) return '-';
+    if (text === null) return '-';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -418,8 +453,12 @@ function showToast(type, title, message) {
 
     const html = `
     <div id="${id}" class="toast text-white ${bgClass}" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
+        <div class="toast-header ${bgClass} text-white">
+            <strong class="me-auto">${title}</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
         <div class="toast-body">
-            <strong>${title}</strong> ${message}
+            ${message}
         </div>
     </div>`;
 

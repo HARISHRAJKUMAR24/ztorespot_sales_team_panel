@@ -54,19 +54,16 @@ if (!in_array($ext, ['xlsx', 'xls', 'csv'])) {
 }
 
 try {
-
     $pdo = db();
 
     /* --------------------------------
        DELETE OLD DATA BEFORE IMPORT
     -------------------------------- */
-
     $pdo->exec("TRUNCATE TABLE registered_sellers");
 
     /* --------------------------------
        LOAD FILE
     -------------------------------- */
-
     if ($ext === 'csv') {
         $data = parseCSV($file['tmp_name']);
     } else {
@@ -83,54 +80,67 @@ try {
 
     $total_rows = count($data);
 
+    /* --------------------------------
+       INSERT DATA - WITHOUT S.NO
+    -------------------------------- */
     $sql = "INSERT INTO registered_sellers (
-                s_no,date,store_name,customer_name,phone_number,status,
-                lead_source_link,assigned_by,deleted_by,lead_source,
-                before_after_registered,store_status,major_reasons,
-                created_by,created_at
+                date, store_name, customer_name, phone_number, 
+                status, lead_source_link, assigned_by
             )
             VALUES (
-                :s_no,:date,:store_name,:customer_name,:phone_number,:status,
-                :lead_source_link,:assigned_by,:deleted_by,:lead_source,
-                :before_after_registered,:store_status,:major_reasons,
-                :created_by,NOW()
+                :date, :store_name, :customer_name, :phone_number,
+                :status, :lead_source_link, :assigned_by
             )";
 
     $stmt = $pdo->prepare($sql);
 
     $success_count = 0;
     $errors = [];
-
-    $row_num = 1;
+    $row_num = 1; // Excel row count (header is row 1)
 
     foreach ($data as $row) {
-
         $row_num++;
-
-        if (empty(array_filter($row))) {
+        
+        // Skip completely empty rows
+        $row_data = array_filter($row);
+        if (empty($row_data)) {
             continue;
+        }
+
+        // Skip rows that look like notes/comments (metadata)
+        $first_col = isset($row['s_no']) ? trim($row['s_no']) : '';
+        if (!empty($first_col) && !is_numeric($first_col) && strlen($first_col) > 5) {
+            continue; // Skip rows with text in S.No column
         }
 
         /* --------------------------------
            FIX PHONE NUMBER
         -------------------------------- */
-
-        $phone = trim($row['phone_number'] ?? '');
-
-        if (is_numeric($phone)) {
-            $phone = number_format($phone, 0, '', '');
+        $phone = '';
+        if (isset($row['phone_number'])) {
+            $phone = trim($row['phone_number']);
+            
+            // Handle Excel scientific notation or formatted numbers
+            if (is_numeric($phone) && strpos($phone, 'E') !== false) {
+                $phone = number_format(floatval($phone), 0, '', '');
+            } elseif (is_numeric($phone) && strpos($phone, '.') !== false) {
+                $phone = number_format(floatval($phone), 0, '', '');
+            }
+            
+            // Remove all non-numeric characters
+            $phone = preg_replace('/[^0-9]/', '', $phone);
+            
+            // Take last 10 digits if longer
+            if (strlen($phone) > 10) {
+                $phone = substr($phone, -10);
+            }
         }
 
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-
-        if (strlen($phone) > 10) {
-            $phone = substr($phone, -10);
-        }
-
-        if (strlen($phone) < 10) {
+        // Validate - must have exactly 10 digits
+        if (strlen($phone) !== 10) {
             $errors[] = [
                 'row' => $row_num,
-                'error' => 'Invalid phone number'
+                'error' => 'Invalid phone number: ' . ($row['phone_number'] ?? 'empty')
             ];
             continue;
         }
@@ -138,61 +148,33 @@ try {
         /* --------------------------------
            PROCESS DATE
         -------------------------------- */
-
         $date_val = null;
-
-        if (!empty($row['date'])) {
-
-            if (is_numeric($row['date'])) {
-
-                try {
-                    $date_val = Date::excelToDateTimeObject($row['date'])
-                        ->format('Y-m-d');
-                } catch (Exception $e) {
-                    $date_val = null;
-                }
-            } else {
-                $date_val = date('Y-m-d', strtotime($row['date']));
-            }
+        if (isset($row['date']) && !empty($row['date'])) {
+            $date_val = parseFlexibleDate($row['date']);
         }
 
+        /* --------------------------------
+           TRUNCATE TEXT FIELDS
+        -------------------------------- */
+        $store_name = isset($row['store_name']) ? substr(trim($row['store_name']), 0, 255) : null;
+        $customer_name = isset($row['customer_name']) ? substr(trim($row['customer_name']), 0, 255) : null;
+        $status = isset($row['status']) ? substr(trim($row['status']), 0, 50) : null;
+        $lead_link = isset($row['lead_source_link']) ? substr(trim($row['lead_source_link']), 0, 500) : null;
+        $assigned_by = isset($row['assigned_by']) ? substr(trim($row['assigned_by']), 0, 100) : null;
+
         try {
-
             $stmt->execute([
-
-                ':s_no' => isset($row['s_no']) ? (int)$row['s_no'] : null,
-
                 ':date' => $date_val,
-
-                ':store_name' => substr($row['store_name'] ?? '', 0, 255),
-
-                ':customer_name' => substr($row['customer_name'] ?? '', 0, 255),
-
+                ':store_name' => $store_name,
+                ':customer_name' => $customer_name,
                 ':phone_number' => $phone,
-
-                ':status' => substr($row['status'] ?? '', 0, 50),
-
-                ':lead_source_link' => substr($row['lead_source_link'] ?? '', 0, 500),
-
-                ':assigned_by' => substr($row['assigned_by'] ?? '', 0, 100),
-
-                ':deleted_by' => substr($row['deleted_by'] ?? '', 0, 100),
-
-                ':lead_source' => substr($row['lead_source'] ?? '', 0, 100),
-
-                ':before_after_registered' => substr($row['before_after_registered'] ?? '', 0, 50),
-
-                ':store_status' => substr($row['store_status'] ?? '', 0, 50),
-
-                ':major_reasons' => $row['major_reasons'] ?? '',
-
-                ':created_by' => $user_uid
-
+                ':status' => $status,
+                ':lead_source_link' => $lead_link,
+                ':assigned_by' => $assigned_by
             ]);
 
             $success_count++;
         } catch (PDOException $e) {
-
             $errors[] = [
                 'row' => $row_num,
                 'error' => $e->getMessage()
@@ -201,19 +183,16 @@ try {
     }
 
     echo json_encode([
-
         'status' => 'success',
-
         'data' => [
             'total_rows' => $total_rows,
             'success_count' => $success_count,
             'error_count' => count($errors),
             'errors' => $errors
         ]
-
     ]);
-} catch (Exception $e) {
 
+} catch (Exception $e) {
     echo json_encode([
         'status' => 'error',
         'message' => $e->getMessage()
@@ -221,33 +200,78 @@ try {
 }
 
 /* ---------------------------
+   FLEXIBLE DATE PARSER
+--------------------------- */
+function parseFlexibleDate($raw_date) {
+    if (empty($raw_date)) {
+        return null;
+    }
+
+    $raw_date = trim($raw_date);
+    
+    // Case 1: Excel numeric date (like 45234)
+    if (is_numeric($raw_date) && $raw_date > 40000 && $raw_date < 50000) {
+        try {
+            return Date::excelToDateTimeObject($raw_date)->format('Y-m-d');
+        } catch (Exception $e) {
+            // fall through
+        }
+    }
+
+    // Case 2: Format like "10.12.23" (DD.MM.YY)
+    if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/', $raw_date, $matches)) {
+        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+        $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+        $year = $matches[3];
+        
+        if (strlen($year) == 2) {
+            $year = '20' . $year;
+        }
+        
+        if (checkdate($month, $day, $year)) {
+            return "$year-$month-$day";
+        }
+    }
+
+    // Case 3: Format like "2025-08-10 00:00:00"
+    if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $raw_date, $matches)) {
+        return $matches[1];
+    }
+
+    // Case 4: Skip time-only entries
+    if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $raw_date)) {
+        return null;
+    }
+
+    // Case 5: Try strtotime
+    $timestamp = strtotime($raw_date);
+    if ($timestamp !== false && $timestamp > 0) {
+        return date('Y-m-d', $timestamp);
+    }
+
+    return null;
+}
+
+/* ---------------------------
    CSV PARSER
 --------------------------- */
-
 function parseCSV($file)
 {
-
     $data = [];
     $header = null;
 
     if (($handle = fopen($file, 'r')) !== false) {
-
         while (($row = fgetcsv($handle)) !== false) {
-
             if (!$header) {
-
-                $header = array_map(function ($h) {
-
-                    $h = strtolower(trim($h));
-                    $h = str_replace(' ', '_', $h);
-                    return preg_replace('/[^a-z0-9_]/', '', $h);
-                }, $row);
+                $header = array_map('cleanHeader', $row);
             } else {
-
-                $data[] = array_combine($header, $row);
+                $assoc_row = [];
+                foreach ($header as $idx => $col_name) {
+                    $assoc_row[$col_name] = $row[$idx] ?? '';
+                }
+                $data[] = $assoc_row;
             }
         }
-
         fclose($handle);
     }
 
@@ -257,37 +281,47 @@ function parseCSV($file)
 /* ---------------------------
    EXCEL PARSER
 --------------------------- */
-
 function parseExcel($file)
 {
-
     $data = [];
-
     $spreadsheet = IOFactory::load($file);
     $sheet = $spreadsheet->getActiveSheet();
-
     $rows = $sheet->toArray();
 
-    $headers = array_map(function ($h) {
+    if (empty($rows)) {
+        return $data;
+    }
 
-        $h = strtolower(trim($h));
-        $h = str_replace(' ', '_', $h);
-        return preg_replace('/[^a-z0-9_]/', '', $h);
-    }, $rows[0]);
+    $headers = array_map('cleanHeader', $rows[0]);
 
     for ($i = 1; $i < count($rows); $i++) {
-
         $row_data = [];
-
+        $has_data = false;
+        
         foreach ($headers as $k => $header) {
-
-            $row_data[$header] = $rows[$i][$k] ?? '';
+            $value = $rows[$i][$k] ?? '';
+            $row_data[$header] = $value;
+            
+            if (!empty($value) && trim($value) !== '') {
+                $has_data = true;
+            }
         }
 
-        if (!empty(array_filter($row_data))) {
+        if ($has_data) {
             $data[] = $row_data;
         }
     }
 
     return $data;
+}
+
+/* ---------------------------
+   CLEAN HEADER FUNCTION
+--------------------------- */
+function cleanHeader($header) {
+    $header = strtolower(trim($header));
+    $header = str_replace(' ', '_', $header);
+    $header = str_replace('.', '', $header); // Remove dots
+    $header = str_replace('-', '_', $header);
+    return preg_replace('/[^a-z0-9_]/', '', $header);
 }

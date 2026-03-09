@@ -100,15 +100,19 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                          id="uploadProgress" role="progressbar" style="width: 0%">0%</div>
                                 </div>
                                 <div class="row text-center">
-                                    <div class="col-4">
+                                    <div class="col-3">
                                         <h4 class="mb-0" id="totalRows">0</h4>
                                         <small class="text-muted">Total Rows</small>
                                     </div>
-                                    <div class="col-4">
-                                        <h4 class="mb-0 text-success" id="successRows">0</h4>
-                                        <small class="text-muted">Success</small>
+                                    <div class="col-3">
+                                        <h4 class="mb-0" id="validRows">0</h4>
+                                        <small class="text-muted">Valid Data</small>
                                     </div>
-                                    <div class="col-4">
+                                    <div class="col-3">
+                                        <h4 class="mb-0 text-success" id="successRows">0</h4>
+                                        <small class="text-muted">Imported</small>
+                                    </div>
+                                    <div class="col-3">
                                         <h4 class="mb-0 text-danger" id="errorRows">0</h4>
                                         <small class="text-muted">Errors</small>
                                     </div>
@@ -132,39 +136,43 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                         <!-- Column Mapping Info -->
                         <div class="card">
                             <div class="card-header bg-white py-3">
-                                <h5 class="card-title mb-0">Excel Column Mapping</h5>
+                                <h5 class="card-title mb-0">Excel Format Guide</h5>
                             </div>
                             <div class="card-body">
+                                <div class="alert alert-primary">
+                                    <h6><i class="bi bi-calendar-event me-2"></i>Date Handling</h6>
+                                    <p class="mb-0">Dates can appear anywhere in the sheet. All data rows after a date will be associated with that date until a new date is found.</p>
+                                </div>
+                                
                                 <div class="table-responsive">
                                     <table class="table table-sm table-bordered">
                                         <thead class="table-light">
                                             <tr>
                                                 <th>Excel Column</th>
                                                 <th>Database Field</th>
-                                                <th>Description</th>
+                                                <th>Example</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td>Seller Name</td><td><code>seller_name</code></td><td>Name of the seller</td></tr>
-                                            <tr><td>Phone Number</td><td><code>phone_number</code></td><td>Contact number</td></tr>
-                                            <tr><td>Assigned By</td><td><code>assigned_by</code></td><td>Who assigned this lead</td></tr>
-                                            <tr><td>Update 1</td><td><code>update_1</code></td><td>First update/note</td></tr>
-                                            <tr><td>Update 2</td><td><code>update_2</code></td><td>Second update/note</td></tr>
-                                            <tr><td>Update 3</td><td><code>update_3</code></td><td>Third update/note</td></tr>
-                                            <tr><td>Seller ID</td><td><code>seller_id</code></td><td>Unique seller identifier</td></tr>
-                                            <tr><td>Store Name</td><td><code>store_name</code></td><td>Name of the store</td></tr>
-                                            <tr><td>Lead Link</td><td><code>lead_link</code></td><td>Link to lead source</td></tr>
-                                            <tr><td>Lead Source</td><td><code>lead_source</code></td><td>Source of lead (FB, Instagram, etc.)</td></tr>
-                                            <tr><td>Before/After Registered</td><td><code>before_after_registered</code></td><td>Registration status</td></tr>
-                                            <tr><td>Store Status</td><td><code>store_status</code></td><td>Current store status</td></tr>
-                                            <tr><td>Major Reasons</td><td><code>major_reasons</code></td><td>Main reasons for status</td></tr>
+                                            <tr><td><strong>Date Row</strong></td><td><code>entry_date</code></td><td>1/2/2024 or 01.02.2024 or 1 February 2024</td></tr>
+                                            <tr><td>Seller Name</td><td><code>seller_name</code></td><td>SMS, SHARUK, Balaji</td></tr>
+                                            <tr><td>Phone Number</td><td><code>phone_number</code></td><td>8526133467</td></tr>
+                                            <tr><td>Assigned By</td><td><code>assigned_by</code></td><td>Gowsika (Prabha)</td></tr>
+                                            <tr><td>Update 1</td><td><code>update_1</code></td><td>CNP, CNA, not interest</td></tr>
+                                            <tr><td>Update 2</td><td><code>update_2</code></td><td>Website need ila</td></tr>
+                                            <tr><td>Update 3</td><td><code>update_3</code></td><td>Swiggy/Zomato maari venum</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="alert alert-info mt-3 mb-0">
+                                
+                                <div class="alert alert-info mt-3">
                                     <i class="bi bi-info-circle-fill me-2"></i>
-                                    The Excel file should have headers matching the column names above. 
-                                    <a href="#" id="sampleFormatLink">Click here to see sample format</a>
+                                    <strong>Example Format:</strong><br>
+                                    <code>1/2/2024</code> (date row - not imported as data)<br>
+                                    <code>SMS | 8526133467 | Gowsika | | Website need ila |</code> (data row - will get date 1/2/2024)<br>
+                                    <code>SHARUK | 9629229928 | Gowsika | | 5 maniku mela call |</code> (data row - will get date 1/2/2024)<br>
+                                    <code>3/2/2024</code> (new date row)<br>
+                                    <code>RAJIV S | 9789307337 | Prabha | | No business |</code> (data row - will get date 3/2/2024)
                                 </div>
                             </div>
                         </div>
@@ -188,6 +196,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                             <thead class="table-danger">
                                 <tr>
                                     <th>Row</th>
+                                    <th>Seller Name</th>
                                     <th>Error</th>
                                 </tr>
                             </thead>

@@ -14,17 +14,26 @@ if (!isset($_SESSION['user_uid'])) {
 }
 
 $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-$seller_name = $_POST['seller_name'] ?? '';
-$phone_number = $_POST['phone_number'] ?? '';
-$store_name = $_POST['store_name'] ?? '';
-$seller_id = $_POST['seller_id'] ?? '';
-$status = $_POST['status'] ?? '';
-$update_1 = $_POST['update_1'] ?? '';
-$update_2 = $_POST['update_2'] ?? '';
-$update_3 = $_POST['update_3'] ?? '';
+$entry_date = isset($_POST['entry_date']) && !empty($_POST['entry_date']) ? $_POST['entry_date'] : null;
+$seller_name = isset($_POST['seller_name']) ? trim($_POST['seller_name']) : '';
+$phone_number = isset($_POST['phone_number']) ? trim($_POST['phone_number']) : '';
+$assigned_by = isset($_POST['assigned_by']) ? trim($_POST['assigned_by']) : '';
+$update_1 = isset($_POST['update_1']) ? trim($_POST['update_1']) : '';
+$update_2 = isset($_POST['update_2']) ? trim($_POST['update_2']) : '';
+$update_3 = isset($_POST['update_3']) ? trim($_POST['update_3']) : '';
 
 if (!$id) {
     echo json_encode(['status' => 'error', 'message' => 'Invalid ID']);
+    exit;
+}
+
+if (empty($seller_name)) {
+    echo json_encode(['status' => 'error', 'message' => 'Seller name is required']);
+    exit;
+}
+
+if (empty($phone_number)) {
+    echo json_encode(['status' => 'error', 'message' => 'Phone number is required']);
     exit;
 }
 
@@ -32,16 +41,31 @@ if (!$id) {
 $phone_number = preg_replace('/[^0-9]/', '', $phone_number);
 
 $pdo = db();
-$stmt = $pdo->prepare("UPDATE whatsapp_customers 
-                       SET seller_name = ?, phone_number = ?, store_name = ?, 
-                           seller_id = ?, status = ?, update_1 = ?, 
-                           update_2 = ?, update_3 = ? 
-                       WHERE id = ?");
-$result = $stmt->execute([$seller_name, $phone_number, $store_name, $seller_id, 
-                         $status, $update_1, $update_2, $update_3, $id]);
+$sql = "UPDATE whatsapp_customers SET 
+        entry_date = :entry_date,
+        seller_name = :seller_name,
+        phone_number = :phone_number,
+        assigned_by = :assigned_by,
+        update_1 = :update_1,
+        update_2 = :update_2,
+        update_3 = :update_3
+        WHERE id = :id";
+
+$stmt = $pdo->prepare($sql);
+$result = $stmt->execute([
+    ':entry_date' => $entry_date,
+    ':seller_name' => $seller_name,
+    ':phone_number' => $phone_number,
+    ':assigned_by' => $assigned_by,
+    ':update_1' => $update_1,
+    ':update_2' => $update_2,
+    ':update_3' => $update_3,
+    ':id' => $id
+]);
 
 if ($result) {
     echo json_encode(['status' => 'success', 'message' => 'Customer updated successfully']);
 } else {
     echo json_encode(['status' => 'error', 'message' => 'Failed to update customer']);
 }
+?>
