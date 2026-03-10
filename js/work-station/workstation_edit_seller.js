@@ -246,7 +246,7 @@ $(document).ready(function() {
         `;
     }
 
-    // Generate Schedule Fields
+    // Generate Schedule Fields (match exactly with add form)
     function generateScheduleFields() {
         return `
             <div class="dynamic-field">
@@ -262,7 +262,7 @@ $(document).ready(function() {
                                     <i class="bi bi-calendar3"></i>
                                 </span>
                                 <input type="text" class="form-control" id="scheduleDate" 
-                                    placeholder="Select schedule date" readonly>
+                                    placeholder="Select schedule date" readonly required>
                                 <span class="input-group-text bg-light" id="clearDate" style="cursor: pointer;">
                                     <i class="bi bi-x-lg"></i>
                                 </span>
@@ -279,7 +279,7 @@ $(document).ready(function() {
         `;
     }
 
-    // Initialize Datepicker
+    // Initialize Datepicker (match with add form)
     function initializeDatepicker() {
         if ($('#scheduleDate').length) {
             // Destroy existing datepicker if any
@@ -293,6 +293,14 @@ $(document).ready(function() {
                 autoclose: true,
                 todayHighlight: true,
                 orientation: 'bottom'
+            });
+            
+            // Handle date selection
+            $('#scheduleDate').on('change', function() {
+                const selectedDate = $(this).val();
+                if (selectedDate) {
+                    $('#finalScheduleDate').val('Shedule at ' + selectedDate);
+                }
             });
             
             $('#calendarIcon').click(function() {
@@ -441,42 +449,36 @@ $(document).ready(function() {
             const callBackTime = sellerData.call_back_time || '';
             console.log('Schedule data from DB:', callBackTime);
             
-            if (callBackTime) {
-                // Check if it starts with "Shedule at "
-                if (callBackTime.startsWith('Shedule at ')) {
-                    // Extract just the date part (remove "Shedule at ")
-                    const datePart = callBackTime.replace('Shedule at ', '');
-                    console.log('Extracted date:', datePart);
+            if (callBackTime && callBackTime.startsWith('Shedule at ')) {
+                const datePart = callBackTime.replace('Shedule at ', '');
+                console.log('Extracted date:', datePart);
+                
+                // Small delay to ensure DOM is ready
+                setTimeout(function() {
+                    $('#scheduleDate').val(datePart);
+                    $('#finalScheduleDate').val(callBackTime);
                     
-                    // Small delay to ensure DOM is ready
-                    setTimeout(function() {
-                        // Set the date in the datepicker
-                        $('#scheduleDate').val(datePart);
-                        $('#finalScheduleDate').val(callBackTime); // Store full value
-                        
-                        // Also set the datepicker date if available
-                        try {
-                            if ($('#scheduleDate').data('datepicker')) {
-                                const dateParts = datePart.split('/');
-                                if (dateParts.length === 3) {
-                                    const day = parseInt(dateParts[0], 10);
-                                    const month = parseInt(dateParts[1], 10) - 1;
-                                    const year = parseInt(dateParts[2], 10);
-                                    const date = new Date(year, month, day);
-                                    $('#scheduleDate').datepicker('setDate', date);
-                                }
+                    // Also set the datepicker date if available
+                    try {
+                        if ($('#scheduleDate').data('datepicker')) {
+                            const dateParts = datePart.split('/');
+                            if (dateParts.length === 3) {
+                                const day = parseInt(dateParts[0], 10);
+                                const month = parseInt(dateParts[1], 10) - 1;
+                                const year = parseInt(dateParts[2], 10);
+                                const date = new Date(year, month, day);
+                                $('#scheduleDate').datepicker('setDate', date);
                             }
-                        } catch (e) {
-                            console.error('Error setting datepicker date:', e);
                         }
-                    }, 200);
-                } else if (callBackTime !== 'null' && callBackTime !== '') {
-                    // If it doesn't have "Shedule at " prefix, just use as is
-                    setTimeout(function() {
-                        $('#scheduleDate').val(callBackTime);
-                        $('#finalScheduleDate').val('Shedule at ' + callBackTime);
-                    }, 200);
-                }
+                    } catch (e) {
+                        console.error('Error setting datepicker date:', e);
+                    }
+                }, 200);
+            } else if (callBackTime && callBackTime !== 'null' && callBackTime !== '') {
+                setTimeout(function() {
+                    $('#scheduleDate').val(callBackTime);
+                    $('#finalScheduleDate').val('Shedule at ' + callBackTime);
+                }, 200);
             }
         }
     }
@@ -556,13 +558,6 @@ $(document).ready(function() {
 
         $('#customCallBackAt').off('input').on('input', function() {
             $('#finalCallBackAt').val($(this).val());
-        });
-        
-        $('#scheduleDate').off('change').on('change', function() {
-            const selectedDate = $(this).val();
-            if (selectedDate) {
-                $('#finalScheduleDate').val('Shedule at ' + selectedDate);
-            }
         });
     }
 

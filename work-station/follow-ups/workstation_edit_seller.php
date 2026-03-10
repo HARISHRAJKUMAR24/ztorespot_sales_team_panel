@@ -77,6 +77,8 @@ $seller_json = $seller ? json_encode($seller) : 'null';
                                 <?php else: ?>
                                 <form id="sellerForm" data-seller-id="<?= $seller_id ?>">
                                     <input type="hidden" id="sellerId" value="<?= $seller_id ?>">
+                                    <!-- Add hidden field for seller data -->
+                                    <input type="hidden" id="sellerData" value='<?= htmlspecialchars($seller_json, ENT_QUOTES, 'UTF-8') ?>'>
                                     
                                     <!-- Row 1: Business Name -->
                                     <div class="row mb-3">
@@ -234,10 +236,10 @@ $seller_json = $seller ? json_encode($seller) : 'null';
                                                         </span>
                                                         <input type="text" class="form-control"
                                                             placeholder="Enter custom call duration"
-                                                            id="customCallDuration">
+                                                            id="customCallDuration" value="<?= !in_array($seller['call_duration'] ?? '', ['5 mins','10 mins','15 mins','20 mins','25 mins','30 mins','45 mins','1 hour','1.5 hours','2 hours']) ? htmlspecialchars($seller['call_duration'] ?? '') : '' ?>">
                                                     </div>
                                                 </div>
-                                                <input type="hidden" id="callDuration" name="call_duration">
+                                                <input type="hidden" id="callDuration" name="call_duration" value="<?= htmlspecialchars($seller['call_duration'] ?? '') ?>">
                                             </div>
                                         </div>
                                     </div>
