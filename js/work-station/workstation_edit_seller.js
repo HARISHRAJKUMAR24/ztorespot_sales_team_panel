@@ -1,17 +1,17 @@
 $(document).ready(function() {
-
-    
     const sellerId = $('#sellerId').val();
     
-    // Parse seller data from hidden field
+    // Get seller data from PHP
     let sellerData = null;
-    const sellerDataStr = $('#sellerData').val();
-    if (sellerDataStr && sellerDataStr !== 'null') {
-        try {
+    try {
+        // Try to get data from data attribute if available
+        const sellerDataStr = $('#sellerData').val();
+        if (sellerDataStr && sellerDataStr !== 'null') {
             sellerData = JSON.parse(sellerDataStr);
-        } catch (e) {
-            console.error('Error parsing seller data:', e);
+            console.log('Seller data loaded:', sellerData); // Debug log
         }
+    } catch (e) {
+        console.error('Error parsing seller data:', e);
     }
     
     // Store original values
@@ -24,21 +24,34 @@ $(document).ready(function() {
             upgradedDuration: sellerData.upgraded_duration,
             callBackTime: sellerData.call_back_time
         };
+        
+        // Set call duration hidden field
+        $('#callDuration').val(sellerData.call_duration || '');
+        
+        // Handle call duration select
+        const callDuration = sellerData.call_duration || '';
+        if (callDuration) {
+            const standardDurations = ['5 mins','10 mins','15 mins','20 mins','25 mins','30 mins','45 mins','1 hour','1.5 hours','2 hours'];
+            if (!standardDurations.includes(callDuration)) {
+                $('#callDurationSelect').val('other');
+                $('#customCallDurationContainer').show();
+                $('#customCallDuration').val(callDuration);
+            } else {
+                $('#callDurationSelect').val(callDuration);
+                $('#customCallDurationContainer').hide();
+            }
+        }
     }
     
-    // Initialize form with existing data
-    if (sellerId && sellerData) {
-        // Set timeout to ensure DOM is ready
-        setTimeout(function() {
-            initializeFormWithData();
-        }, 200);
-    }
+    // Initialize form after page load
+    setTimeout(function() {
+        initializeFormWithData();
+    }, 100);
     
     // Customer Response Change Handler
     $('#customerResponse').on('change', function() {
         const response = $(this).val();
         const container = $('#dynamicFieldsContainer');
-        const previousResponse = originalValues.customerResponse;
         
         container.empty();
         
@@ -58,15 +71,23 @@ $(document).ready(function() {
             case 'Call Back AT':
                 html = generateCallBackAtFields();
                 break;
+            case 'Shedule':
+                html = generateScheduleFields();
+                break;
         }
         
         container.html(html);
         initializeOtherOptionHandlers();
         
-        // Set values based on original data, not current selections
+        // Set existing values
         setTimeout(function() {
             setExistingDynamicValues(response);
         }, 100);
+        
+        // Initialize datepicker for schedule
+        if (response === 'Shedule') {
+            initializeDatepicker();
+        }
     });
 
     // Generate Plan Interested Fields
@@ -225,41 +246,128 @@ $(document).ready(function() {
         `;
     }
 
+    // Generate Schedule Fields
+    function generateScheduleFields() {
+        return `
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-calendar-date-fill text-primary me-1"></i>
+                            Schedule Date <span class="text-danger">*</span>
+                        </label>
+                        <div class="schedule-wrapper">
+                            <div class="input-group date" id="scheduleDatePicker">
+                                <span class="input-group-text bg-light" id="calendarIcon">
+                                    <i class="bi bi-calendar3"></i>
+                                </span>
+                                <input type="text" class="form-control" id="scheduleDate" 
+                                    placeholder="Select schedule date" readonly>
+                                <span class="input-group-text bg-light" id="clearDate" style="cursor: pointer;">
+                                    <i class="bi bi-x-lg"></i>
+                                </span>
+                            </div>
+                            <div class="mt-2 text-muted small">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Select a date for follow-up schedule
+                            </div>
+                            <input type="hidden" id="finalScheduleDate">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Initialize Datepicker
+    function initializeDatepicker() {
+        if ($('#scheduleDate').length) {
+            // Destroy existing datepicker if any
+            if ($('#scheduleDate').data('datepicker')) {
+                $('#scheduleDate').datepicker('destroy');
+            }
+            
+            $('#scheduleDate').datepicker({
+                format: 'dd/mm/yyyy',
+                startDate: new Date(),
+                autoclose: true,
+                todayHighlight: true,
+                orientation: 'bottom'
+            });
+            
+            $('#calendarIcon').click(function() {
+                $('#scheduleDate').datepicker('show');
+            });
+            
+            $('#clearDate').click(function() {
+                $('#scheduleDate').val('');
+                $('#finalScheduleDate').val('');
+            });
+            
+            // Set existing schedule date if any
+            setTimeout(function() {
+                if (sellerData && sellerData.call_back_time) {
+                    const callBackTime = sellerData.call_back_time;
+                    console.log('Setting schedule date in datepicker:', callBackTime);
+                    
+                    if (callBackTime && callBackTime.startsWith('Shedule at ')) {
+                        const datePart = callBackTime.replace('Shedule at ', '');
+                        console.log('Extracted date part:', datePart);
+                        
+                        $('#scheduleDate').val(datePart);
+                        $('#finalScheduleDate').val(callBackTime);
+                        
+                        // Set date in datepicker
+                        try {
+                            const dateParts = datePart.split('/');
+                            if (dateParts.length === 3) {
+                                const day = parseInt(dateParts[0], 10);
+                                const month = parseInt(dateParts[1], 10) - 1;
+                                const year = parseInt(dateParts[2], 10);
+                                const date = new Date(year, month, day);
+                                
+                                if ($('#scheduleDate').data('datepicker')) {
+                                    $('#scheduleDate').datepicker('setDate', date);
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error parsing date:', e);
+                        }
+                    } else if (callBackTime && callBackTime !== 'null' && callBackTime !== '') {
+                        // If it's just a date without prefix
+                        $('#scheduleDate').val(callBackTime);
+                        $('#finalScheduleDate').val('Shedule at ' + callBackTime);
+                    }
+                }
+            }, 200);
+        }
+    }
+
     // Initialize form with existing data
     function initializeFormWithData() {
         if (!sellerData) return;
         
-        // Set initial values from database
         const response = sellerData.customer_response || '';
+        console.log('Initializing form with response:', response);
         
-        // Only trigger change if there's a value
         if (response) {
             $('#customerResponse').val(response);
             $('#customerResponse').trigger('change');
         }
-        
-        // Handle call duration
-        const callDuration = sellerData.call_duration || '';
-        if (callDuration) {
-            if (!['5 mins','10 mins','15 mins','20 mins','25 mins','30 mins','45 mins','1 hour','1.5 hours','2 hours'].includes(callDuration)) {
-                $('#callDurationSelect').val('other').trigger('change');
-                $('#customCallDuration').val(callDuration);
-            } else {
-                $('#callDurationSelect').val(callDuration);
-            }
-            $('#callDuration').val(callDuration);
-        }
     }
 
-    // Set existing dynamic field values based on original data
+    // Set existing dynamic field values
     function setExistingDynamicValues(currentResponse) {
         if (!sellerData) return;
         
-        // Use original values from database, not current selections
+        console.log('Setting existing values for response:', currentResponse);
+        console.log('Seller data:', sellerData);
+        
         if (currentResponse === 'Plan Interested') {
             const selectedPlan = sellerData.selected_plan || '';
             if (selectedPlan) {
-                if (!['Welcome Plan','Starter Plan','Professional Plan','Enterprise Plan'].includes(selectedPlan)) {
+                const standardPlans = ['Welcome Plan','Starter Plan','Professional Plan','Enterprise Plan'];
+                if (!standardPlans.includes(selectedPlan)) {
                     $('#selectedPlan').val('other').trigger('change');
                     $('#customPlan').val(selectedPlan);
                     $('#finalSelectedPlan').val(selectedPlan);
@@ -275,7 +383,8 @@ $(document).ready(function() {
             const upgradedDuration = sellerData.upgraded_duration || '';
             
             if (upgradedPlan) {
-                if (!['Welcome Plan','Starter Plan','Professional Plan','Enterprise Plan'].includes(upgradedPlan)) {
+                const standardPlans = ['Welcome Plan','Starter Plan','Professional Plan','Enterprise Plan'];
+                if (!standardPlans.includes(upgradedPlan)) {
                     $('#upgradedPlan').val('other').trigger('change');
                     $('#customUpgradedPlan').val(upgradedPlan);
                     $('#finalUpgradedPlan').val(upgradedPlan);
@@ -286,7 +395,8 @@ $(document).ready(function() {
             }
             
             if (upgradedDuration) {
-                if (!['1 Month','3 Months','6 Months','1 Year','2 Years'].includes(upgradedDuration)) {
+                const standardDurations = ['1 Month','3 Months','6 Months','1 Year','2 Years'];
+                if (!standardDurations.includes(upgradedDuration)) {
                     $('#upgradedDuration').val('other').trigger('change');
                     $('#customDuration').val(upgradedDuration);
                     $('#finalUpgradedDuration').val(upgradedDuration);
@@ -300,7 +410,8 @@ $(document).ready(function() {
         if (currentResponse === 'Later') {
             const callBackTime = sellerData.call_back_time || '';
             if (callBackTime) {
-                if (!['After 1 hour','After 2 hours','After 3 hours','After 6 hours','Tomorrow','After 2 days','After 1 week','Next month'].includes(callBackTime)) {
+                const standardTimes = ['After 1 hour','After 2 hours','After 3 hours','After 6 hours','Tomorrow','After 2 days','After 1 week','Next month'];
+                if (!standardTimes.includes(callBackTime)) {
                     $('#callBackTime').val('other').trigger('change');
                     $('#customCallBackTime').val(callBackTime);
                     $('#finalCallBackTime').val(callBackTime);
@@ -314,13 +425,57 @@ $(document).ready(function() {
         if (currentResponse === 'Call Back AT') {
             const callBackAt = sellerData.call_back_time || '';
             if (callBackAt) {
-                if (!['Morning 9-11 AM','Late Morning 11-1 PM','Afternoon 2-4 PM','Evening 4-6 PM','Night 7-9 PM'].includes(callBackAt)) {
+                const standardTimes = ['Morning 9-11 AM','Late Morning 11-1 PM','Afternoon 2-4 PM','Evening 4-6 PM','Night 7-9 PM'];
+                if (!standardTimes.includes(callBackAt)) {
                     $('#callBackAt').val('other').trigger('change');
                     $('#customCallBackAt').val(callBackAt);
                     $('#finalCallBackAt').val(callBackAt);
                 } else {
                     $('#callBackAt').val(callBackAt);
                     $('#finalCallBackAt').val(callBackAt);
+                }
+            }
+        }
+        
+        if (currentResponse === 'Shedule') {
+            const callBackTime = sellerData.call_back_time || '';
+            console.log('Schedule data from DB:', callBackTime);
+            
+            if (callBackTime) {
+                // Check if it starts with "Shedule at "
+                if (callBackTime.startsWith('Shedule at ')) {
+                    // Extract just the date part (remove "Shedule at ")
+                    const datePart = callBackTime.replace('Shedule at ', '');
+                    console.log('Extracted date:', datePart);
+                    
+                    // Small delay to ensure DOM is ready
+                    setTimeout(function() {
+                        // Set the date in the datepicker
+                        $('#scheduleDate').val(datePart);
+                        $('#finalScheduleDate').val(callBackTime); // Store full value
+                        
+                        // Also set the datepicker date if available
+                        try {
+                            if ($('#scheduleDate').data('datepicker')) {
+                                const dateParts = datePart.split('/');
+                                if (dateParts.length === 3) {
+                                    const day = parseInt(dateParts[0], 10);
+                                    const month = parseInt(dateParts[1], 10) - 1;
+                                    const year = parseInt(dateParts[2], 10);
+                                    const date = new Date(year, month, day);
+                                    $('#scheduleDate').datepicker('setDate', date);
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error setting datepicker date:', e);
+                        }
+                    }, 200);
+                } else if (callBackTime !== 'null' && callBackTime !== '') {
+                    // If it doesn't have "Shedule at " prefix, just use as is
+                    setTimeout(function() {
+                        $('#scheduleDate').val(callBackTime);
+                        $('#finalScheduleDate').val('Shedule at ' + callBackTime);
+                    }, 200);
                 }
             }
         }
@@ -402,6 +557,13 @@ $(document).ready(function() {
         $('#customCallBackAt').off('input').on('input', function() {
             $('#finalCallBackAt').val($(this).val());
         });
+        
+        $('#scheduleDate').off('change').on('change', function() {
+            const selectedDate = $(this).val();
+            if (selectedDate) {
+                $('#finalScheduleDate').val('Shedule at ' + selectedDate);
+            }
+        });
     }
 
     // Call Duration Handler
@@ -419,6 +581,11 @@ $(document).ready(function() {
 
     $('#customCallDuration').off('input').on('input', function() {
         $('#callDuration').val($(this).val());
+    });
+
+    // Phone number validation
+    $('#phoneNumber').on('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
     });
 
     // Form Submit Handler
@@ -475,6 +642,8 @@ $(document).ready(function() {
             additional_notes: $('#additionalNotes').val().trim() || ''
         };
         
+        console.log('Submitting form data:', formData);
+        
         const $submitBtn = $(this).find('button[type="submit"]');
         const originalText = $submitBtn.html();
         $submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Updating...').prop('disabled', true);
@@ -488,7 +657,7 @@ $(document).ready(function() {
                 if (response.status === 'success') {
                     showToast('success', 'Success!', 'Seller updated successfully');
                     setTimeout(function() {
-                      //  window.location.href = 'workstation_followup.php';
+                        window.location.href = 'workstation_followup.php';
                     }, 1500);
                 } else {
                     showToast('danger', 'Error!', response.message);
@@ -544,18 +713,25 @@ $(document).ready(function() {
                 $('#finalCallBackAt').val($('#callBackAt').val());
             }
         }
+        
+        if ($('#scheduleDate').length) {
+            const scheduleDate = $('#scheduleDate').val();
+            if (scheduleDate) {
+                $('#finalScheduleDate').val('Shedule at ' + scheduleDate);
+            }
+        }
     }
 
     function getFinalPlanValue() {
-        return $('#selectedPlan').length ? $('#finalSelectedPlan').val() || '' : '';
+        return $('#selectedPlan').length ? ($('#finalSelectedPlan').val() || '') : '';
     }
 
     function getFinalUpgradedPlanValue() {
-        return $('#upgradedPlan').length ? $('#finalUpgradedPlan').val() || '' : '';
+        return $('#upgradedPlan').length ? ($('#finalUpgradedPlan').val() || '') : '';
     }
 
     function getFinalDurationValue() {
-        return $('#upgradedDuration').length ? $('#finalUpgradedDuration').val() || '' : '';
+        return $('#upgradedDuration').length ? ($('#finalUpgradedDuration').val() || '') : '';
     }
 
     function getFinalCallBackValue() {
@@ -564,6 +740,9 @@ $(document).ready(function() {
         }
         if ($('#callBackAt').length) {
             return $('#finalCallBackAt').val() || '';
+        }
+        if ($('#finalScheduleDate').length) {
+            return $('#finalScheduleDate').val() || '';
         }
         return '';
     }
@@ -594,20 +773,17 @@ $(document).ready(function() {
             }
         }
         
-        if (response === 'Later' || response === 'Call Back AT') {
+        if (response === 'Later' || response === 'Call Back AT' || response === 'Shedule') {
             const callBack = getFinalCallBackValue();
             if (!callBack) {
-                showToast('warning', 'Warning!', 'Please select or enter call back time');
+                const fieldName = response === 'Shedule' ? 'schedule date' : 'call back time';
+                showToast('warning', 'Warning!', `Please select or enter ${fieldName}`);
                 return false;
             }
         }
         
         return true;
     }
-
-    $('#phoneNumber').on('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
-    });
 
     function showToast(type, title, message) {
         const id = 'toast-' + Date.now();

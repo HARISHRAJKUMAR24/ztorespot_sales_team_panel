@@ -58,7 +58,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 <!-- Stats Cards -->
                 <div class="row g-3 mb-4">
-                    <div class="col-6 col-md-4">
+                    <div class="col-4 col-md-3">
                         <div class="card text-white bg-primary h-100">
                             <div class="card-body d-flex flex-column flex-sm-row justify-content-between align-items-center p-3">
                                 <div class="text-center text-sm-start mb-2 mb-sm-0">
@@ -69,7 +69,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-4">
+                    <div class="col-4 col-md-3">
                         <div class="card text-white bg-warning h-100">
                             <div class="card-body d-flex flex-column flex-sm-row justify-content-between align-items-center p-3">
                                 <div class="text-center text-sm-start mb-2 mb-sm-0">
@@ -80,7 +80,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-4">
+                    <div class="col-4 col-md-3">
                         <div class="card text-white bg-info h-100">
                             <div class="card-body d-flex flex-column flex-sm-row justify-content-between align-items-center p-3">
                                 <div class="text-center text-sm-start mb-2 mb-sm-0">
@@ -88,6 +88,17 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                     <h3 class="mb-0" id="callbackCount">0</h3>
                                 </div>
                                 <i class="bi bi-telephone-forward fs-2 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4 col-md-3">
+                        <div class="card text-white bg-success h-100">
+                            <div class="card-body d-flex flex-column flex-sm-row justify-content-between align-items-center p-3">
+                                <div class="text-center text-sm-start mb-2 mb-sm-0">
+                                    <h6 class="card-title mb-1 small">Shedule</h6>
+                                    <h3 class="mb-0" id="sheduleCount">0</h3>
+                                </div>
+                                <i class="bi bi-calendar-date fs-2 opacity-50"></i>
                             </div>
                         </div>
                     </div>
@@ -114,6 +125,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                         <option value="">All Responses</option>
                                         <option value="Later">Later</option>
                                         <option value="Call Back AT">Call Back AT</option>
+                                        <option value="Shedule">Shedule</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-sm-6 col-md-3">
@@ -200,7 +212,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                             <th class="sortable" data-sort="business_name">Business Name <i class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th class="sortable" data-sort="phone_number">Phone <i class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th class="d-none d-lg-table-cell">Response</th>
-                                            <th class="d-none d-lg-table-cell">Call Back Time</th>
+                                            <th class="d-none d-lg-table-cell">Follow Up Time</th>
                                             <th>Status</th>
                                             <th class="text-center">Actions</th>
                                         </tr>

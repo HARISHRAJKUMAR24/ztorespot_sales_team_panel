@@ -26,7 +26,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/work-station.php">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/workstation_add_seller.php">
             <svg class="bi" aria-hidden="true">
               <use xlink:href="#work-station"></use>
             </svg>

@@ -77,8 +77,6 @@ $seller_json = $seller ? json_encode($seller) : 'null';
                                 <?php else: ?>
                                 <form id="sellerForm" data-seller-id="<?= $seller_id ?>">
                                     <input type="hidden" id="sellerId" value="<?= $seller_id ?>">
-                                    <!-- Add hidden field for seller data -->
-                                    <input type="hidden" id="sellerData" value='<?= htmlspecialchars($seller_json, ENT_QUOTES, 'UTF-8') ?>'>
                                     
                                     <!-- Row 1: Business Name -->
                                     <div class="row mb-3">
@@ -159,6 +157,7 @@ $seller_json = $seller ? json_encode($seller) : 'null';
                                                     <option value="Out of Service" <?= ($seller['customer_response'] ?? '') == 'Out of Service' ? 'selected' : '' ?>>Out of Service</option>
                                                     <option value="Testing" <?= ($seller['customer_response'] ?? '') == 'Testing' ? 'selected' : '' ?>>Testing</option>
                                                     <option value="Renewals" <?= ($seller['customer_response'] ?? '') == 'Renewals' ? 'selected' : '' ?>>Renewals</option>
+                                                    <option value="Shedule" <?= ($seller['customer_response'] ?? '') == 'Shedule' ? 'selected' : '' ?>>Shedule (Select Date)</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -235,10 +234,10 @@ $seller_json = $seller ? json_encode($seller) : 'null';
                                                         </span>
                                                         <input type="text" class="form-control"
                                                             placeholder="Enter custom call duration"
-                                                            id="customCallDuration" value="<?= !in_array($seller['call_duration'] ?? '', ['5 mins','10 mins','15 mins','20 mins','25 mins','30 mins','45 mins','1 hour','1.5 hours','2 hours']) ? htmlspecialchars($seller['call_duration'] ?? '') : '' ?>">
+                                                            id="customCallDuration">
                                                     </div>
                                                 </div>
-                                                <input type="hidden" id="callDuration" name="call_duration" value="<?= htmlspecialchars($seller['call_duration'] ?? '') ?>">
+                                                <input type="hidden" id="callDuration" name="call_duration">
                                             </div>
                                         </div>
                                     </div>
@@ -285,6 +284,9 @@ $seller_json = $seller ? json_encode($seller) : 'null';
     <!-- Toast Container for Notifications -->
     <div class="toast-container position-fixed top-0 end-0 p-3"></div>
 
+    <!-- Bootstrap Datepicker CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
+
     <style>
         .form-label {
             font-size: 0.9rem;
@@ -307,6 +309,16 @@ $seller_json = $seller ? json_encode($seller) : 'null';
             border: 1px solid #dee2e6;
             border-radius: 0.5rem;
         }
+        .date-field {
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #0d6efd;
+            border-radius: 0.5rem;
+        }
+        .input-group.date .input-group-text {
+            cursor: pointer;
+        }
         @media (min-width: 992px) {
             .card-body {
                 padding: 2rem !important;
@@ -320,6 +332,8 @@ $seller_json = $seller ? json_encode($seller) : 'null';
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Datepicker JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
     <script src="<?= BASE_URL ?>js/work-station/workstation_edit_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>

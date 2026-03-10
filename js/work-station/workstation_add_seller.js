@@ -1,6 +1,5 @@
 $(document).ready(function() {
     
-    
     // Customer Response Change Handler
     $('#customerResponse').on('change', function() {
         const response = $(this).val();
@@ -12,14 +11,12 @@ $(document).ready(function() {
         switch(response) {
             case 'Plan Interested':
                 html = generatePlanInterestedFields();
-                // Don't change customer status for Plan Interested
                 break;
                 
             case 'Plan Upgraded':
                 html = generatePlanUpgradedFields();
                 // Auto set customer status to "Upgraded"
                 $('#customerStatus').val('Upgraded');
-                //showToast('info', 'Info!', 'Customer status automatically set to Upgraded');
                 break;
                 
             case 'Later':
@@ -30,9 +27,12 @@ $(document).ready(function() {
                 html = generateCallBackAtFields();
                 break;
                 
+            case 'Shedule':
+                html = generateScheduleFields();
+                break;
+                
             default:
-                // For other responses, reset customer status if needed
-                // You can add logic here if needed
+                // For other responses, no dynamic fields
                 break;
         }
         
@@ -40,19 +40,11 @@ $(document).ready(function() {
         
         // Initialize the "Other" option handlers for newly added fields
         initializeOtherOptionHandlers();
-    });
-
-    // Also handle when customer response is changed to something else
-    $('#customerResponse').on('change', function() {
-        const response = $(this).val();
         
-        // If response is not "Plan Upgraded", you might want to reset customer status
-        // Uncomment the following lines if you want this behavior
-        /*
-        if (response !== 'Plan Upgraded') {
-            $('#customerStatus').val('');
+        // Initialize datepicker if schedule fields are shown
+        if (response === 'Shedule') {
+            initializeDatepicker();
         }
-        */
     });
 
     // Generate Plan Interested Fields
@@ -209,6 +201,72 @@ $(document).ready(function() {
                 </div>
             </div>
         `;
+    }
+
+    // Generate Schedule Fields with Datepicker
+    function generateScheduleFields() {
+        return `
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-calendar-date-fill text-primary me-1"></i>
+                            Schedule Date <span class="text-danger">*</span>
+                        </label>
+                        <div class="schedule-wrapper">
+                            <div class="input-group date" id="scheduleDatePicker">
+                                <span class="input-group-text bg-light" id="calendarIcon">
+                                    <i class="bi bi-calendar3"></i>
+                                </span>
+                                <input type="text" class="form-control" id="scheduleDate" 
+                                    placeholder="Select schedule date" readonly required>
+                                <span class="input-group-text bg-light" id="clearDate" style="cursor: pointer;">
+                                    <i class="bi bi-x-lg"></i>
+                                </span>
+                            </div>
+                            <div class="mt-2 text-muted small">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Select a date for follow-up schedule
+                            </div>
+                            <input type="hidden" id="finalScheduleDate">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Initialize Datepicker
+    function initializeDatepicker() {
+        if ($('#scheduleDate').length) {
+            $('#scheduleDate').datepicker({
+                format: 'dd/mm/yyyy',
+                startDate: new Date(),
+                autoclose: true,
+                todayHighlight: true,
+                orientation: 'bottom'
+            });
+            
+            // Handle date selection
+            $('#scheduleDate').on('change', function() {
+                const selectedDate = $(this).val();
+                if (selectedDate) {
+                    // Format: Shedule at dd/mm/yyyy
+                    $('#finalScheduleDate').val('Shedule at ' + selectedDate);
+                }
+            });
+            
+            // Handle calendar icon click
+            $('#calendarIcon').click(function() {
+                $('#scheduleDate').datepicker('show');
+            });
+            
+            // Handle clear date
+            $('#clearDate').click(function() {
+                $('#scheduleDate').val('');
+                $('#finalScheduleDate').val('');
+            });
+        }
     }
 
     // Initialize "Other" option handlers for all dynamic selects
@@ -388,7 +446,7 @@ $(document).ready(function() {
         
         // Send AJAX request
         $.ajax({
-            url: '../ajax/work-station/workstation_add_seller.php',
+             url: BASE_URL + 'ajax/work-station/workstation_add_seller.php',
             type: 'POST',
             data: formData,
             dataType: 'json',
@@ -476,6 +534,14 @@ $(document).ready(function() {
                 $('#finalCallBackAt').val($('#callBackAt').val());
             }
         }
+        
+        // Schedule Date
+        if ($('#scheduleDate').length) {
+            const scheduleDate = $('#scheduleDate').val();
+            if (scheduleDate) {
+                $('#finalScheduleDate').val('Shedule at ' + scheduleDate);
+            }
+        }
     }
 
     // Get final plan value
@@ -510,6 +576,9 @@ $(document).ready(function() {
         if ($('#callBackAt').length) {
             return $('#finalCallBackAt').val() || '';
         }
+        if ($('#finalScheduleDate').length) {
+            return $('#finalScheduleDate').val() || '';
+        }
         return '';
     }
 
@@ -540,10 +609,11 @@ $(document).ready(function() {
             }
         }
         
-        if (response === 'Later' || response === 'Call Back AT') {
+        if (response === 'Later' || response === 'Call Back AT' || response === 'Shedule') {
             const callBack = getFinalCallBackValue();
             if (!callBack) {
-                showToast('warning', 'Warning!', 'Please select or enter call back time');
+                const fieldName = response === 'Shedule' ? 'schedule date' : 'call back time';
+                showToast('warning', 'Warning!', `Please select or enter ${fieldName}`);
                 return false;
             }
         }

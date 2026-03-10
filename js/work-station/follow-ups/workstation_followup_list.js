@@ -1,7 +1,4 @@
 $(document).ready(function () {
-    // Define BASE_URL if not defined
-
-
     let currentPage = 1;
     let perPage = 10;
     let totalPages = 1;
@@ -178,7 +175,10 @@ $(document).ready(function () {
             }
             
             // Get badge color based on response
-            const badgeClass = row.customer_response === 'Later' ? 'bg-warning' : 'bg-info';
+            let badgeClass = 'bg-secondary';
+            if (row.customer_response === 'Later') badgeClass = 'bg-warning';
+            else if (row.customer_response === 'Call Back AT') badgeClass = 'bg-info';
+            else if (row.customer_response === 'Shedule') badgeClass = 'bg-success';
             
             // Get status badge
             const statusBadge = row.customer_status === 'Upgraded' ? 'bg-success' : 'bg-secondary';
@@ -278,6 +278,7 @@ $(document).ready(function () {
         $('#totalCount').text(stats.total || 0);
         $('#laterCount').text(stats.later_count || 0);
         $('#callbackCount').text(stats.callback_count || 0);
+        $('#sheduleCount').text(stats.shedule_count || 0);
     }
 
     /* -----------------------------
@@ -331,7 +332,7 @@ $(document).ready(function () {
             ['Selected Plan', seller.selected_plan],
             ['Upgraded Plan', seller.upgraded_plan],
             ['Upgraded Duration', seller.upgraded_duration],
-            ['Call Back Time', seller.call_back_time],
+            ['Follow Up Time', seller.call_back_time],
             ['Customer Queries', seller.customer_queries],
             ['Customer Status', seller.customer_status],
             ['Call Duration', seller.call_duration],

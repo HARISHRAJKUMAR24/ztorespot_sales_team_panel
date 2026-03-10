@@ -143,6 +143,7 @@ $profile_image = !empty($user['profile_image'])
                                                     <option value="Out of Service">Out of Service</option>
                                                     <option value="Testing">Testing</option>
                                                     <option value="Renewals">Renewals</option>
+                                                    <option value="Shedule">Shedule (Select Date)</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -184,7 +185,6 @@ $profile_image = !empty($user['profile_image'])
                                                     <option value="" selected disabled>Select current status</option>
                                                     <option value="Not yet">Not yet</option>
                                                     <option value="Upgraded">Upgraded</option>
-                                                  
                                                 </select>
                                             </div>
                                         </div>
@@ -269,6 +269,9 @@ $profile_image = !empty($user['profile_image'])
     <!-- Toast Container for Notifications -->
     <div class="toast-container position-fixed top-0 end-0 p-3"></div>
 
+    <!-- Bootstrap Datepicker CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
+
     <style>
         .form-label {
             font-size: 0.9rem;
@@ -299,6 +302,18 @@ $profile_image = !empty($user['profile_image'])
             background-color: #fff;
             border: 1px solid #dee2e6;
             border-radius: 0.5rem;
+        }
+
+        .date-field {
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #0d6efd;
+            border-radius: 0.5rem;
+        }
+
+        .input-group.date .input-group-text {
+            cursor: pointer;
         }
 
         @media (min-width: 992px) {
@@ -367,8 +382,9 @@ $profile_image = !empty($user['profile_image'])
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Datepicker JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
     <script src="<?= BASE_URL ?>js/work-station/workstation_add_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>
-
 </html>

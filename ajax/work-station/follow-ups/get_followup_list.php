@@ -43,8 +43,8 @@ try {
     $whereConditions = ["user_uid = ?"];
     $params = [$user_uid];
     
-    // Add follow-up condition (Later or Call Back AT)
-    $whereConditions[] = "(customer_response = 'Later' OR customer_response = 'Call Back AT')";
+    // Add follow-up condition (Later, Call Back AT, or Shedule)
+    $whereConditions[] = "(customer_response = 'Later' OR customer_response = 'Call Back AT' OR customer_response = 'Shedule')";
 
     // Handle search
     if (!empty($search)) {
@@ -121,13 +121,14 @@ try {
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Get stats - Separate query for stats with just user_uid
+    // Get stats - Separate query for stats with all follow-up types
     $stats_sql = "SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN customer_response = 'Later' THEN 1 ELSE 0 END) as later_count,
-                    SUM(CASE WHEN customer_response = 'Call Back AT' THEN 1 ELSE 0 END) as callback_count
+                    SUM(CASE WHEN customer_response = 'Call Back AT' THEN 1 ELSE 0 END) as callback_count,
+                    SUM(CASE WHEN customer_response = 'Shedule' THEN 1 ELSE 0 END) as shedule_count
                   FROM sellers_workstation 
-                  WHERE user_uid = ? AND (customer_response = 'Later' OR customer_response = 'Call Back AT')";
+                  WHERE user_uid = ? AND (customer_response = 'Later' OR customer_response = 'Call Back AT' OR customer_response = 'Shedule')";
     
     $stats_stmt = $pdo->prepare($stats_sql);
     $stats_stmt->execute([$user_uid]);
@@ -138,7 +139,8 @@ try {
         $stats = [
             'total' => 0,
             'later_count' => 0,
-            'callback_count' => 0
+            'callback_count' => 0,
+            'shedule_count' => 0
         ];
     }
 
@@ -157,13 +159,13 @@ try {
     error_log("Database Error in get_followup_list.php: " . $e->getMessage());
     echo json_encode([
         'status' => 'error', 
-        'message' => 'Database error: ' . $e->getMessage()
+        'message' => 'Database error occurred'
     ]);
 } catch (Exception $e) {
     error_log("General Error in get_followup_list.php: " . $e->getMessage());
     echo json_encode([
         'status' => 'error', 
-        'message' => 'Error: ' . $e->getMessage()
+        'message' => 'An error occurred'
     ]);
 }
 ?>

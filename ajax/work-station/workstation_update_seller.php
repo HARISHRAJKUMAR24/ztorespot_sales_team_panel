@@ -81,7 +81,8 @@ try {
                 customer_queries = ?,
                 customer_status = ?,
                 call_duration = ?,
-                additional_notes = ?
+                additional_notes = ?,
+                updated_at = NOW()
             WHERE id = ? AND user_uid = ?";
     
     $stmt = $pdo->prepare($sql);
