@@ -42,7 +42,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="#">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/follow-ups/follow-ups.php">
             <svg class="bi" aria-hidden="true">
               <use xlink:href="#follow-up"></use>
             </svg>
