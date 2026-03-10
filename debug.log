@@ -1,0 +1,393 @@
+[10-Mar-2026 05:35:39 Europe/Berlin] ===== RECEIVED POST DATA =====
+[10-Mar-2026 05:35:39 Europe/Berlin] POST: Array
+(
+    [page] => 1
+    [per_page] => 10
+    [sort_column] => id
+    [sort_order] => DESC
+    [search] => 
+    [filters] => Array
+        (
+            [assigned_by] => 
+            [update1] => 
+            [update2] => 
+            [update3] => 
+            [has_date] => 
+            [date_range] => 
+        )
+
+)
+
+[10-Mar-2026 05:35:39 Europe/Berlin] Parsed Data - Page: 1, Per Page: 10, Search: ''
+[10-Mar-2026 05:35:39 Europe/Berlin] Filters: Array
+(
+    [assigned_by] => 
+    [update1] => 
+    [update2] => 
+    [update3] => 
+    [has_date] => 
+    [date_range] => 
+)
+
+[10-Mar-2026 05:35:39 Europe/Berlin] WHERE clause: 
+[10-Mar-2026 05:35:39 Europe/Berlin] Parameters count: 0
+[10-Mar-2026 05:35:39 Europe/Berlin] Count SQL: SELECT COUNT(*) as total FROM whatsapp_customers 
+[10-Mar-2026 05:35:39 Europe/Berlin] Total count: 4460
+[10-Mar-2026 05:35:39 Europe/Berlin] Data SQL: SELECT * FROM whatsapp_customers 
+             
+            ORDER BY `id` DESC 
+            LIMIT :offset, :per_page
+[10-Mar-2026 05:35:39 Europe/Berlin] Binding offset: 0, per_page: 10
+[10-Mar-2026 05:35:39 Europe/Berlin] Rows found: 10
+[10-Mar-2026 05:35:39 Europe/Berlin] Stats: Array
+(
+    [total] => 4460
+    [update1_count] => 2210
+    [update2_count] => 319
+    [update3_count] => 93
+)
+
+[10-Mar-2026 05:35:44 Europe/Berlin] ===== RECEIVED POST DATA =====
+[10-Mar-2026 05:35:44 Europe/Berlin] POST: Array
+(
+    [page] => 1
+    [per_page] => 10
+    [sort_column] => id
+    [sort_order] => DESC
+    [search] => Vishwa S
+    [filters] => Array
+        (
+            [assigned_by] => 
+            [update1] => 
+            [update2] => 
+            [update3] => 
+            [has_date] => 
+            [date_range] => 
+        )
+
+)
+
+[10-Mar-2026 05:35:44 Europe/Berlin] Parsed Data - Page: 1, Per Page: 10, Search: 'Vishwa S'
+[10-Mar-2026 05:35:44 Europe/Berlin] Filters: Array
+(
+    [assigned_by] => 
+    [update1] => 
+    [update2] => 
+    [update3] => 
+    [has_date] => 
+    [date_range] => 
+)
+
+[10-Mar-2026 05:35:44 Europe/Berlin] Added search parameter: :search = %Vishwa S%
+[10-Mar-2026 05:35:44 Europe/Berlin] WHERE clause: WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:35:44 Europe/Berlin] Parameters count: 1
+[10-Mar-2026 05:35:44 Europe/Berlin] Count SQL: SELECT COUNT(*) as total FROM whatsapp_customers WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:35:44 Europe/Berlin] Binding count param: :search = %Vishwa S%
+[10-Mar-2026 05:35:44 Europe/Berlin] !!!!!!!!!! PDO ERROR !!!!!!!!!!
+[10-Mar-2026 05:35:44 Europe/Berlin] Error Message: SQLSTATE[HY093]: Invalid parameter number
+[10-Mar-2026 05:35:44 Europe/Berlin] SQL State: HY093
+[10-Mar-2026 05:35:44 Europe/Berlin] Error Code: N/A
+[10-Mar-2026 05:35:44 Europe/Berlin] Driver Error: N/A
+[10-Mar-2026 05:37:58 Europe/Berlin] ===== RECEIVED POST DATA =====
+[10-Mar-2026 05:37:58 Europe/Berlin] POST: Array
+(
+    [page] => 1
+    [per_page] => 10
+    [sort_column] => id
+    [sort_order] => DESC
+    [search] => 
+    [filters] => Array
+        (
+            [assigned_by] => 
+            [update1] => 
+            [update2] => 
+            [update3] => 
+            [has_date] => 
+            [date_range] => 
+        )
+
+)
+
+[10-Mar-2026 05:37:58 Europe/Berlin] Parsed Data - Page: 1, Per Page: 10, Search: ''
+[10-Mar-2026 05:37:58 Europe/Berlin] Filters: Array
+(
+    [assigned_by] => 
+    [update1] => 
+    [update2] => 
+    [update3] => 
+    [has_date] => 
+    [date_range] => 
+)
+
+[10-Mar-2026 05:37:58 Europe/Berlin] WHERE clause: 
+[10-Mar-2026 05:37:58 Europe/Berlin] Parameters count: 0
+[10-Mar-2026 05:37:58 Europe/Berlin] Count SQL: SELECT COUNT(*) as total FROM whatsapp_customers 
+[10-Mar-2026 05:37:58 Europe/Berlin] Total count: 4460
+[10-Mar-2026 05:37:58 Europe/Berlin] Data SQL: SELECT * FROM whatsapp_customers 
+             
+            ORDER BY `id` DESC 
+            LIMIT :offset, :per_page
+[10-Mar-2026 05:37:58 Europe/Berlin] Binding offset: 0, per_page: 10
+[10-Mar-2026 05:37:58 Europe/Berlin] Rows found: 10
+[10-Mar-2026 05:37:58 Europe/Berlin] Stats: Array
+(
+    [total] => 4460
+    [update1_count] => 2210
+    [update2_count] => 319
+    [update3_count] => 93
+)
+
+[10-Mar-2026 05:38:09 Europe/Berlin] ===== RECEIVED POST DATA =====
+[10-Mar-2026 05:38:09 Europe/Berlin] POST: Array
+(
+    [page] => 1
+    [per_page] => 10
+    [sort_column] => id
+    [sort_order] => DESC
+    [search] => Vishwa S
+    [filters] => Array
+        (
+            [assigned_by] => 
+            [update1] => 
+            [update2] => 
+            [update3] => 
+            [has_date] => 
+            [date_range] => 
+        )
+
+)
+
+[10-Mar-2026 05:38:09 Europe/Berlin] Parsed Data - Page: 1, Per Page: 10, Search: 'Vishwa S'
+[10-Mar-2026 05:38:09 Europe/Berlin] Filters: Array
+(
+    [assigned_by] => 
+    [update1] => 
+    [update2] => 
+    [update3] => 
+    [has_date] => 
+    [date_range] => 
+)
+
+[10-Mar-2026 05:38:09 Europe/Berlin] Added search parameter: :search = %Vishwa S%
+[10-Mar-2026 05:38:09 Europe/Berlin] WHERE clause: WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:09 Europe/Berlin] Parameters count: 1
+[10-Mar-2026 05:38:09 Europe/Berlin] Count SQL: SELECT COUNT(*) as total FROM whatsapp_customers WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:09 Europe/Berlin] Binding count param: :search = %Vishwa S%
+[10-Mar-2026 05:38:09 Europe/Berlin] !!!!!!!!!! PDO ERROR !!!!!!!!!!
+[10-Mar-2026 05:38:09 Europe/Berlin] Error Message: SQLSTATE[HY093]: Invalid parameter number
+[10-Mar-2026 05:38:09 Europe/Berlin] SQL State: HY093
+[10-Mar-2026 05:38:09 Europe/Berlin] Error Code: N/A
+[10-Mar-2026 05:38:09 Europe/Berlin] Driver Error: N/A
+[10-Mar-2026 05:38:16 Europe/Berlin] ===== RECEIVED POST DATA =====
+[10-Mar-2026 05:38:16 Europe/Berlin] POST: Array
+(
+    [page] => 1
+    [per_page] => 10
+    [sort_column] => id
+    [sort_order] => DESC
+    [search] => Vishwa
+    [filters] => Array
+        (
+            [assigned_by] => 
+            [update1] => 
+            [update2] => 
+            [update3] => 
+            [has_date] => 
+            [date_range] => 
+        )
+
+)
+
+[10-Mar-2026 05:38:16 Europe/Berlin] Parsed Data - Page: 1, Per Page: 10, Search: 'Vishwa'
+[10-Mar-2026 05:38:16 Europe/Berlin] Filters: Array
+(
+    [assigned_by] => 
+    [update1] => 
+    [update2] => 
+    [update3] => 
+    [has_date] => 
+    [date_range] => 
+)
+
+[10-Mar-2026 05:38:16 Europe/Berlin] Added search parameter: :search = %Vishwa%
+[10-Mar-2026 05:38:16 Europe/Berlin] WHERE clause: WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:16 Europe/Berlin] Parameters count: 1
+[10-Mar-2026 05:38:16 Europe/Berlin] Count SQL: SELECT COUNT(*) as total FROM whatsapp_customers WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:16 Europe/Berlin] Binding count param: :search = %Vishwa%
+[10-Mar-2026 05:38:16 Europe/Berlin] !!!!!!!!!! PDO ERROR !!!!!!!!!!
+[10-Mar-2026 05:38:16 Europe/Berlin] Error Message: SQLSTATE[HY093]: Invalid parameter number
+[10-Mar-2026 05:38:16 Europe/Berlin] SQL State: HY093
+[10-Mar-2026 05:38:16 Europe/Berlin] Error Code: N/A
+[10-Mar-2026 05:38:16 Europe/Berlin] Driver Error: N/A
+[10-Mar-2026 05:38:19 Europe/Berlin] ===== RECEIVED POST DATA =====
+[10-Mar-2026 05:38:19 Europe/Berlin] POST: Array
+(
+    [page] => 1
+    [per_page] => 10
+    [sort_column] => id
+    [sort_order] => DESC
+    [search] => Vis
+    [filters] => Array
+        (
+            [assigned_by] => 
+            [update1] => 
+            [update2] => 
+            [update3] => 
+            [has_date] => 
+            [date_range] => 
+        )
+
+)
+
+[10-Mar-2026 05:38:19 Europe/Berlin] Parsed Data - Page: 1, Per Page: 10, Search: 'Vis'
+[10-Mar-2026 05:38:19 Europe/Berlin] Filters: Array
+(
+    [assigned_by] => 
+    [update1] => 
+    [update2] => 
+    [update3] => 
+    [has_date] => 
+    [date_range] => 
+)
+
+[10-Mar-2026 05:38:19 Europe/Berlin] Added search parameter: :search = %Vis%
+[10-Mar-2026 05:38:19 Europe/Berlin] WHERE clause: WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:19 Europe/Berlin] Parameters count: 1
+[10-Mar-2026 05:38:19 Europe/Berlin] Count SQL: SELECT COUNT(*) as total FROM whatsapp_customers WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:19 Europe/Berlin] Binding count param: :search = %Vis%
+[10-Mar-2026 05:38:19 Europe/Berlin] !!!!!!!!!! PDO ERROR !!!!!!!!!!
+[10-Mar-2026 05:38:19 Europe/Berlin] Error Message: SQLSTATE[HY093]: Invalid parameter number
+[10-Mar-2026 05:38:19 Europe/Berlin] SQL State: HY093
+[10-Mar-2026 05:38:19 Europe/Berlin] Error Code: N/A
+[10-Mar-2026 05:38:19 Europe/Berlin] Driver Error: N/A
+[10-Mar-2026 05:38:20 Europe/Berlin] ===== RECEIVED POST DATA =====
+[10-Mar-2026 05:38:20 Europe/Berlin] POST: Array
+(
+    [page] => 1
+    [per_page] => 10
+    [sort_column] => id
+    [sort_order] => DESC
+    [search] => V
+    [filters] => Array
+        (
+            [assigned_by] => 
+            [update1] => 
+            [update2] => 
+            [update3] => 
+            [has_date] => 
+            [date_range] => 
+        )
+
+)
+
+[10-Mar-2026 05:38:20 Europe/Berlin] Parsed Data - Page: 1, Per Page: 10, Search: 'V'
+[10-Mar-2026 05:38:20 Europe/Berlin] Filters: Array
+(
+    [assigned_by] => 
+    [update1] => 
+    [update2] => 
+    [update3] => 
+    [has_date] => 
+    [date_range] => 
+)
+
+[10-Mar-2026 05:38:20 Europe/Berlin] Added search parameter: :search = %V%
+[10-Mar-2026 05:38:20 Europe/Berlin] WHERE clause: WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:20 Europe/Berlin] Parameters count: 1
+[10-Mar-2026 05:38:20 Europe/Berlin] Count SQL: SELECT COUNT(*) as total FROM whatsapp_customers WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:20 Europe/Berlin] Binding count param: :search = %V%
+[10-Mar-2026 05:38:20 Europe/Berlin] !!!!!!!!!! PDO ERROR !!!!!!!!!!
+[10-Mar-2026 05:38:20 Europe/Berlin] Error Message: SQLSTATE[HY093]: Invalid parameter number
+[10-Mar-2026 05:38:20 Europe/Berlin] SQL State: HY093
+[10-Mar-2026 05:38:20 Europe/Berlin] Error Code: N/A
+[10-Mar-2026 05:38:20 Europe/Berlin] Driver Error: N/A
+[10-Mar-2026 05:38:46 Europe/Berlin] ===== RECEIVED POST DATA =====
+[10-Mar-2026 05:38:46 Europe/Berlin] POST: Array
+(
+    [page] => 1
+    [per_page] => 10
+    [sort_column] => id
+    [sort_order] => DESC
+    [search] => V\
+    [filters] => Array
+        (
+            [assigned_by] => 
+            [update1] => 
+            [update2] => 
+            [update3] => 
+            [has_date] => 
+            [date_range] => 
+        )
+
+)
+
+[10-Mar-2026 05:38:46 Europe/Berlin] Parsed Data - Page: 1, Per Page: 10, Search: 'V\'
+[10-Mar-2026 05:38:46 Europe/Berlin] Filters: Array
+(
+    [assigned_by] => 
+    [update1] => 
+    [update2] => 
+    [update3] => 
+    [has_date] => 
+    [date_range] => 
+)
+
+[10-Mar-2026 05:38:46 Europe/Berlin] Added search parameter: :search = %V\%
+[10-Mar-2026 05:38:46 Europe/Berlin] WHERE clause: WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:46 Europe/Berlin] Parameters count: 1
+[10-Mar-2026 05:38:46 Europe/Berlin] Count SQL: SELECT COUNT(*) as total FROM whatsapp_customers WHERE (seller_name LIKE :search OR phone_number LIKE :search OR assigned_by LIKE :search OR update_1 LIKE :search OR update_2 LIKE :search OR update_3 LIKE :search)
+[10-Mar-2026 05:38:46 Europe/Berlin] Binding count param: :search = %V\%
+[10-Mar-2026 05:38:46 Europe/Berlin] !!!!!!!!!! PDO ERROR !!!!!!!!!!
+[10-Mar-2026 05:38:46 Europe/Berlin] Error Message: SQLSTATE[HY093]: Invalid parameter number
+[10-Mar-2026 05:38:46 Europe/Berlin] SQL State: HY093
+[10-Mar-2026 05:38:46 Europe/Berlin] Error Code: N/A
+[10-Mar-2026 05:38:46 Europe/Berlin] Driver Error: N/A
+[10-Mar-2026 05:38:46 Europe/Berlin] ===== RECEIVED POST DATA =====
+[10-Mar-2026 05:38:46 Europe/Berlin] POST: Array
+(
+    [page] => 1
+    [per_page] => 10
+    [sort_column] => id
+    [sort_order] => DESC
+    [search] => 
+    [filters] => Array
+        (
+            [assigned_by] => 
+            [update1] => 
+            [update2] => 
+            [update3] => 
+            [has_date] => 
+            [date_range] => 
+        )
+
+)
+
+[10-Mar-2026 05:38:46 Europe/Berlin] Parsed Data - Page: 1, Per Page: 10, Search: ''
+[10-Mar-2026 05:38:46 Europe/Berlin] Filters: Array
+(
+    [assigned_by] => 
+    [update1] => 
+    [update2] => 
+    [update3] => 
+    [has_date] => 
+    [date_range] => 
+)
+
+[10-Mar-2026 05:38:46 Europe/Berlin] WHERE clause: 
+[10-Mar-2026 05:38:46 Europe/Berlin] Parameters count: 0
+[10-Mar-2026 05:38:46 Europe/Berlin] Count SQL: SELECT COUNT(*) as total FROM whatsapp_customers 
+[10-Mar-2026 05:38:46 Europe/Berlin] Total count: 4460
+[10-Mar-2026 05:38:46 Europe/Berlin] Data SQL: SELECT * FROM whatsapp_customers 
+             
+            ORDER BY `id` DESC 
+            LIMIT :offset, :per_page
+[10-Mar-2026 05:38:46 Europe/Berlin] Binding offset: 0, per_page: 10
+[10-Mar-2026 05:38:46 Europe/Berlin] Rows found: 10
+[10-Mar-2026 05:38:46 Europe/Berlin] Stats: Array
+(
+    [total] => 4460
+    [update1_count] => 2210
+    [update2_count] => 319
+    [update3_count] => 93
+)
+
