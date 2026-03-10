@@ -1,5 +1,6 @@
 $(document).ready(function() {
     
+    
     // Customer Response Change Handler
     $('#customerResponse').on('change', function() {
         const response = $(this).val();
@@ -10,101 +11,305 @@ $(document).ready(function() {
         
         switch(response) {
             case 'Plan Interested':
-                html = `
-                    <div class="dynamic-field">
-                        <div class="row">
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-star-fill text-warning me-1"></i>
-                                    Select Plan
-                                </label>
-                                <select class="form-select" id="selectedPlan" required>
-                                    <option value="" selected disabled>Choose a plan</option>
-                                    <option value="Welcome Plan">Welcome Plan</option>
-                                    <option value="Starter Plan">Starter Plan</option>
-                                    <option value="Professional Plan">Professional Plan</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                html = generatePlanInterestedFields();
+                // Don't change customer status for Plan Interested
                 break;
                 
             case 'Plan Upgraded':
-                html = `
-                    <div class="dynamic-field">
-                        <div class="row">
-                            <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-arrow-up-circle-fill text-success me-1"></i>
-                                    Upgraded Plan
-                                </label>
-                                <select class="form-select" id="upgradedPlan" required>
-                                    <option value="" selected disabled>Choose upgraded plan</option>
-                                    <option value="Welcome Plan">Welcome Plan</option>
-                                    <option value="Starter Plan">Starter Plan</option>
-                                    <option value="Professional Plan">Professional Plan</option>
-                                </select>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-calendar-check-fill text-info me-1"></i>
-                                    Duration
-                                </label>
-                                <select class="form-select" id="upgradedDuration" required>
-                                    <option value="" selected disabled>Select duration</option>
-                                    <option value="1 Month">1 Month</option>
-                                    <option value="3 Months">3 Months</option>
-                                    <option value="6 Months">6 Months</option>
-                                    <option value="1 Year">1 Year</option>
-                                    <option value="2 Years">2 Years</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                html = generatePlanUpgradedFields();
+                // Auto set customer status to "Upgraded"
+                $('#customerStatus').val('Upgraded');
+                //showToast('info', 'Info!', 'Customer status automatically set to Upgraded');
                 break;
                 
             case 'Later':
-                html = `
-                    <div class="dynamic-field">
-                        <div class="row">
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-clock-fill text-primary me-1"></i>
-                                    Call Back Time
-                                </label>
-                                <select class="form-select" id="callBackTime" required>
-                                    <option value="" selected disabled>Select when to call back</option>
-                                    <option value="After 1 hour">After 1 hour</option>
-                                    <option value="After 2 hours">After 2 hours</option>
-                                    <option value="After 3 hours">After 3 hours</option>
-                                    <option value="After 6 hours">After 6 hours</option>
-                                    <option value="Tomorrow">Tomorrow</option>
-                                    <option value="After 2 days">After 2 days</option>
-                                    <option value="After 1 week">After 1 week</option>
-                                    <option value="Next month">Next month</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                html = generateLaterFields();
                 break;
                 
-            case 'CNP':
-            case 'Switch Off':
-            case 'Out of Service':
-            case 'Testing':
-            case 'Renewals':
-            case 'Not interested':
-            case 'No Business':
-            case 'Whatsapp Details sent':
             case 'Call Back AT':
-                // No additional fields needed for these options
+                html = generateCallBackAtFields();
+                break;
+                
+            default:
+                // For other responses, reset customer status if needed
+                // You can add logic here if needed
                 break;
         }
         
         container.html(html);
+        
+        // Initialize the "Other" option handlers for newly added fields
+        initializeOtherOptionHandlers();
+    });
+
+    // Also handle when customer response is changed to something else
+    $('#customerResponse').on('change', function() {
+        const response = $(this).val();
+        
+        // If response is not "Plan Upgraded", you might want to reset customer status
+        // Uncomment the following lines if you want this behavior
+        /*
+        if (response !== 'Plan Upgraded') {
+            $('#customerStatus').val('');
+        }
+        */
+    });
+
+    // Generate Plan Interested Fields
+    function generatePlanInterestedFields() {
+        return `
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-star-fill text-warning me-1"></i>
+                            Select Plan <span class="text-danger">*</span>
+                        </label>
+                        <div class="plan-select-wrapper">
+                            <select class="form-select" id="selectedPlan" required>
+                                <option value="" selected disabled>Choose a plan</option>
+                                <option value="Welcome Plan">Welcome Plan</option>
+                                <option value="Starter Plan">Starter Plan</option>
+                                <option value="Professional Plan">Professional Plan</option>
+                                <option value="Enterprise Plan">Enterprise Plan</option>
+                                <option value="other">Other (Custom Plan)</option>
+                            </select>
+                            <div id="customPlanContainer" style="display: none;" class="mt-2 custom-field">
+                                <label class="form-label">Enter Custom Plan Name:</label>
+                                <input type="text" class="form-control" id="customPlan" 
+                                    placeholder="e.g., Premium Plan, Gold Plan etc.">
+                            </div>
+                            <input type="hidden" id="finalSelectedPlan">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Generate Plan Upgraded Fields
+    function generatePlanUpgradedFields() {
+        return `
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12 col-md-6 mb-3 mb-md-0">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-arrow-up-circle-fill text-success me-1"></i>
+                            Upgraded Plan <span class="text-danger">*</span>
+                        </label>
+                        <div class="upgraded-plan-wrapper">
+                            <select class="form-select" id="upgradedPlan" required>
+                                <option value="" selected disabled>Choose upgraded plan</option>
+                                <option value="Welcome Plan">Welcome Plan</option>
+                                <option value="Starter Plan">Starter Plan</option>
+                                <option value="Professional Plan">Professional Plan</option>
+                                <option value="Enterprise Plan">Enterprise Plan</option>
+                                <option value="other">Other (Custom Plan)</option>
+                            </select>
+                            <div id="customUpgradedPlanContainer" style="display: none;" class="mt-2 custom-field">
+                                <label class="form-label">Enter Custom Plan Name:</label>
+                                <input type="text" class="form-control" id="customUpgradedPlan" 
+                                    placeholder="e.g., Premium Plan, Gold Plan etc.">
+                            </div>
+                            <input type="hidden" id="finalUpgradedPlan">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-calendar-check-fill text-info me-1"></i>
+                            Duration <span class="text-danger">*</span>
+                        </label>
+                        <div class="duration-wrapper">
+                            <select class="form-select" id="upgradedDuration" required>
+                                <option value="" selected disabled>Select duration</option>
+                                <option value="1 Month">1 Month</option>
+                                <option value="3 Months">3 Months</option>
+                                <option value="6 Months">6 Months</option>
+                                <option value="1 Year">1 Year</option>
+                                <option value="2 Years">2 Years</option>
+                                <option value="other">Other (Custom Duration)</option>
+                            </select>
+                            <div id="customDurationContainer" style="display: none;" class="mt-2 custom-field">
+                                <label class="form-label">Enter Custom Duration:</label>
+                                <input type="text" class="form-control" id="customDuration" 
+                                    placeholder="e.g., 45 days, 18 months, etc.">
+                            </div>
+                            <input type="hidden" id="finalUpgradedDuration">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Generate Later Fields
+    function generateLaterFields() {
+        return `
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-clock-fill text-primary me-1"></i>
+                            Call Back Time <span class="text-danger">*</span>
+                        </label>
+                        <div class="callback-wrapper">
+                            <select class="form-select" id="callBackTime" required>
+                                <option value="" selected disabled>Select when to call back</option>
+                                <option value="After 1 hour">After 1 hour</option>
+                                <option value="After 2 hours">After 2 hours</option>
+                                <option value="After 3 hours">After 3 hours</option>
+                                <option value="After 6 hours">After 6 hours</option>
+                                <option value="Tomorrow">Tomorrow</option>
+                                <option value="After 2 days">After 2 days</option>
+                                <option value="After 1 week">After 1 week</option>
+                                <option value="Next month">Next month</option>
+                                <option value="other">Other (Custom Time)</option>
+                            </select>
+                            <div id="customCallBackContainer" style="display: none;" class="mt-2 custom-field">
+                                <label class="form-label">Enter Custom Call Back Time:</label>
+                                <input type="text" class="form-control" id="customCallBackTime" 
+                                    placeholder="e.g., After 4 hours, Next week, After 15 days, etc.">
+                            </div>
+                            <input type="hidden" id="finalCallBackTime">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Generate Call Back AT Fields
+    function generateCallBackAtFields() {
+        return `
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-telephone-forward-fill text-primary me-1"></i>
+                            Call Back At <span class="text-danger">*</span>
+                        </label>
+                        <div class="callback-at-wrapper">
+                            <select class="form-select" id="callBackAt" required>
+                                <option value="" selected disabled>Select call back time</option>
+                                <option value="Morning 9-11 AM">Morning 9-11 AM</option>
+                                <option value="Late Morning 11-1 PM">Late Morning 11-1 PM</option>
+                                <option value="Afternoon 2-4 PM">Afternoon 2-4 PM</option>
+                                <option value="Evening 4-6 PM">Evening 4-6 PM</option>
+                                <option value="Night 7-9 PM">Night 7-9 PM</option>
+                                <option value="other">Other (Custom Time)</option>
+                            </select>
+                            <div id="customCallBackAtContainer" style="display: none;" class="mt-2 custom-field">
+                                <label class="form-label">Enter Custom Call Back Time:</label>
+                                <input type="text" class="form-control" id="customCallBackAt" 
+                                    placeholder="e.g., 10-12 AM, 3-5 PM, etc.">
+                            </div>
+                            <input type="hidden" id="finalCallBackAt">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Initialize "Other" option handlers for all dynamic selects
+    function initializeOtherOptionHandlers() {
+        // Plan Interested - Custom Plan
+        $('#selectedPlan').on('change', function() {
+            if ($(this).val() === 'other') {
+                $('#customPlanContainer').show();
+                $('#customPlan').prop('required', true);
+            } else {
+                $('#customPlanContainer').hide();
+                $('#customPlan').prop('required', false);
+                $('#finalSelectedPlan').val($(this).val());
+            }
+        });
+
+        // Plan Upgraded - Custom Plan
+        $('#upgradedPlan').on('change', function() {
+            if ($(this).val() === 'other') {
+                $('#customUpgradedPlanContainer').show();
+                $('#customUpgradedPlan').prop('required', true);
+            } else {
+                $('#customUpgradedPlanContainer').hide();
+                $('#customUpgradedPlan').prop('required', false);
+                $('#finalUpgradedPlan').val($(this).val());
+            }
+        });
+
+        // Plan Upgraded - Custom Duration
+        $('#upgradedDuration').on('change', function() {
+            if ($(this).val() === 'other') {
+                $('#customDurationContainer').show();
+                $('#customDuration').prop('required', true);
+            } else {
+                $('#customDurationContainer').hide();
+                $('#customDuration').prop('required', false);
+                $('#finalUpgradedDuration').val($(this).val());
+            }
+        });
+
+        // Later - Custom Call Back Time
+        $('#callBackTime').on('change', function() {
+            if ($(this).val() === 'other') {
+                $('#customCallBackContainer').show();
+                $('#customCallBackTime').prop('required', true);
+            } else {
+                $('#customCallBackContainer').hide();
+                $('#customCallBackTime').prop('required', false);
+                $('#finalCallBackTime').val($(this).val());
+            }
+        });
+
+        // Call Back AT - Custom Time
+        $('#callBackAt').on('change', function() {
+            if ($(this).val() === 'other') {
+                $('#customCallBackAtContainer').show();
+                $('#customCallBackAt').prop('required', true);
+            } else {
+                $('#customCallBackAtContainer').hide();
+                $('#customCallBackAt').prop('required', false);
+                $('#finalCallBackAt').val($(this).val());
+            }
+        });
+
+        // Update final values when custom fields are filled
+        $('#customPlan').on('input', function() {
+            $('#finalSelectedPlan').val($(this).val());
+        });
+
+        $('#customUpgradedPlan').on('input', function() {
+            $('#finalUpgradedPlan').val($(this).val());
+        });
+
+        $('#customDuration').on('input', function() {
+            $('#finalUpgradedDuration').val($(this).val());
+        });
+
+        $('#customCallBackTime').on('input', function() {
+            $('#finalCallBackTime').val($(this).val());
+        });
+
+        $('#customCallBackAt').on('input', function() {
+            $('#finalCallBackAt').val($(this).val());
+        });
+    }
+
+    // Call Duration Handler
+    $('#callDurationSelect').on('change', function() {
+        if ($(this).val() === 'other') {
+            $('#customCallDurationContainer').show();
+            $('#customCallDuration').prop('required', true);
+            $('#callDuration').val(''); // Clear hidden field until custom value is entered
+        } else {
+            $('#customCallDurationContainer').hide();
+            $('#customCallDuration').prop('required', false);
+            $('#callDuration').val($(this).val());
+        }
+    });
+
+    $('#customCallDuration').on('input', function() {
+        $('#callDuration').val($(this).val());
     });
 
     // Form Reset Handler
@@ -112,6 +317,8 @@ $(document).ready(function() {
         e.preventDefault();
         $('#sellerForm')[0].reset();
         $('#dynamicFieldsContainer').empty();
+        $('#customCallDurationContainer').hide();
+        $('#callDuration').val('');
     });
 
     // Form Submit Handler
@@ -148,36 +355,12 @@ $(document).ready(function() {
             return;
         }
         
+        // Process dynamic field values before submission
+        processDynamicFieldValues();
+        
         // Validate dynamic fields based on response
-        if (customerResponse === 'Plan Interested') {
-            const selectedPlan = $('#selectedPlan').val();
-            if (!selectedPlan) {
-                showToast('warning', 'Warning!', 'Please select a plan');
-                return;
-            }
-        }
-        
-        if (customerResponse === 'Plan Upgraded') {
-            const upgradedPlan = $('#upgradedPlan').val();
-            const upgradedDuration = $('#upgradedDuration').val();
-            
-            if (!upgradedPlan) {
-                showToast('warning', 'Warning!', 'Please select the upgraded plan');
-                return;
-            }
-            
-            if (!upgradedDuration) {
-                showToast('warning', 'Warning!', 'Please select the duration');
-                return;
-            }
-        }
-        
-        if (customerResponse === 'Later') {
-            const callBackTime = $('#callBackTime').val();
-            if (!callBackTime) {
-                showToast('warning', 'Warning!', 'Please select call back time');
-                return;
-            }
+        if (!validateDynamicFields()) {
+            return;
         }
         
         // Collect form data
@@ -186,15 +369,17 @@ $(document).ready(function() {
             seller_type: $('#sellerType').val() || '',
             phone_number: phoneNumber,
             customer_response: customerResponse,
-            selected_plan: $('#selectedPlan').val() || '',
-            upgraded_plan: $('#upgradedPlan').val() || '',
-            upgraded_duration: $('#upgradedDuration').val() || '',
-            call_back_time: $('#callBackTime').val() || '',
+            selected_plan: getFinalPlanValue(),
+            upgraded_plan: getFinalUpgradedPlanValue(),
+            upgraded_duration: getFinalDurationValue(),
+            call_back_time: getFinalCallBackValue(),
             customer_queries: $('#customerQueries').val().trim() || '',
             customer_status: $('#customerStatus').val() || '',
-            call_duration: $('#callDuration').val().trim() || '',
+            call_duration: $('#callDuration').val() || '',
             additional_notes: $('#additionalNotes').val().trim() || ''
         };
+        
+        console.log('Submitting form data:', formData); // For debugging
         
         // Show loading state
         const $submitBtn = $(this).find('button[type="submit"]');
@@ -203,7 +388,7 @@ $(document).ready(function() {
         
         // Send AJAX request
         $.ajax({
-            url: BASE_URL + 'ajax/work-station/workstation_add_seller.php',
+            url: '../ajax/work-station/workstation_add_seller.php',
             type: 'POST',
             data: formData,
             dataType: 'json',
@@ -212,6 +397,7 @@ $(document).ready(function() {
                     showToast('success', 'Success!', 'Seller added successfully');
                     $('#sellerForm')[0].reset();
                     $('#dynamicFieldsContainer').empty();
+                    $('#customCallDurationContainer').hide();
                     
                     // Optional: Redirect after 2 seconds
                     setTimeout(function() {
@@ -223,14 +409,147 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('AJAX Error:', error);
+                console.error('Status:', status);
                 console.error('Response:', xhr.responseText);
-                showToast('danger', 'Error!', 'Failed to save seller. Please try again.');
+                
+                let errorMessage = 'Failed to save seller. Please try again.';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMessage = response.message;
+                    }
+                } catch(e) {
+                    errorMessage = 'Server error: ' + xhr.responseText;
+                }
+                
+                showToast('danger', 'Error!', errorMessage);
             },
             complete: function() {
                 $submitBtn.html(originalText).prop('disabled', false);
             }
         });
     });
+
+    // Process dynamic field values
+    function processDynamicFieldValues() {
+        // Plan Interested
+        if ($('#selectedPlan').length) {
+            if ($('#selectedPlan').val() === 'other') {
+                $('#finalSelectedPlan').val($('#customPlan').val());
+            } else {
+                $('#finalSelectedPlan').val($('#selectedPlan').val());
+            }
+        }
+        
+        // Plan Upgraded - Plan
+        if ($('#upgradedPlan').length) {
+            if ($('#upgradedPlan').val() === 'other') {
+                $('#finalUpgradedPlan').val($('#customUpgradedPlan').val());
+            } else {
+                $('#finalUpgradedPlan').val($('#upgradedPlan').val());
+            }
+        }
+        
+        // Plan Upgraded - Duration
+        if ($('#upgradedDuration').length) {
+            if ($('#upgradedDuration').val() === 'other') {
+                $('#finalUpgradedDuration').val($('#customDuration').val());
+            } else {
+                $('#finalUpgradedDuration').val($('#upgradedDuration').val());
+            }
+        }
+        
+        // Later - Call Back Time
+        if ($('#callBackTime').length) {
+            if ($('#callBackTime').val() === 'other') {
+                $('#finalCallBackTime').val($('#customCallBackTime').val());
+            } else {
+                $('#finalCallBackTime').val($('#callBackTime').val());
+            }
+        }
+        
+        // Call Back AT
+        if ($('#callBackAt').length) {
+            if ($('#callBackAt').val() === 'other') {
+                $('#finalCallBackAt').val($('#customCallBackAt').val());
+            } else {
+                $('#finalCallBackAt').val($('#callBackAt').val());
+            }
+        }
+    }
+
+    // Get final plan value
+    function getFinalPlanValue() {
+        if ($('#selectedPlan').length) {
+            return $('#finalSelectedPlan').val() || '';
+        }
+        return '';
+    }
+
+    // Get final upgraded plan value
+    function getFinalUpgradedPlanValue() {
+        if ($('#upgradedPlan').length) {
+            return $('#finalUpgradedPlan').val() || '';
+        }
+        return '';
+    }
+
+    // Get final duration value
+    function getFinalDurationValue() {
+        if ($('#upgradedDuration').length) {
+            return $('#finalUpgradedDuration').val() || '';
+        }
+        return '';
+    }
+
+    // Get final call back value
+    function getFinalCallBackValue() {
+        if ($('#callBackTime').length) {
+            return $('#finalCallBackTime').val() || '';
+        }
+        if ($('#callBackAt').length) {
+            return $('#finalCallBackAt').val() || '';
+        }
+        return '';
+    }
+
+    // Validate dynamic fields
+    function validateDynamicFields() {
+        const response = $('#customerResponse').val();
+        
+        if (response === 'Plan Interested') {
+            const plan = getFinalPlanValue();
+            if (!plan) {
+                showToast('warning', 'Warning!', 'Please select or enter a plan');
+                return false;
+            }
+        }
+        
+        if (response === 'Plan Upgraded') {
+            const upgradedPlan = getFinalUpgradedPlanValue();
+            const duration = getFinalDurationValue();
+            
+            if (!upgradedPlan) {
+                showToast('warning', 'Warning!', 'Please select or enter the upgraded plan');
+                return false;
+            }
+            
+            if (!duration) {
+                showToast('warning', 'Warning!', 'Please select or enter the duration');
+                return false;
+            }
+        }
+        
+        if (response === 'Later' || response === 'Call Back AT') {
+            const callBack = getFinalCallBackValue();
+            if (!callBack) {
+                showToast('warning', 'Warning!', 'Please select or enter call back time');
+                return false;
+            }
+        }
+        
+        return true;
+    }
 
     // Phone number validation
     $('#phoneNumber').on('input', function() {

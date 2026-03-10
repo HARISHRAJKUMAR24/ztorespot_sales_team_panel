@@ -8,14 +8,18 @@ if (!isLoggedIn()) {
     exit;
 }
 
-// Get current user data
+// Get current user data using user_uid from session
 $user_uid = $_SESSION['user_uid'];
 $pdo = db();
 $stmt = $pdo->prepare("SELECT * FROM users WHERE user_uid = ?");
 $stmt->execute([$user_uid]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
-?>
 
+// Set profile image path
+$profile_image = !empty($user['profile_image'])
+    ? BASE_URL . $user['profile_image']
+    : 'https://via.placeholder.com/150';
+?>
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
 
@@ -180,8 +184,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                                     <option value="" selected disabled>Select current status</option>
                                                     <option value="Not yet">Not yet</option>
                                                     <option value="Upgraded">Upgraded</option>
-                                                    <option value="In Active">In Active</option>
-                                                    <option value="To be deleted">To be deleted</option>
+                                                  
                                                 </select>
                                             </div>
                                         </div>
@@ -190,13 +193,37 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                                 <i class="bi bi-clock-history text-primary me-1"></i>
                                                 Call Duration
                                             </label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-light border-end-0">
-                                                    <i class="bi bi-stopwatch"></i>
-                                                </span>
-                                                <input type="text" class="form-control border-start-0"
-                                                    placeholder="e.g., 15 mins, 30 mins, 1 hour"
-                                                    id="callDuration">
+                                            <div class="call-duration-wrapper">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-light border-end-0">
+                                                        <i class="bi bi-stopwatch"></i>
+                                                    </span>
+                                                    <select class="form-select border-start-0" id="callDurationSelect">
+                                                        <option value="" selected disabled>Select duration</option>
+                                                        <option value="5 mins">5 mins</option>
+                                                        <option value="10 mins">10 mins</option>
+                                                        <option value="15 mins">15 mins</option>
+                                                        <option value="20 mins">20 mins</option>
+                                                        <option value="25 mins">25 mins</option>
+                                                        <option value="30 mins">30 mins</option>
+                                                        <option value="45 mins">45 mins</option>
+                                                        <option value="1 hour">1 hour</option>
+                                                        <option value="1.5 hours">1.5 hours</option>
+                                                        <option value="2 hours">2 hours</option>
+                                                        <option value="other">Other (Custom)</option>
+                                                    </select>
+                                                </div>
+                                                <div id="customCallDurationContainer" style="display: none;" class="mt-2">
+                                                    <div class="input-group">
+                                                        <span class="input-group-text bg-light">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </span>
+                                                        <input type="text" class="form-control"
+                                                            placeholder="Enter custom call duration (e.g., 40 mins, 2.5 hours)"
+                                                            id="customCallDuration">
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" id="callDuration" name="call_duration">
                                             </div>
                                         </div>
                                     </div>
@@ -266,6 +293,14 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
             border-radius: 0.5rem;
         }
 
+        .custom-field {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+        }
+
         @media (min-width: 992px) {
             .container-fluid {
                 max-width: 100%;
@@ -314,6 +349,19 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
             font-weight: 600;
             color: #0d6efd;
         }
+
+        .custom-field label {
+            color: #198754;
+        }
+
+        .badge-other {
+            background-color: #ffc107;
+            color: #000;
+            font-size: 0.7rem;
+            margin-left: 5px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
     </style>
 
     <!-- Bootstrap JS -->
@@ -322,4 +370,5 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
     <script src="<?= BASE_URL ?>js/work-station/workstation_add_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>
+
 </html>

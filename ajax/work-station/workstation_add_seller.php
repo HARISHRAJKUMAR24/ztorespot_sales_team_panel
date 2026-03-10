@@ -2,8 +2,16 @@
 require_once "../../config/config.php";
 require_once "../../lib/functions.php";
 
+// Enable error reporting for debugging (disable in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Set to 0 in production
+
+// Start output buffering
+ob_start();
+
 header('Content-Type: application/json');
 
+// Start session if not started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -54,28 +62,6 @@ try {
         exit;
     }
     
-    // Validate based on customer response
-    if ($customer_response === 'Plan Interested' && empty($selected_plan)) {
-        echo json_encode(['status' => 'error', 'message' => 'Please select a plan']);
-        exit;
-    }
-    
-    if ($customer_response === 'Plan Upgraded') {
-        if (empty($upgraded_plan)) {
-            echo json_encode(['status' => 'error', 'message' => 'Please select the upgraded plan']);
-            exit;
-        }
-        if (empty($upgraded_duration)) {
-            echo json_encode(['status' => 'error', 'message' => 'Please select the duration']);
-            exit;
-        }
-    }
-    
-    if ($customer_response === 'Later' && empty($call_back_time)) {
-        echo json_encode(['status' => 'error', 'message' => 'Please select call back time']);
-        exit;
-    }
-    
     // Check if phone number already exists for this user
     $check_sql = "SELECT id FROM sellers_workstation WHERE phone_number = ? AND user_uid = ?";
     $check_stmt = $pdo->prepare($check_sql);
@@ -100,12 +86,18 @@ try {
             )";
     
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([
+    $result = $stmt->execute([
         $user_uid, $business_name, $seller_type, $phone_number, $customer_response,
         $selected_plan, $upgraded_plan, $upgraded_duration, $call_back_time,
         $customer_queries, $customer_status, $call_duration, $additional_notes
     ]);
     
+    if (!$result) {
+        throw new Exception('Failed to insert record');
+    }
+    
+    // Clear output buffer and send success response
+    ob_end_clean();
     echo json_encode([
         'status' => 'success',
         'message' => 'Seller added successfully',
@@ -114,12 +106,14 @@ try {
     
 } catch (PDOException $e) {
     error_log("Database Error in workstation_add_seller.php: " . $e->getMessage());
+    ob_end_clean();
     echo json_encode([
         'status' => 'error',
         'message' => 'Database error occurred. Please try again.'
     ]);
 } catch (Exception $e) {
     error_log("General Error in workstation_add_seller.php: " . $e->getMessage());
+    ob_end_clean();
     echo json_encode([
         'status' => 'error',
         'message' => 'An error occurred. Please try again.'
