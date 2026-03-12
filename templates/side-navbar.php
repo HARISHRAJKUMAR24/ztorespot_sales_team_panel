@@ -43,7 +43,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/follow-ups/follow-ups.php">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/follow-ups/sheets_followup_list.php">
             <svg class="bi" aria-hidden="true">
               <use xlink:href="#follow-up"></use>
             </svg>
