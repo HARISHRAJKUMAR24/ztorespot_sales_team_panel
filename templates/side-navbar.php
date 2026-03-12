@@ -4,9 +4,10 @@
     id="sidebarMenu"
     aria-labelledby="sidebarMenuLabel">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="sidebarMenuLabel">
-        Company name
-      </h5>
+      <div class="offcanvas-title d-flex align-items-center gap-2" id="sidebarMenuLabel">
+        <img src="<?= ASSETS_URL ?>images/logo-black.png" alt="Logo" height="35" class="d-inline-block">
+        <span class="fw-semibold fs-6">Sales Team</span>
+      </div>
       <button type="button"
         class="btn-close"
         data-bs-dismiss="offcanvas"
