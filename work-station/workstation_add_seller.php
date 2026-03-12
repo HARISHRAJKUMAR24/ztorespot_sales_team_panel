@@ -129,6 +129,7 @@ $profile_image = !empty($user['profile_image'])
                                                 <span class="input-group-text bg-light border-end-0">
                                                     <i class="bi bi-megaphone"></i>
                                                 </span>
+
                                                 <select class="form-select border-start-0" id="customerResponse" required>
                                                     <option value="" selected disabled>Select response type</option>
                                                     <option value="Plan Upgraded">Plan Upgraded</option>
@@ -139,7 +140,7 @@ $profile_image = !empty($user['profile_image'])
                                                     <option value="Switch Off">Switch Off</option>
                                                     <option value="No Business">No Business</option>
                                                     <option value="Whatsapp Details sent">Whatsapp Details sent</option>
-                                                    <option value="Call Back AT">Call Back AT</option>
+                                                    
                                                     <option value="Out of Service">Out of Service</option>
                                                     <option value="Testing">Testing</option>
                                                     <option value="Renewals">Renewals</option>
@@ -387,4 +388,5 @@ $profile_image = !empty($user['profile_image'])
     <script src="<?= BASE_URL ?>js/work-station/workstation_add_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>
+
 </html>

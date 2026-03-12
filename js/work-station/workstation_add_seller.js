@@ -23,9 +23,6 @@ $(document).ready(function() {
                 html = generateLaterFields();
                 break;
                 
-            case 'Call Back AT':
-                html = generateCallBackAtFields();
-                break;
                 
             case 'Shedule':
                 html = generateScheduleFields();
@@ -170,38 +167,6 @@ $(document).ready(function() {
         `;
     }
 
-    // Generate Call Back AT Fields
-    function generateCallBackAtFields() {
-        return `
-            <div class="dynamic-field">
-                <div class="row">
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-telephone-forward-fill text-primary me-1"></i>
-                            Call Back At <span class="text-danger">*</span>
-                        </label>
-                        <div class="callback-at-wrapper">
-                            <select class="form-select" id="callBackAt" required>
-                                <option value="" selected disabled>Select call back time</option>
-                                <option value="Morning 9-11 AM">Morning 9-11 AM</option>
-                                <option value="Late Morning 11-1 PM">Late Morning 11-1 PM</option>
-                                <option value="Afternoon 2-4 PM">Afternoon 2-4 PM</option>
-                                <option value="Evening 4-6 PM">Evening 4-6 PM</option>
-                                <option value="Night 7-9 PM">Night 7-9 PM</option>
-                                <option value="other">Other (Custom Time)</option>
-                            </select>
-                            <div id="customCallBackAtContainer" style="display: none;" class="mt-2 custom-field">
-                                <label class="form-label">Enter Custom Call Back Time:</label>
-                                <input type="text" class="form-control" id="customCallBackAt" 
-                                    placeholder="e.g., 10-12 AM, 3-5 PM, etc.">
-                            </div>
-                            <input type="hidden" id="finalCallBackAt">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
 
     // Generate Schedule Fields with Datepicker
     function generateScheduleFields() {
@@ -316,18 +281,6 @@ $(document).ready(function() {
                 $('#customCallBackContainer').hide();
                 $('#customCallBackTime').prop('required', false);
                 $('#finalCallBackTime').val($(this).val());
-            }
-        });
-
-        // Call Back AT - Custom Time
-        $('#callBackAt').on('change', function() {
-            if ($(this).val() === 'other') {
-                $('#customCallBackAtContainer').show();
-                $('#customCallBackAt').prop('required', true);
-            } else {
-                $('#customCallBackAtContainer').hide();
-                $('#customCallBackAt').prop('required', false);
-                $('#finalCallBackAt').val($(this).val());
             }
         });
 

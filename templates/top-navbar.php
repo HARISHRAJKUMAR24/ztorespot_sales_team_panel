@@ -16,7 +16,7 @@
         
         <!-- Username visible on larger screens -->
         <span class="text-white me-3 d-none d-lg-inline">
-            Welcome, <strong><?= htmlspecialchars(explode(' ', $userName)[0]) ?></strong>
+            <strong><?= htmlspecialchars(explode(' ', $userName)[0]) ?></strong>
         </span>
         
         <!-- Profile Dropdown -->

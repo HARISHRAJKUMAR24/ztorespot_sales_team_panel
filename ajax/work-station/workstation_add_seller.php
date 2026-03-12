@@ -2,9 +2,9 @@
 require_once "../../config/config.php";
 require_once "../../lib/functions.php";
 
-// Enable error reporting for debugging (disable in production)
+// Enable error reporting for debugging
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Set to 0 in production
+ini_set('display_errors', 1); // Temporarily enable for debugging
 
 // Start output buffering
 ob_start();
@@ -26,19 +26,22 @@ try {
     $pdo = db();
     $user_uid = $_SESSION['user_uid'];
     
-    // Get and sanitize POST data from the form
-    $business_name = trim($_POST['business_name'] ?? ''); // This will go to work_details_update
-    $seller_type = trim($_POST['seller_type'] ?? ''); // This will go to source_type
+    // Get and sanitize POST data
+    $business_name = trim($_POST['business_name'] ?? '');
+    $seller_type = trim($_POST['seller_type'] ?? '');
     $phone_number = trim($_POST['phone_number'] ?? '');
-    $customer_response = trim($_POST['customer_response'] ?? ''); // This will go to customer_response
-    $selected_plan = trim($_POST['selected_plan'] ?? ''); // This will go to plans_interested
-    $upgraded_plan = trim($_POST['upgraded_plan'] ?? ''); // This will be combined with notes
-    $upgraded_duration = trim($_POST['upgraded_duration'] ?? ''); // This will be combined with notes
-    $call_back_time = trim($_POST['call_back_time'] ?? ''); // This will go to call_timing
-    $customer_queries = trim($_POST['customer_queries'] ?? ''); // This will go to customer_queries
-    $customer_status = trim($_POST['customer_status'] ?? ''); // This will go to current_status
-    $call_duration = trim($_POST['call_duration'] ?? ''); // This will go to remembering_notes or latest_update
-    $additional_notes = trim($_POST['additional_notes'] ?? ''); // This will go to remarks
+    $customer_response = trim($_POST['customer_response'] ?? '');
+    $selected_plan = trim($_POST['selected_plan'] ?? '');
+    $upgraded_plan = trim($_POST['upgraded_plan'] ?? '');
+    $upgraded_duration = trim($_POST['upgraded_duration'] ?? '');
+    $call_back_time = trim($_POST['call_back_time'] ?? '');
+    $customer_queries = trim($_POST['customer_queries'] ?? '');
+    $customer_status = trim($_POST['customer_status'] ?? '');
+    $call_duration = trim($_POST['call_duration'] ?? '');
+    $additional_notes = trim($_POST['additional_notes'] ?? '');
+    
+    // Log the customer_response value
+    error_log("Attempting to insert customer_response: '" . $customer_response . "'");
     
     // Validate required fields
     if (empty($business_name)) {
@@ -56,70 +59,73 @@ try {
         exit;
     }
     
-    // Validate phone number format
+    // Validate phone number
     if (!preg_match('/^\d{10}$/', $phone_number)) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid phone number format. Please enter 10 digits.']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid phone number format']);
         exit;
     }
     
-    // Check if phone number already exists for this user in sales_person_sellers table
+    // Check if phone number exists
     $check_sql = "SELECT id FROM sales_person_sellers WHERE phone_number = ? AND user_uid = ?";
     $check_stmt = $pdo->prepare($check_sql);
     $check_stmt->execute([$phone_number, $user_uid]);
     
     if ($check_stmt->fetch()) {
-        echo json_encode(['status' => 'error', 'message' => 'This phone number already exists in your list']);
+        echo json_encode(['status' => 'error', 'message' => 'Phone number already exists']);
         exit;
     }
     
-    // Determine registration status based on seller_type or customer_response
-    $registration_status = 'No'; // Default
-    if ($seller_type == 'Register Seller' || $customer_response == 'Plan Upgraded' || $customer_response == 'Plan Interested') {
+    // Determine registration status
+    $registration_status = 'No';
+    if ($seller_type == 'Register Seller' || 
+        $customer_response == 'Plan Upgraded' || 
+        $customer_response == 'Plan Interested') {
         $registration_status = 'Yes';
     }
     
-    // Determine plans_interested based on selected_plan or upgraded_plan
-    $plans_interested = '';
+    // Determine plans_interested
+    $plans_interested = 'None';
     if (!empty($selected_plan)) {
         $plans_interested = $selected_plan;
     } elseif (!empty($upgraded_plan)) {
         $plans_interested = $upgraded_plan;
-    } else {
-        $plans_interested = 'None';
     }
     
-    // Combine notes for remembering_notes and latest_update
-    $remembering_notes = '';
-    $latest_update = '';
-    
+    // Build remembering_notes
+    $remembering_notes = [];
     if (!empty($call_duration)) {
-        $remembering_notes .= "Call Duration: " . $call_duration . ". ";
+        $remembering_notes[] = "Call Duration: " . $call_duration;
     }
-    
     if (!empty($upgraded_duration)) {
-        $remembering_notes .= "Upgraded Duration: " . $upgraded_duration . ". ";
+        $remembering_notes[] = "Upgraded Duration: " . $upgraded_duration;
+    }
+    $remembering_notes_str = implode(". ", $remembering_notes);
+    
+    // Build latest_update
+    $latest_update = '';
+    switch($customer_response) {
+        case 'Plan Upgraded':
+            $latest_update = "Customer upgraded to " . $upgraded_plan . " for " . $upgraded_duration;
+            break;
+        case 'Plan Interested':
+            $latest_update = "Customer interested in " . $selected_plan;
+            break;
+        case 'Later':
+        case 'Call Back AT':
+            $latest_update = "Customer asked to call back: " . $call_back_time;
+            break;
+        case 'Shedule':
+            $latest_update = "Scheduled for: " . $call_back_time;
+            break;
+        default:
+            $latest_update = $customer_response;
     }
     
-    if (!empty($additional_notes)) {
-        $remarks = $additional_notes;
-    } else {
-        $remarks = '';
-    }
+    // First, let's check what values are allowed in the constraint
+    // Run this query manually in phpMyAdmin to see the constraint
+    // SHOW CREATE TABLE sales_person_sellers;
     
-    // Set latest_update based on customer_response
-    if ($customer_response == 'Plan Upgraded') {
-        $latest_update = "Customer upgraded to " . $upgraded_plan . " for " . $upgraded_duration;
-    } elseif ($customer_response == 'Plan Interested') {
-        $latest_update = "Customer interested in " . $selected_plan;
-    } elseif ($customer_response == 'Later' || $customer_response == 'Call Back AT') {
-        $latest_update = "Customer asked to call back: " . $call_back_time;
-    } elseif ($customer_response == 'Shedule') {
-        $latest_update = "Scheduled for: " . $call_back_time;
-    } else {
-        $latest_update = $customer_response;
-    }
-    
-    // Insert data into sales_person_sellers table
+    // For now, let's try to insert with the exact value that worked before
     $sql = "INSERT INTO sales_person_sellers (
                 user_uid, 
                 work_details_update, 
@@ -141,49 +147,56 @@ try {
             )";
     
     $stmt = $pdo->prepare($sql);
-    $result = $stmt->execute([
-        $user_uid,                      // user_uid
-        $business_name,                  // work_details_update
-        $seller_type,                    // source_type
-        $registration_status,            // registration_status
-        $phone_number,                    // phone_number
-        $plans_interested,                // plans_interested
-        $customer_response,               // customer_response
-        $remembering_notes,               // remembering_notes
-        $latest_update,                    // latest_update
-        $customer_status,                  // current_status
-        $customer_queries,                 // customer_queries
-        $call_back_time,                    // call_timing
-        $remarks                             // remarks
-    ]);
+    
+    $params = [
+        $user_uid,
+        $business_name,
+        $seller_type,
+        $registration_status,
+        $phone_number,
+        $plans_interested,
+        $customer_response, // This is the value causing the issue
+        $remembering_notes_str,
+        $latest_update,
+        $customer_status,
+        $customer_queries,
+        $call_back_time,
+        $additional_notes
+    ];
+    
+    // Log the parameters
+    error_log("Insert params: " . print_r($params, true));
+    
+    $result = $stmt->execute($params);
     
     if (!$result) {
-        throw new Exception('Failed to insert record');
+        $errorInfo = $stmt->errorInfo();
+        error_log("SQL Error: " . print_r($errorInfo, true));
+        throw new Exception('Failed to insert: ' . $errorInfo[2]);
     }
     
     $inserted_id = $pdo->lastInsertId();
     
-    // Clear output buffer and send success response
     ob_end_clean();
     echo json_encode([
         'status' => 'success',
-        'message' => 'Seller added successfully to follow-up list',
+        'message' => 'Seller added successfully',
         'id' => $inserted_id
     ]);
     
 } catch (PDOException $e) {
-    error_log("Database Error in workstation_add_seller.php: " . $e->getMessage());
+    error_log("Database Error: " . $e->getMessage());
     ob_end_clean();
     echo json_encode([
         'status' => 'error',
-        'message' => 'Database error occurred. Please try again.'
+        'message' => 'Database error: ' . $e->getMessage()
     ]);
 } catch (Exception $e) {
-    error_log("General Error in workstation_add_seller.php: " . $e->getMessage());
+    error_log("General Error: " . $e->getMessage());
     ob_end_clean();
     echo json_encode([
         'status' => 'error',
-        'message' => 'An error occurred. Please try again.'
+        'message' => 'Error: ' . $e->getMessage()
     ]);
 }
 ?>
