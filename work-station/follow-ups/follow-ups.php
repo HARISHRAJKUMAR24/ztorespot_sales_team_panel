@@ -73,7 +73,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                 <p class="card-text small text-muted mb-3">
                                     View sellers imported from sheets that need follow up
                                 </p>
-                                <a href="workstation_sheet_list.php" class="btn btn-success btn-sm w-100">
+                                <a href="sheets_followup_list.php" class="btn btn-success btn-sm w-100">
                                     <i class="bi bi-arrow-right-circle me-2"></i>View
                                 </a>
                             </div>
