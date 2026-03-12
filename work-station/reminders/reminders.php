@@ -97,35 +97,15 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=CNP" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
+                                    <a href="cnp_sellers.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Card 2: Not Interested -->
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card border-0 shadow-sm rounded-3 h-100">
-                            <div class="card-body p-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0">
-                                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
-                                            <i class="bi bi-hand-thumbs-down text-warning"></i>
-                                        </div>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6 class="text-muted mb-0 small">Not Interested</h6>
-                                        <h3 class="fw-bold text-warning mb-0"><?= $counts['not_interested'] ?></h3>
-                                    </div>
-                                </div>
-                                <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=Not%20interested" class="btn btn-outline-warning btn-sm rounded-pill px-3">View</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Card 3: Later Call -->
+
+                    <!-- Card 2: Later Call -->
                     <div class="col-md-4 col-sm-6">
                         <div class="card border-0 shadow-sm rounded-3 h-100">
                             <div class="card-body p-3">
@@ -147,7 +127,7 @@ $total_count = $stmt->fetchColumn();
                         </div>
                     </div>
 
-                    <!-- Card 4: Switch Off -->
+                    <!-- Card 3: Switch Off -->
                     <div class="col-md-4 col-sm-6">
                         <div class="card border-0 shadow-sm rounded-3 h-100">
                             <div class="card-body p-3">
@@ -169,7 +149,7 @@ $total_count = $stmt->fetchColumn();
                         </div>
                     </div>
 
-                    <!-- Card 6: Out of Service -->
+                    <!-- Card 4: Out of Service -->
                     <div class="col-md-4 col-sm-6">
                         <div class="card border-0 shadow-sm rounded-3 h-100">
                             <div class="card-body p-3">
@@ -190,6 +170,28 @@ $total_count = $stmt->fetchColumn();
                             </div>
                         </div>
                     </div>
+
+                    <!-- Card 5: Not Interested -->
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
+                                            <i class="bi bi-hand-thumbs-down text-warning"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-0 small">Not Interested</h6>
+                                        <h3 class="fw-bold text-warning mb-0"><?= $counts['not_interested'] ?></h3>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-end">
+                                    <a href="filtered_list.php?status=Not%20interested" class="btn btn-outline-warning btn-sm rounded-pill px-3">View</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </main>
@@ -201,4 +203,5 @@ $total_count = $stmt->fetchColumn();
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>
+
 </html>

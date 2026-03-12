@@ -1,6 +1,6 @@
 <?php
-require_once '../../lib/functions.php';
-require_once '../../config/config.php';
+require_once '../lib/functions.php';
+require_once '../config/config.php';
 
 // Check if user is logged in
 if (!isLoggedIn()) {
@@ -99,7 +99,7 @@ $seller_json = json_encode($seller);
                                 <form id="sellerForm" data-seller-id="<?= $seller_id ?>">
                                     <input type="hidden" id="sellerId" value="<?= $seller_id ?>">
                                     <input type="hidden" id="sellerData" value='<?= htmlspecialchars($seller_json, ENT_QUOTES, 'UTF-8') ?>'>
-                                    
+
                                     <!-- Row 1: Business Name -->
                                     <div class="row mb-3">
                                         <div class="col-12">
@@ -286,7 +286,7 @@ $seller_json = json_encode($seller);
                                                         </span>
                                                         <input type="text" class="form-control"
                                                             placeholder="Enter custom call timing"
-                                                            id="customCallTiming" value="<?= !in_array($form_data['call_timing'], ['Morning 9-11 AM','Late Morning 11-1 PM','Afternoon 2-4 PM','Evening 4-6 PM','Night 7-9 PM']) ? htmlspecialchars($form_data['call_timing']) : '' ?>">
+                                                            id="customCallTiming" value="<?= !in_array($form_data['call_timing'], ['Morning 9-11 AM', 'Late Morning 11-1 PM', 'Afternoon 2-4 PM', 'Evening 4-6 PM', 'Night 7-9 PM']) ? htmlspecialchars($form_data['call_timing']) : '' ?>">
                                                     </div>
                                                 </div>
                                                 <input type="hidden" id="callTiming" name="call_timing" value="<?= htmlspecialchars($form_data['call_timing']) ?>">
@@ -343,9 +343,11 @@ $seller_json = json_encode($seller);
             font-size: 0.9rem;
             margin-bottom: 0.35rem;
         }
+
         .input-group-text {
             background-color: #f8f9fa;
         }
+
         .dynamic-field {
             background-color: #f8f9fa;
             border-left: 4px solid #198754;
@@ -353,6 +355,7 @@ $seller_json = json_encode($seller);
             margin-bottom: 1rem;
             border-radius: 0.5rem;
         }
+
         .custom-field {
             margin-top: 10px;
             padding: 10px;
@@ -360,6 +363,7 @@ $seller_json = json_encode($seller);
             border: 1px solid #dee2e6;
             border-radius: 0.5rem;
         }
+
         .date-field {
             margin-top: 10px;
             padding: 15px;
@@ -367,14 +371,17 @@ $seller_json = json_encode($seller);
             border: 1px solid #198754;
             border-radius: 0.5rem;
         }
+
         .input-group.date .input-group-text {
             cursor: pointer;
         }
+
         @media (min-width: 992px) {
             .card-body {
                 padding: 2rem !important;
             }
         }
+
         .card:hover {
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
         }
@@ -385,7 +392,8 @@ $seller_json = json_encode($seller);
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
     <!-- Bootstrap Datepicker JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
-    <script src="<?= BASE_URL ?>js/work-station/follow-ups/sheets_edit_seller.js"></script>
+    <script src="<?= BASE_URL ?>js/work-station/sheets_edit_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>
+
 </html>
