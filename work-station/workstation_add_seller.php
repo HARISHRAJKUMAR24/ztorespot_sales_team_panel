@@ -144,7 +144,7 @@ $profile_image = !empty($user['profile_image'])
                                                     <option value="Out of Service">Out of Service</option>
                                                     <option value="Testing">Testing</option>
                                                     <option value="Renewals">Renewals</option>
-                                                    <option value="Shedule">Shedule (Select Date)</option>
+                                                    <option value="Schedule">Schedule (Select Date)</option>
                                                 </select>
                                             </div>
                                         </div>

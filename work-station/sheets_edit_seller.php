@@ -156,6 +156,7 @@ $seller_json = json_encode($seller);
                                     </div>
 
                                     <!-- Row 3: Customer Response -->
+                                    <!-- Row 3: Customer Response -->
                                     <div class="row mb-3">
                                         <div class="col-12">
                                             <label class="form-label fw-semibold">
@@ -180,7 +181,7 @@ $seller_json = json_encode($seller);
                                                     <option value="Out of Service" <?= $form_data['customer_response'] == 'Out of Service' ? 'selected' : '' ?>>Out of Service</option>
                                                     <option value="Testing" <?= $form_data['customer_response'] == 'Testing' ? 'selected' : '' ?>>Testing</option>
                                                     <option value="Renewals" <?= $form_data['customer_response'] == 'Renewals' ? 'selected' : '' ?>>Renewals</option>
-                                                    <option value="Shedule" <?= $form_data['customer_response'] == 'Shedule' ? 'selected' : '' ?>>Shedule (Select Date)</option>
+                                                    <option value="Schedule" <?= ($form_data['customer_response'] == 'Schedule' || $form_data['customer_response'] == 'Shedule') ? 'selected' : '' ?>>Schedule (Select Date)</option>
                                                 </select>
                                             </div>
                                         </div>

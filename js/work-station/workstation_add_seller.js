@@ -24,7 +24,7 @@ $(document).ready(function() {
                 break;
                 
                 
-            case 'Shedule':
+            case 'Schedule':
                 html = generateScheduleFields();
                 break;
                 
@@ -39,7 +39,7 @@ $(document).ready(function() {
         initializeOtherOptionHandlers();
         
         // Initialize datepicker if schedule fields are shown
-        if (response === 'Shedule') {
+        if (response === 'Schedule') {
             initializeDatepicker();
         }
     });
@@ -216,8 +216,8 @@ $(document).ready(function() {
             $('#scheduleDate').on('change', function() {
                 const selectedDate = $(this).val();
                 if (selectedDate) {
-                    // Format: Shedule at dd/mm/yyyy
-                    $('#finalScheduleDate').val('Shedule at ' + selectedDate);
+                    // Format: Schedule at dd/mm/yyyy
+                    $('#finalScheduleDate').val('Schedule at ' + selectedDate);
                 }
             });
             
@@ -492,7 +492,7 @@ $(document).ready(function() {
         if ($('#scheduleDate').length) {
             const scheduleDate = $('#scheduleDate').val();
             if (scheduleDate) {
-                $('#finalScheduleDate').val('Shedule at ' + scheduleDate);
+                $('#finalScheduleDate').val('Schedule at ' + scheduleDate);
             }
         }
     }
@@ -562,10 +562,10 @@ $(document).ready(function() {
             }
         }
         
-        if (response === 'Later' || response === 'Call Back AT' || response === 'Shedule') {
+        if (response === 'Later' || response === 'Call Back AT' || response === 'Schedule') {
             const callBack = getFinalCallBackValue();
             if (!callBack) {
-                const fieldName = response === 'Shedule' ? 'schedule date' : 'call back time';
+                const fieldName = response === 'Schedule' ? 'schedule date' : 'call back time';
                 showToast('warning', 'Warning!', `Please select or enter ${fieldName}`);
                 return false;
             }

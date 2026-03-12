@@ -114,7 +114,7 @@ try {
         case 'Call Back AT':
             $latest_update = "Customer asked to call back: " . $call_back_time;
             break;
-        case 'Shedule':
+        case 'Schedule':
             $latest_update = "Scheduled for: " . $call_back_time;
             break;
         default:

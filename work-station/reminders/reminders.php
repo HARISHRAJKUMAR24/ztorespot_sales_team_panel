@@ -15,16 +15,14 @@ $pdo = db();
 // Get counts for different statuses - matching actual values in database
 $statuses = [
     'cnp' => "customer_response = 'CNP'",
-    'not_interested' => "customer_response = 'Not interested'", // Added missing
+    'not_interested' => "customer_response = 'Not interested'",
     'later' => "customer_response = 'Later'",
+    'schedule' => "customer_response = 'Schedule' OR customer_response = 'Shedule'", // Handle both spellings
     'switch_off' => "customer_response = 'Switch Off'",
-    'no_business' => "customer_response = 'No Business'", // Added missing
+    'no_business' => "customer_response = 'No Business'",
     'out_of_service' => "customer_response = 'Out of Service'",
-    'whatsapp_sent' => "customer_response = 'Whatsapp Details sent'", // Added missing
-    'call_back_at' => "customer_response = 'Call Back AT'", // Added missing
-    'plan_upgraded' => "customer_response = 'Plan Upgraded'", // Added missing
-    'testing' => "customer_response = 'Testing'", // Added missing
-    'plan_interested' => "customer_response = 'Plan Interested'" // Added missing
+    'whatsapp_sent' => "customer_response = 'Whatsapp Details sent'",
+    'testing' => "customer_response = 'Testing'"
 ];
 
 $counts = [];
@@ -79,21 +77,22 @@ $total_count = $stmt->fetchColumn();
                     </div>
                 </div>
 
-                <!-- 3x2 Cards Grid -->
+                <!-- 3x4 Cards Grid (12 cards) -->
                 <div class="row g-3 mt-2">
-                    <!-- Card 1: CNP -->
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <!-- Card 1: CNP - Danger -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0">
                                         <div class="bg-danger bg-opacity-10 p-2 rounded-circle">
-                                            <i class="bi bi-telephone-x text-danger"></i>
+                                            <i class="bi bi-telephone-x text-danger fs-4"></i>
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="text-muted mb-0 small">CNP (Call Not Picked)</h6>
+                                        <h6 class="text-muted mb-0 small">CNP</h6>
                                         <h3 class="fw-bold text-danger mb-0"><?= $counts['cnp'] ?></h3>
+                                        <small class="text-muted">Call Not Picked</small>
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
@@ -103,43 +102,66 @@ $total_count = $stmt->fetchColumn();
                         </div>
                     </div>
 
-
-
-                    <!-- Card 2: Later Call -->
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <!-- Card 2: Later Call - Info -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0">
                                         <div class="bg-info bg-opacity-10 p-2 rounded-circle">
-                                            <i class="bi bi-clock-history text-info"></i>
+                                            <i class="bi bi-clock-history text-info fs-4"></i>
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <h6 class="text-muted mb-0 small">Later Call</h6>
                                         <h3 class="fw-bold text-info mb-0"><?= $counts['later'] ?></h3>
+                                        <small class="text-muted">Call Back Later</small>
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=Later" class="btn btn-outline-info btn-sm rounded-pill px-3">View</a>
+                                    <a href="later_sellers.php" class="btn btn-outline-info btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Card 3: Switch Off -->
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <!-- Card 3: Schedule Calls - Success -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                                            <i class="bi bi-calendar-check text-success fs-4"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-0 small">Schedule</h6>
+                                        <h3 class="fw-bold text-success mb-0"><?= $counts['schedule'] ?></h3>
+                                        <small class="text-muted">Scheduled Follow-ups</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-end">
+                                    <a href="schedule_sellers.php" class="btn btn-outline-success btn-sm rounded-pill px-3">View</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 8: Switch Off - Secondary -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0">
                                         <div class="bg-secondary bg-opacity-10 p-2 rounded-circle">
-                                            <i class="bi bi-power text-secondary"></i>
+                                            <i class="bi bi-power text-secondary fs-4"></i>
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <h6 class="text-muted mb-0 small">Switch Off</h6>
                                         <h3 class="fw-bold text-secondary mb-0"><?= $counts['switch_off'] ?></h3>
+                                        <small class="text-muted">Phone Switched Off</small>
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
@@ -149,45 +171,115 @@ $total_count = $stmt->fetchColumn();
                         </div>
                     </div>
 
-                    <!-- Card 4: Out of Service -->
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <!-- Card 10: Out of Service - Danger (Dark) -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0">
-                                        <div class="bg-dark bg-opacity-10 p-2 rounded-circle">
-                                            <i class="bi bi-exclamation-triangle text-dark"></i>
+                                        <div class="bg-danger bg-opacity-10 p-2 rounded-circle">
+                                            <i class="bi bi-exclamation-triangle text-danger fs-4"></i>
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <h6 class="text-muted mb-0 small">Out of Service</h6>
-                                        <h3 class="fw-bold text-dark mb-0"><?= $counts['out_of_service'] ?></h3>
+                                        <h3 class="fw-bold text-danger mb-0"><?= $counts['out_of_service'] ?></h3>
+                                        <small class="text-muted">Number Inactive</small>
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=Out%20of%20Service" class="btn btn-outline-dark btn-sm rounded-pill px-3">View</a>
+                                    <a href="filtered_list.php?status=Out%20of%20Service" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Card 5: Not Interested -->
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <!-- Card 11: WhatsApp Sent - Success (Light) -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-success bg-opacity-10 p-2 rounded-circle">
+                                            <i class="bi bi-whatsapp text-success fs-4"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-0 small">WhatsApp Sent</h6>
+                                        <h3 class="fw-bold text-success mb-0"><?= $counts['whatsapp_sent'] ?></h3>
+                                        <small class="text-muted">Details Sent</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-end">
+                                    <a href="filtered_list.php?status=Whatsapp%20Details%20sent" class="btn btn-outline-success btn-sm rounded-pill px-3">View</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 12: Testing - Info (Light) -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-info bg-opacity-10 p-2 rounded-circle">
+                                            <i class="bi bi-bug text-info fs-4"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-0 small">Testing</h6>
+                                        <h3 class="fw-bold text-info mb-0"><?= $counts['testing'] ?></h3>
+                                        <small class="text-muted">Test Calls</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-end">
+                                    <a href="filtered_list.php?status=Testing" class="btn btn-outline-info btn-sm rounded-pill px-3">View</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 7: Not Interested - Warning -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0">
                                         <div class="bg-warning bg-opacity-10 p-2 rounded-circle">
-                                            <i class="bi bi-hand-thumbs-down text-warning"></i>
+                                            <i class="bi bi-hand-thumbs-down text-warning fs-4"></i>
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <h6 class="text-muted mb-0 small">Not Interested</h6>
                                         <h3 class="fw-bold text-warning mb-0"><?= $counts['not_interested'] ?></h3>
+                                        <small class="text-muted">Rejected</small>
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
                                     <a href="filtered_list.php?status=Not%20interested" class="btn btn-outline-warning btn-sm rounded-pill px-3">View</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                                        <!-- Card 9: No Business - Dark -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-dark bg-opacity-10 p-2 rounded-circle">
+                                            <i class="bi bi-briefcase text-dark fs-4"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-0 small">No Business</h6>
+                                        <h3 class="fw-bold text-dark mb-0"><?= $counts['no_business'] ?></h3>
+                                        <small class="text-muted">Not Operating</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-end">
+                                    <a href="filtered_list.php?status=No%20Business" class="btn btn-outline-dark btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -197,6 +289,74 @@ $total_count = $stmt->fetchColumn();
             </main>
         </div>
     </div>
+
+    <style>
+        .card-hover {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Custom color classes */
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
+
+        .bg-purple.bg-opacity-10 {
+            background-color: rgba(111, 66, 193, 0.1) !important;
+        }
+
+        .text-purple {
+            color: #6f42c1 !important;
+        }
+
+        .btn-outline-purple {
+            color: #6f42c1;
+            border-color: #6f42c1;
+        }
+
+        .btn-outline-purple:hover {
+            color: #fff;
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+        }
+
+        .bg-indigo {
+            background-color: #6610f2 !important;
+        }
+
+        .bg-indigo.bg-opacity-10 {
+            background-color: rgba(102, 16, 242, 0.1) !important;
+        }
+
+        .text-indigo {
+            color: #6610f2 !important;
+        }
+
+        .btn-outline-indigo {
+            color: #6610f2;
+            border-color: #6610f2;
+        }
+
+        .btn-outline-indigo:hover {
+            color: #fff;
+            background-color: #6610f2;
+            border-color: #6610f2;
+        }
+
+        .badge {
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .col-sm-6 {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
 
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

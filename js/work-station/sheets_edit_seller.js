@@ -70,7 +70,7 @@ $(document).ready(function () {
             case 'Call Back AT':
                 html = generateCallBackAtFields();
                 break;
-            case 'Shedule':
+            case 'Schedule':
                 html = generateScheduleFields();
                 break;
         }
@@ -84,7 +84,7 @@ $(document).ready(function () {
         }, 100);
 
         // Initialize datepicker for schedule
-        if (response === 'Shedule') {
+        if (response === 'Schedule') {
             initializeDatepicker();
         }
     });
@@ -296,7 +296,7 @@ $(document).ready(function () {
             $('#scheduleDate').on('change', function () {
                 const selectedDate = $(this).val();
                 if (selectedDate) {
-                    $('#finalScheduleDate').val('Shedule at ' + selectedDate);
+                    $('#finalScheduleDate').val('Schedule at ' + selectedDate);
                 }
             });
 
@@ -313,8 +313,8 @@ $(document).ready(function () {
             setTimeout(function () {
                 if (sellerData && sellerData.call_timing) {
                     const callTiming = sellerData.call_timing;
-                    if (callTiming && callTiming.startsWith('Shedule at ')) {
-                        const datePart = callTiming.replace('Shedule at ', '');
+                    if (callTiming && callTiming.startsWith('Schedule at ')) {
+                        const datePart = callTiming.replace('Schedule at ', '');
                         $('#scheduleDate').val(datePart);
                         $('#finalScheduleDate').val(callTiming);
 
@@ -421,10 +421,10 @@ $(document).ready(function () {
             }
         }
 
-        if (currentResponse === 'Shedule') {
+        if (currentResponse === 'Schedule') {
             const callTiming = sellerData.call_timing || '';
-            if (callTiming && callTiming.startsWith('Shedule at ')) {
-                const datePart = callTiming.replace('Shedule at ', '');
+            if (callTiming && callTiming.startsWith('Schedule at ')) {
+                const datePart = callTiming.replace('Schedule at ', '');
                 setTimeout(function () {
                     $('#scheduleDate').val(datePart);
                     $('#finalScheduleDate').val(callTiming);
@@ -753,7 +753,7 @@ $(document).ready(function () {
         if ($('#scheduleDate').length > 0) {
             const scheduleDate = $('#scheduleDate').val();
             if (scheduleDate && scheduleDate !== '') {
-                $('#finalScheduleDate').val('Shedule at ' + scheduleDate);
+                $('#finalScheduleDate').val('Schedule at ' + scheduleDate);
             }
         }
     }
@@ -820,10 +820,10 @@ $(document).ready(function () {
             }
         }
 
-        if (response === 'Later' || response === 'Call Back AT' || response === 'Shedule') {
+        if (response === 'Later' || response === 'Call Back AT' || response === 'Schedule') {
             const callBack = getFinalCallBackValue();
             if (!callBack || callBack === '') {
-                const fieldName = response === 'Shedule' ? 'schedule date' : 'call back time';
+                const fieldName = response === 'Schedule' ? 'schedule date' : 'call back time';
                 showToast('warning', 'Warning!', 'Please select or enter ' + fieldName);
                 return false;
             }
