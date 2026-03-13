@@ -165,7 +165,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=Switch%20Off" class="btn btn-outline-secondary btn-sm rounded-pill px-3">View</a>
+                                    <a href="switchoff_sellers.php" class="btn btn-outline-secondary btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -188,7 +188,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=Out%20of%20Service" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
+                                    <a href="out_of_services_sellers.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -234,7 +234,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=Testing" class="btn btn-outline-info btn-sm rounded-pill px-3">View</a>
+                                    <a href="testing_sellers.php" class="btn btn-outline-info btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -257,12 +257,13 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=Not%20interested" class="btn btn-outline-warning btn-sm rounded-pill px-3">View</a>
+                                    <a href="not_interested_sellers.php" class="btn btn-outline-warning btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                                        <!-- Card 9: No Business - Dark -->
+
+                    <!-- Card 9: No Business - Dark -->
                     <div class="col-md-3 col-sm-6">
                         <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
                             <div class="card-body p-3">
@@ -279,7 +280,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=No%20Business" class="btn btn-outline-dark btn-sm rounded-pill px-3">View</a>
+                                    <a href="no_business_sellers.php" class="btn btn-outline-dark btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
