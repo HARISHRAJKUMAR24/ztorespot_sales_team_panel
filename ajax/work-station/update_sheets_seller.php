@@ -28,7 +28,7 @@ if (!isset($_SESSION['user_uid'])) {
 try {
     $pdo = db();
     $user_uid = $_SESSION['user_uid'];
-    
+
     // Get and sanitize POST data
     $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
     $business_name = trim($_POST['business_name'] ?? '');
@@ -47,71 +47,73 @@ try {
     $customer_queries = trim($_POST['customer_queries'] ?? '');
     $call_timing = trim($_POST['call_timing'] ?? '');
     $entry_date = trim($_POST['entry_date'] ?? '');
-    
+
     // Default values for fields that might not be sent
     $registration_status = 'No';
     $plans_interested = 'None';
     $video_canva = '';
     $remarks = '';
-    
+
     // Validate ID
     if ($id <= 0) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid seller ID']);
         exit;
     }
-    
+
     // Validate required fields
     if (empty($business_name)) {
         echo json_encode(['status' => 'error', 'message' => 'Business name is required']);
         exit;
     }
-    
+
     if (empty($phone_number)) {
         echo json_encode(['status' => 'error', 'message' => 'Phone number is required']);
         exit;
     }
-    
+
     if (empty($customer_response)) {
         echo json_encode(['status' => 'error', 'message' => 'Customer response is required']);
         exit;
     }
-    
+
     // Validate phone number
     if (!preg_match('/^\d{10}$/', $phone_number)) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid phone number format']);
         exit;
     }
-    
+
     // Check if record belongs to this user and get current data
     $check_sql = "SELECT * FROM sales_person_sellers WHERE id = ? AND user_uid = ?";
     $check_stmt = $pdo->prepare($check_sql);
     $check_stmt->execute([$id, $user_uid]);
     $existing = $check_stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if (!$existing) {
         echo json_encode(['status' => 'error', 'message' => 'Record not found or access denied']);
         exit;
     }
-    
+
     // Check if phone number exists for other records
     if ($phone_number !== $existing['phone_number']) {
         $dup_sql = "SELECT id FROM sales_person_sellers WHERE phone_number = ? AND user_uid = ? AND id != ?";
         $dup_stmt = $pdo->prepare($dup_sql);
         $dup_stmt->execute([$phone_number, $user_uid, $id]);
-        
+
         if ($dup_stmt->fetch()) {
             echo json_encode(['status' => 'error', 'message' => 'Phone number already exists for another record']);
             exit;
         }
     }
-    
+
     // Determine registration status based on available data
-    if ($seller_type == 'Register Seller' || 
-        $customer_response == 'Plan Upgraded' || 
-        $customer_response == 'Plan Interested') {
+    if (
+        $seller_type == 'Register Seller' ||
+        $customer_response == 'Plan Upgraded' ||
+        $customer_response == 'Plan Interested'
+    ) {
         $registration_status = 'Yes';
     }
-    
+
     // Determine plans_interested based on available data
     if (!empty($selected_plan)) {
         $plans_interested = $selected_plan;
@@ -123,13 +125,13 @@ try {
             $plans_interested = trim($matches[1]);
         }
     }
-    
+
     // Determine final call timing
     $final_call_timing = !empty($call_timing) ? $call_timing : $call_back_time;
-    
+
     // IMPORTANT: Clean the remembering notes - remove any auto-generated content
     // This ensures only manually entered notes are preserved
-    
+
     // 1. Remove any "Call Duration: ..." lines
     $clean_notes = preg_replace('/Call Duration: [^\n]*(\n|$)/', '', $remembering_notes);
     // 2. Remove any "Upgraded Duration: ..." lines
@@ -140,10 +142,10 @@ try {
     $clean_notes = preg_replace('/\n\s*\n/', "\n", $clean_notes);
     // 5. Trim
     $clean_notes = trim($clean_notes);
-    
+
     // Now build the final remembering notes with ONLY the clean user notes
     $final_remembering_notes = $clean_notes;
-    
+
     // Add refund info if present (as a single line, not duplicated)
     if (!empty($refund_info) && $customer_response == 'Refund') {
         if (!empty($final_remembering_notes)) {
@@ -152,10 +154,10 @@ try {
             $final_remembering_notes = $refund_info;
         }
     }
-    
+
     // DO NOT add Call Duration or Upgraded Duration to remembering notes anymore
     // These are stored in dedicated columns: call_timing and plan_duration
-    
+
     // Create update history entry with Indian time
     $history_entry = [
         'timestamp' => date('Y-m-d H:i:s'),
@@ -163,7 +165,7 @@ try {
         'user_uid' => $user_uid,
         'changes' => []
     ];
-    
+
     // Track changes
     $fields_to_track = [
         'work_details_update' => ['label' => 'Business Name', 'old' => $existing['work_details_update'], 'new' => $business_name],
@@ -176,12 +178,27 @@ try {
         'current_status' => ['label' => 'Current Status', 'old' => $existing['current_status'], 'new' => $current_status],
         'call_timing' => ['label' => 'Call Timing', 'old' => $existing['call_timing'], 'new' => $final_call_timing]
     ];
-    
+
+    foreach ($fields_to_track as $field => $data) {
+        // Convert to string for comparison to handle null/empty properly
+        $old_val = trim((string)($data['old'] ?? ''));
+        $new_val = trim((string)($data['new'] ?? ''));
+
+        // Only track if values are different
+        if ($old_val !== $new_val) {
+            $history_entry['changes'][$field] = [
+                'field' => $data['label'],
+                'old' => $old_val !== '' ? $old_val : '-',
+                'new' => $new_val !== '' ? $new_val : '-'
+            ];
+        }
+    }
+
     foreach ($fields_to_track as $field => $data) {
         // Convert to string for comparison to handle null/empty properly
         $old_val = (string)$data['old'];
         $new_val = (string)$data['new'];
-        
+
         if ($old_val !== $new_val) {
             $history_entry['changes'][$field] = [
                 'field' => $data['label'],
@@ -190,7 +207,7 @@ try {
             ];
         }
     }
-    
+
     // Decode existing history
     $update_history = [];
     if (!empty($existing['update_history'])) {
@@ -199,15 +216,15 @@ try {
             $update_history = [];
         }
     }
-    
+
     // Add new history entry only if there are changes
     if (!empty($history_entry['changes'])) {
         array_unshift($update_history, $history_entry); // Add to beginning for latest first
     }
-    
+
     // Encode history back to JSON
     $update_history_json = !empty($update_history) ? json_encode($update_history, JSON_PRETTY_PRINT) : null;
-    
+
     // Update the record
     $sql = "UPDATE sales_person_sellers SET 
                 work_details_update = ?,
@@ -229,9 +246,9 @@ try {
                 update_history = ?,
                 updated_at = NOW()
             WHERE id = ? AND user_uid = ?";
-    
+
     $stmt = $pdo->prepare($sql);
-    
+
     $params = [
         $business_name,
         $seller_type,
@@ -253,21 +270,21 @@ try {
         $id,
         $user_uid
     ];
-    
+
     // Log the parameters for debugging
     error_log("Update params for ID $id: " . print_r($params, true));
-    
+
     $result = $stmt->execute($params);
-    
+
     if (!$result) {
         $errorInfo = $stmt->errorInfo();
         error_log("SQL Error on update: " . print_r($errorInfo, true));
         throw new Exception('Failed to update: ' . $errorInfo[2]);
     }
-    
+
     // Check if any rows were affected
     $rowCount = $stmt->rowCount();
-    
+
     ob_end_clean();
     echo json_encode([
         'status' => 'success',
@@ -277,7 +294,6 @@ try {
         'changes_made' => !empty($history_entry['changes']),
         'indian_time' => date('d M Y, h:i A')
     ]);
-    
 } catch (PDOException $e) {
     error_log("Database Error in update: " . $e->getMessage());
     ob_end_clean();
@@ -293,4 +309,3 @@ try {
         'message' => 'Error: ' . $e->getMessage()
     ]);
 }
-?>
