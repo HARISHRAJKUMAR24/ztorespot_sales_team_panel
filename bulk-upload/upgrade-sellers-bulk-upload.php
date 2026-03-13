@@ -198,7 +198,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                         </thead>
                                         <tbody>
                                             <tr><td><strong>A</strong> - Store ID</td><td><code>store_id</code></td><td>No</td><td>161</td></tr>
-                                            <tr><td><strong>B</strong> - Seller Name</td><td><code>seller_name</code></td><td><span class="text-danger">Yes</span></td><td>Jaihind Enterprises India</td></tr>
+                                            <tr><td><strong>B</strong> - Seller Name</td><td><code>seller_name</code></td><td><span class="text-danger">Yes</span></td><td>Jaihind Intermediates India</td></tr>
                                             <tr><td><strong>C</strong> - Seller Contact</td><td><code>seller_contact</code></td><td>No</td><td>Vivekanandan Palanisamy</td></tr>
                                             <tr><td><strong>D</strong> - Phone Number</td><td><code>phone_number</code></td><td>No</td><td>9629850366</td></tr>
                                             <tr><td><strong>E</strong> - Seller Response</td><td><code>seller_response</code></td><td>No</td><td>10</td></tr>

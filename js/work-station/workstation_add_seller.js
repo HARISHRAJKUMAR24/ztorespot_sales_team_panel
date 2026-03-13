@@ -1,43 +1,43 @@
-$(document).ready(function() {
-    
+$(document).ready(function () {
+
     // Customer Response Change Handler
-    $('#customerResponse').on('change', function() {
+    $('#customerResponse').on('change', function () {
         const response = $(this).val();
         const container = $('#dynamicFieldsContainer');
         container.empty(); // Clear previous dynamic fields
-        
+
         let html = '';
-        
-        switch(response) {
+
+        switch (response) {
             case 'Plan Interested':
                 html = generatePlanInterestedFields();
                 break;
-                
+
             case 'Plan Upgraded':
                 html = generatePlanUpgradedFields();
                 // Auto set customer status to "Upgraded"
                 $('#customerStatus').val('Upgraded');
                 break;
-                
+
             case 'Later':
                 html = generateLaterFields();
                 break;
-                
-                
+
+
             case 'Schedule':
                 html = generateScheduleFields();
                 break;
-                
+
             default:
                 // For other responses, no dynamic fields
                 break;
         }
-        
+
         container.html(html);
-        
+
         // Initialize the "Other" option handlers for newly added fields
         initializeOtherOptionHandlers();
-        
+
         // Initialize datepicker if schedule fields are shown
         if (response === 'Schedule') {
             initializeDatepicker();
@@ -60,7 +60,7 @@ $(document).ready(function() {
                                 <option value="Welcome Plan">Welcome Plan</option>
                                 <option value="Starter Plan">Starter Plan</option>
                                 <option value="Professional Plan">Professional Plan</option>
-                                <option value="Enterprise Plan">Enterprise Plan</option>
+                                <option value="Intermediate Plan">Intermediate Plan</option>
                                 <option value="other">Other (Custom Plan)</option>
                             </select>
                             <div id="customPlanContainer" style="display: none;" class="mt-2 custom-field">
@@ -77,58 +77,81 @@ $(document).ready(function() {
     }
 
     // Generate Plan Upgraded Fields
+    // Generate Plan Upgraded Fields
     function generatePlanUpgradedFields() {
         return `
-            <div class="dynamic-field">
-                <div class="row">
-                    <div class="col-12 col-md-6 mb-3 mb-md-0">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-arrow-up-circle-fill text-success me-1"></i>
-                            Upgraded Plan <span class="text-danger">*</span>
-                        </label>
-                        <div class="upgraded-plan-wrapper">
-                            <select class="form-select" id="upgradedPlan" required>
-                                <option value="" selected disabled>Choose upgraded plan</option>
-                                <option value="Welcome Plan">Welcome Plan</option>
-                                <option value="Starter Plan">Starter Plan</option>
-                                <option value="Professional Plan">Professional Plan</option>
-                                <option value="Enterprise Plan">Enterprise Plan</option>
-                                <option value="other">Other (Custom Plan)</option>
-                            </select>
-                            <div id="customUpgradedPlanContainer" style="display: none;" class="mt-2 custom-field">
-                                <label class="form-label">Enter Custom Plan Name:</label>
-                                <input type="text" class="form-control" id="customUpgradedPlan" 
-                                    placeholder="e.g., Premium Plan, Gold Plan etc.">
-                            </div>
-                            <input type="hidden" id="finalUpgradedPlan">
+        <div class="dynamic-field">
+            <div class="row">
+                <div class="col-12 col-md-6 mb-3 mb-md-0">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-arrow-up-circle-fill text-success me-1"></i>
+                        Upgraded Plan <span class="text-danger">*</span>
+                    </label>
+                    <div class="upgraded-plan-wrapper">
+                        <select class="form-select" id="upgradedPlan" required>
+                            <option value="" selected disabled>Choose upgraded plan</option>
+                            <option value="Welcome Plan">Welcome Plan</option>
+                            <option value="Starter Plan">Starter Plan</option>
+                            <option value="Professional Plan">Professional Plan</option>
+                            <option value="Intermediate Plan">Intermediate Plan</option>
+                            <option value="other">Other (Custom Plan)</option>
+                        </select>
+                        <div id="customUpgradedPlanContainer" style="display: none;" class="mt-2 custom-field">
+                            <label class="form-label">Enter Custom Plan Name:</label>
+                            <input type="text" class="form-control" id="customUpgradedPlan" 
+                                placeholder="e.g., Premium Plan, Gold Plan etc.">
                         </div>
+                        <input type="hidden" id="finalUpgradedPlan">
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label fw-semibold">
-                            <i class="bi bi-calendar-check-fill text-info me-1"></i>
-                            Duration <span class="text-danger">*</span>
-                        </label>
-                        <div class="duration-wrapper">
-                            <select class="form-select" id="upgradedDuration" required>
-                                <option value="" selected disabled>Select duration</option>
-                                <option value="1 Month">1 Month</option>
-                                <option value="3 Months">3 Months</option>
-                                <option value="6 Months">6 Months</option>
-                                <option value="1 Year">1 Year</option>
-                                <option value="2 Years">2 Years</option>
-                                <option value="other">Other (Custom Duration)</option>
-                            </select>
-                            <div id="customDurationContainer" style="display: none;" class="mt-2 custom-field">
-                                <label class="form-label">Enter Custom Duration:</label>
-                                <input type="text" class="form-control" id="customDuration" 
-                                    placeholder="e.g., 45 days, 18 months, etc.">
-                            </div>
-                            <input type="hidden" id="finalUpgradedDuration">
+                </div>
+                <div class="col-12 col-md-6 mb-3 mb-md-0">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-calendar-check-fill text-info me-1"></i>
+                        Duration <span class="text-danger">*</span>
+                    </label>
+                    <div class="duration-wrapper">
+                        <select class="form-select" id="upgradedDuration" required>
+                            <option value="" selected disabled>Select duration</option>
+                            <option value="1 Month">1 Month</option>
+                            <option value="3 Months">3 Months</option>
+                            <option value="6 Months">6 Months</option>
+                            <option value="1 Year">1 Year</option>
+                            <option value="2 Years">2 Years</option>
+                            <option value="other">Other (Custom Duration)</option>
+                        </select>
+                        <div id="customDurationContainer" style="display: none;" class="mt-2 custom-field">
+                            <label class="form-label">Enter Custom Duration:</label>
+                            <input type="text" class="form-control" id="customDuration" 
+                                placeholder="e.g., 45 days, 18 months, etc.">
                         </div>
+                        <input type="hidden" id="finalUpgradedDuration">
                     </div>
                 </div>
             </div>
-        `;
+            <!-- New row for Products Uploaded -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-cloud-upload text-primary me-1"></i>
+                        Number of Products Uploaded
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-files"></i>
+                        </span>
+                        <input type="number" class="form-control border-start-0" 
+                            id="productsUploaded" 
+                            placeholder="Enter number of products (0-999)"
+                            min="0" max="999" value="0">
+                    </div>
+                    <div class="form-text text-muted small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Enter 0 if no products uploaded yet
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     }
 
     // Generate Later Fields
@@ -211,23 +234,23 @@ $(document).ready(function() {
                 todayHighlight: true,
                 orientation: 'bottom'
             });
-            
+
             // Handle date selection
-            $('#scheduleDate').on('change', function() {
+            $('#scheduleDate').on('change', function () {
                 const selectedDate = $(this).val();
                 if (selectedDate) {
                     // Format: Schedule at dd/mm/yyyy
                     $('#finalScheduleDate').val('Schedule at ' + selectedDate);
                 }
             });
-            
+
             // Handle calendar icon click
-            $('#calendarIcon').click(function() {
+            $('#calendarIcon').click(function () {
                 $('#scheduleDate').datepicker('show');
             });
-            
+
             // Handle clear date
-            $('#clearDate').click(function() {
+            $('#clearDate').click(function () {
                 $('#scheduleDate').val('');
                 $('#finalScheduleDate').val('');
             });
@@ -237,7 +260,7 @@ $(document).ready(function() {
     // Initialize "Other" option handlers for all dynamic selects
     function initializeOtherOptionHandlers() {
         // Plan Interested - Custom Plan
-        $('#selectedPlan').on('change', function() {
+        $('#selectedPlan').on('change', function () {
             if ($(this).val() === 'other') {
                 $('#customPlanContainer').show();
                 $('#customPlan').prop('required', true);
@@ -249,7 +272,7 @@ $(document).ready(function() {
         });
 
         // Plan Upgraded - Custom Plan
-        $('#upgradedPlan').on('change', function() {
+        $('#upgradedPlan').on('change', function () {
             if ($(this).val() === 'other') {
                 $('#customUpgradedPlanContainer').show();
                 $('#customUpgradedPlan').prop('required', true);
@@ -261,7 +284,7 @@ $(document).ready(function() {
         });
 
         // Plan Upgraded - Custom Duration
-        $('#upgradedDuration').on('change', function() {
+        $('#upgradedDuration').on('change', function () {
             if ($(this).val() === 'other') {
                 $('#customDurationContainer').show();
                 $('#customDuration').prop('required', true);
@@ -273,7 +296,7 @@ $(document).ready(function() {
         });
 
         // Later - Custom Call Back Time
-        $('#callBackTime').on('change', function() {
+        $('#callBackTime').on('change', function () {
             if ($(this).val() === 'other') {
                 $('#customCallBackContainer').show();
                 $('#customCallBackTime').prop('required', true);
@@ -285,29 +308,29 @@ $(document).ready(function() {
         });
 
         // Update final values when custom fields are filled
-        $('#customPlan').on('input', function() {
+        $('#customPlan').on('input', function () {
             $('#finalSelectedPlan').val($(this).val());
         });
 
-        $('#customUpgradedPlan').on('input', function() {
+        $('#customUpgradedPlan').on('input', function () {
             $('#finalUpgradedPlan').val($(this).val());
         });
 
-        $('#customDuration').on('input', function() {
+        $('#customDuration').on('input', function () {
             $('#finalUpgradedDuration').val($(this).val());
         });
 
-        $('#customCallBackTime').on('input', function() {
+        $('#customCallBackTime').on('input', function () {
             $('#finalCallBackTime').val($(this).val());
         });
 
-        $('#customCallBackAt').on('input', function() {
+        $('#customCallBackAt').on('input', function () {
             $('#finalCallBackAt').val($(this).val());
         });
     }
 
     // Call Duration Handler
-    $('#callDurationSelect').on('change', function() {
+    $('#callDurationSelect').on('change', function () {
         if ($(this).val() === 'other') {
             $('#customCallDurationContainer').show();
             $('#customCallDuration').prop('required', true);
@@ -319,12 +342,12 @@ $(document).ready(function() {
         }
     });
 
-    $('#customCallDuration').on('input', function() {
+    $('#customCallDuration').on('input', function () {
         $('#callDuration').val($(this).val());
     });
 
     // Form Reset Handler
-    $('button[type="reset"]').on('click', function(e) {
+    $('button[type="reset"]').on('click', function (e) {
         e.preventDefault();
         $('#sellerForm')[0].reset();
         $('#dynamicFieldsContainer').empty();
@@ -333,48 +356,49 @@ $(document).ready(function() {
     });
 
     // Form Submit Handler
-    $('#sellerForm').on('submit', function(e) {
+    $('#sellerForm').on('submit', function (e) {
         e.preventDefault();
-        
+
         // Validate required fields
         const businessName = $('#businessName').val().trim();
         const phoneNumber = $('#phoneNumber').val().trim();
         const customerResponse = $('#customerResponse').val();
-        
+
         if (!businessName) {
             showToast('warning', 'Warning!', 'Business Name is required');
             $('#businessName').focus();
             return;
         }
-        
+
         if (!phoneNumber) {
             showToast('warning', 'Warning!', 'Phone Number is required');
             $('#phoneNumber').focus();
             return;
         }
-        
+
         if (!customerResponse) {
             showToast('warning', 'Warning!', 'Customer Response is required');
             $('#customerResponse').focus();
             return;
         }
-        
+
         // Validate phone number format
         if (!/^\d{10}$/.test(phoneNumber)) {
             showToast('warning', 'Warning!', 'Please enter a valid 10-digit phone number');
             $('#phoneNumber').focus();
             return;
         }
-        
+
         // Process dynamic field values before submission
         processDynamicFieldValues();
-        
+
         // Validate dynamic fields based on response
         if (!validateDynamicFields()) {
             return;
         }
-        
+
         // Collect form data
+        // In the form submit handler, add this line to collect products_uploaded value
         const formData = {
             business_name: businessName,
             seller_type: $('#sellerType').val() || '',
@@ -383,59 +407,60 @@ $(document).ready(function() {
             selected_plan: getFinalPlanValue(),
             upgraded_plan: getFinalUpgradedPlanValue(),
             upgraded_duration: getFinalDurationValue(),
+            products_uploaded: $('#productsUploaded').length ? $('#productsUploaded').val() || '0' : '0', // Add this line
             call_back_time: getFinalCallBackValue(),
             customer_queries: $('#customerQueries').val().trim() || '',
             customer_status: $('#customerStatus').val() || '',
             call_duration: $('#callDuration').val() || '',
             additional_notes: $('#additionalNotes').val().trim() || ''
         };
-        
+
         console.log('Submitting form data:', formData); // For debugging
-        
+
         // Show loading state
         const $submitBtn = $(this).find('button[type="submit"]');
         const originalText = $submitBtn.html();
         $submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...').prop('disabled', true);
-        
+
         // Send AJAX request
         $.ajax({
-             url: BASE_URL + 'ajax/work-station/workstation_add_seller.php',
+            url: BASE_URL + 'ajax/work-station/workstation_add_seller.php',
             type: 'POST',
             data: formData,
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 if (response.status === 'success') {
                     showToast('success', 'Success!', 'Seller added successfully');
                     $('#sellerForm')[0].reset();
                     $('#dynamicFieldsContainer').empty();
                     $('#customCallDurationContainer').hide();
-                    
+
                     // Optional: Redirect after 2 seconds
-                    setTimeout(function() {
-                       // window.location.href = BASE_URL + 'sellers/workstation_sellers_list.php';
+                    setTimeout(function () {
+                        // window.location.href = BASE_URL + 'sellers/workstation_sellers_list.php';
                     }, 2000);
                 } else {
                     showToast('danger', 'Error!', response.message);
                 }
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error('AJAX Error:', error);
                 console.error('Status:', status);
                 console.error('Response:', xhr.responseText);
-                
+
                 let errorMessage = 'Failed to save seller. Please try again.';
                 try {
                     const response = JSON.parse(xhr.responseText);
                     if (response.message) {
                         errorMessage = response.message;
                     }
-                } catch(e) {
+                } catch (e) {
                     errorMessage = 'Server error: ' + xhr.responseText;
                 }
-                
+
                 showToast('danger', 'Error!', errorMessage);
             },
-            complete: function() {
+            complete: function () {
                 $submitBtn.html(originalText).prop('disabled', false);
             }
         });
@@ -451,7 +476,7 @@ $(document).ready(function() {
                 $('#finalSelectedPlan').val($('#selectedPlan').val());
             }
         }
-        
+
         // Plan Upgraded - Plan
         if ($('#upgradedPlan').length) {
             if ($('#upgradedPlan').val() === 'other') {
@@ -460,7 +485,7 @@ $(document).ready(function() {
                 $('#finalUpgradedPlan').val($('#upgradedPlan').val());
             }
         }
-        
+
         // Plan Upgraded - Duration
         if ($('#upgradedDuration').length) {
             if ($('#upgradedDuration').val() === 'other') {
@@ -469,7 +494,7 @@ $(document).ready(function() {
                 $('#finalUpgradedDuration').val($('#upgradedDuration').val());
             }
         }
-        
+
         // Later - Call Back Time
         if ($('#callBackTime').length) {
             if ($('#callBackTime').val() === 'other') {
@@ -478,7 +503,7 @@ $(document).ready(function() {
                 $('#finalCallBackTime').val($('#callBackTime').val());
             }
         }
-        
+
         // Call Back AT
         if ($('#callBackAt').length) {
             if ($('#callBackAt').val() === 'other') {
@@ -487,7 +512,7 @@ $(document).ready(function() {
                 $('#finalCallBackAt').val($('#callBackAt').val());
             }
         }
-        
+
         // Schedule Date
         if ($('#scheduleDate').length) {
             const scheduleDate = $('#scheduleDate').val();
@@ -538,7 +563,7 @@ $(document).ready(function() {
     // Validate dynamic fields
     function validateDynamicFields() {
         const response = $('#customerResponse').val();
-        
+
         if (response === 'Plan Interested') {
             const plan = getFinalPlanValue();
             if (!plan) {
@@ -546,22 +571,22 @@ $(document).ready(function() {
                 return false;
             }
         }
-        
+
         if (response === 'Plan Upgraded') {
             const upgradedPlan = getFinalUpgradedPlanValue();
             const duration = getFinalDurationValue();
-            
+
             if (!upgradedPlan) {
                 showToast('warning', 'Warning!', 'Please select or enter the upgraded plan');
                 return false;
             }
-            
+
             if (!duration) {
                 showToast('warning', 'Warning!', 'Please select or enter the duration');
                 return false;
             }
         }
-        
+
         if (response === 'Later' || response === 'Call Back AT' || response === 'Schedule') {
             const callBack = getFinalCallBackValue();
             if (!callBack) {
@@ -570,12 +595,12 @@ $(document).ready(function() {
                 return false;
             }
         }
-        
+
         return true;
     }
 
     // Phone number validation
-    $('#phoneNumber').on('input', function() {
+    $('#phoneNumber').on('input', function () {
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
     });
 
@@ -583,9 +608,9 @@ $(document).ready(function() {
     function showToast(type, title, message) {
         const id = 'toast-' + Date.now();
         const bgClass = type === 'success' ? 'bg-success' :
-                       type === 'danger' ? 'bg-danger' :
-                       type === 'warning' ? 'bg-warning' : 'bg-info';
-        
+            type === 'danger' ? 'bg-danger' :
+                type === 'warning' ? 'bg-warning' : 'bg-info';
+
         const html = `
             <div id="${id}" class="toast text-white ${bgClass}" role="alert" aria-live="assertive" 
                  aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
@@ -598,12 +623,12 @@ $(document).ready(function() {
                 </div>
             </div>
         `;
-        
+
         $('.toast-container').append(html);
         const toast = new bootstrap.Toast(document.getElementById(id));
         toast.show();
-        
-        $(`#${id}`).on('hidden.bs.toast', function() {
+
+        $(`#${id}`).on('hidden.bs.toast', function () {
             $(this).remove();
         });
     }

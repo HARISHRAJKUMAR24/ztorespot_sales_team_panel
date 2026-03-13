@@ -1,4 +1,7 @@
 <?php
+// Set Indian timezone
+date_default_timezone_set('Asia/Kolkata');
+
 require_once '../lib/functions.php';
 require_once '../config/config.php';
 
@@ -31,6 +34,15 @@ if (!$seller) {
     exit;
 }
 
+// Decode update history
+$update_history = [];
+if (!empty($seller['update_history'])) {
+    $update_history = json_decode($seller['update_history'], true);
+    if (!is_array($update_history)) {
+        $update_history = [];
+    }
+}
+
 // Map database fields to form fields
 $form_data = [
     'business_name' => $seller['work_details_update'] ?? '',
@@ -38,6 +50,8 @@ $form_data = [
     'registration_status' => $seller['registration_status'] ?? '',
     'phone_number' => $seller['phone_number'] ?? '',
     'plans_interested' => $seller['plans_interested'] ?? '',
+    'plan_duration' => $seller['plan_duration'] ?? '',
+    'products_uploaded' => $seller['products_uploaded'] ?? 0,
     'customer_response' => $seller['customer_response'] ?? '',
     'remembering_notes' => $seller['remembering_notes'] ?? '',
     'latest_update' => $seller['latest_update'] ?? '',
@@ -51,6 +65,9 @@ $form_data = [
 
 // Encode seller data for JavaScript
 $seller_json = json_encode($seller);
+
+// Get current Indian time for display
+$current_indian_time = date('d M Y, h:i A');
 ?>
 
 <!doctype html>
@@ -74,10 +91,16 @@ $seller_json = json_encode($seller);
             <main class="col-md-9 ms-sm-auto col-lg-10 px-3 px-md-4 py-4">
                 <!-- Header -->
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap flex-md-nowrap pt-3 pb-2 mb-4 border-bottom gap-2">
-                    <h1 class="h2 mb-2 mb-sm-0">
-                        <i class="bi bi-pencil-square text-success me-2"></i>
-                        Edit Seller - Follow Up
-                    </h1>
+                    <div>
+                        <h1 class="h2 mb-2 mb-sm-0">
+                            <i class="bi bi-pencil-square text-success me-2"></i>
+                            Edit Seller - Follow Up
+                        </h1>
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>
+                            Indian Time: <?= $current_indian_time ?>
+                        </small>
+                    </div>
                     <div class="d-flex gap-2">
                         <a href="sheets_followup_list.php" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-1"></i>Back to Follow Up
@@ -156,7 +179,6 @@ $seller_json = json_encode($seller);
                                     </div>
 
                                     <!-- Row 3: Customer Response -->
-                                    <!-- Row 3: Customer Response -->
                                     <div class="row mb-3">
                                         <div class="col-12">
                                             <label class="form-label fw-semibold">
@@ -182,6 +204,7 @@ $seller_json = json_encode($seller);
                                                     <option value="Testing" <?= $form_data['customer_response'] == 'Testing' ? 'selected' : '' ?>>Testing</option>
                                                     <option value="Renewals" <?= $form_data['customer_response'] == 'Renewals' ? 'selected' : '' ?>>Renewals</option>
                                                     <option value="Schedule" <?= ($form_data['customer_response'] == 'Schedule' || $form_data['customer_response'] == 'Shedule') ? 'selected' : '' ?>>Schedule (Select Date)</option>
+                                                    <option value="Refund" <?= $form_data['customer_response'] == 'Refund' ? 'selected' : '' ?>>Refund</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -295,7 +318,6 @@ $seller_json = json_encode($seller);
                                         </div>
                                     </div>
 
-
                                     <!-- Row 7: Entry Date -->
                                     <div class="row mb-4">
                                         <div class="col-12 col-md-6">
@@ -329,6 +351,81 @@ $seller_json = json_encode($seller);
                         </div>
                     </div>
                 </div>
+
+                <!-- Update History Section -->
+                <?php if (!empty($update_history)): ?>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white py-3">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-clock-history text-primary me-2"></i>
+                                    Update History & Tracking (Indian Standard Time)
+                                </h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="timeline">
+                                    <?php foreach ($update_history as $index => $entry): 
+                                        // Use formatted timestamp if available, otherwise format it
+                                        $display_time = $entry['timestamp_formatted'] ?? date('d M Y, h:i A', strtotime($entry['timestamp']));
+                                    ?>
+                                        <div class="timeline-item <?= $index === 0 ? 'latest' : '' ?>">
+                                            <div class="timeline-badge">
+                                                <i class="bi bi-<?= $index === 0 ? 'star-fill' : 'record-circle' ?>"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <div class="timeline-header">
+                                                    <span class="timeline-date">
+                                                        <i class="bi bi-calendar3 me-1"></i>
+                                                        <?= $display_time ?> IST
+                                                    </span>
+                                                    <?php if ($index === 0): ?>
+                                                        <span class="badge bg-success ms-2">Latest</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <?php if (!empty($entry['changes'])): ?>
+                                                    <div class="timeline-changes">
+                                                        <table class="table table-sm table-borderless mb-0">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th width="30%">Field</th>
+                                                                    <th width="35%">Previous Value</th>
+                                                                    <th width="35%">New Value</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php foreach ($entry['changes'] as $change): ?>
+                                                                    <tr>
+                                                                        <td class="fw-semibold"><?= htmlspecialchars($change['field']) ?></td>
+                                                                        <td class="text-muted">
+                                                                            <?php if (!empty($change['old']) && $change['old'] !== '' && $change['old'] !== '0'): ?>
+                                                                                <span class="badge bg-light text-dark"><?= htmlspecialchars($change['old']) ?></span>
+                                                                            <?php else: ?>
+                                                                                <span class="text-muted fst-italic">(empty)</span>
+                                                                            <?php endif; ?>
+                                                                        </td>
+                                                                        <td class="text-success">
+                                                                            <span class="badge bg-success-subtle text-success">
+                                                                                <?= htmlspecialchars($change['new']) ?>
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <p class="text-muted mb-0">No specific field changes recorded</p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
             </main>
         </div>
     </div>
@@ -375,6 +472,89 @@ $seller_json = json_encode($seller);
 
         .input-group.date .input-group-text {
             cursor: pointer;
+        }
+
+        /* Timeline Styles */
+        .timeline {
+            position: relative;
+            padding: 1rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 2.2rem;
+            top: 1.5rem;
+            bottom: 1.5rem;
+            width: 2px;
+            background: #e9ecef;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 3.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-badge {
+            position: absolute;
+            left: 1.5rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #198754;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #198754;
+            font-size: 0.8rem;
+            z-index: 1;
+        }
+
+        .timeline-item.latest .timeline-badge {
+            background: #198754;
+            color: white;
+            border-color: #198754;
+        }
+
+        .timeline-content {
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .timeline-header {
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .timeline-date {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .timeline-changes table {
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+
+        .timeline-changes td {
+            padding: 0.5rem 0.25rem;
+            vertical-align: middle;
+        }
+
+        .badge.bg-success-subtle {
+            background-color: #d1e7dd !important;
         }
 
         @media (min-width: 992px) {

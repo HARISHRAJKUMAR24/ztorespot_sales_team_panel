@@ -60,11 +60,29 @@
         </li>
 
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="#">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/reminders/renewal_sellers.php">
             <svg class="bi" aria-hidden="true">
               <use xlink:href="#renewal"></use>
             </svg>
             Renewel sellers
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/reminders/upgrade_sellers.php">
+            <svg class="bi" aria-hidden="true">
+              <use xlink:href="#upgrade_sellers"></use>
+            </svg>
+            Upgrade sellers
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/reminders/refund_sellers.php">
+            <svg class="bi" aria-hidden="true">
+              <use xlink:href="#refund_sellers"></use>
+            </svg>
+           Refund sellers
           </a>
         </li>
       </ul>

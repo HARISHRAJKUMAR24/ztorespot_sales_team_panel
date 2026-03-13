@@ -19,6 +19,7 @@ $(document).ready(function () {
         originalValues = {
             customerResponse: sellerData.customer_response,
             plansInterested: sellerData.plans_interested,
+            planDuration: sellerData.plan_duration || '',
             callTiming: sellerData.call_timing,
             rememberingNotes: sellerData.remembering_notes,
             latestUpdate: sellerData.latest_update
@@ -73,6 +74,19 @@ $(document).ready(function () {
             case 'Schedule':
                 html = generateScheduleFields();
                 break;
+            case 'Refund':
+                html = generateRefundFields();
+                $('#currentStatus').val('Refunded');
+                break;
+            default:
+                // For other responses like CNP, Not interested, etc., clear any dynamic fields
+                // Also clear call timing if it shouldn't be there
+                if (!['Later', 'Call Back AT', 'Schedule'].includes(response)) {
+                    $('#callTiming').val('');
+                    $('#callTimingSelect').val('');
+                    $('#customCallTimingContainer').hide();
+                }
+                break;
         }
 
         container.html(html);
@@ -83,9 +97,12 @@ $(document).ready(function () {
             setExistingDynamicValues(response);
         }, 100);
 
-        // Initialize datepicker for schedule
+        // Initialize datepickers
         if (response === 'Schedule') {
             initializeDatepicker();
+        }
+        if (response === 'Refund') {
+            initializeRefundDatepicker();
         }
     });
 
@@ -105,7 +122,7 @@ $(document).ready(function () {
                                 <option value="Welcome">Welcome Plan</option>
                                 <option value="Starter">Starter Plan</option>
                                 <option value="Professional">Professional Plan</option>
-                                <option value="Enterprise">Enterprise Plan</option>
+                                <option value="Intermediate">Intermediate Plan</option>
                                 <option value="other">Other (Custom Plan)</option>
                             </select>
                             <div id="customPlanContainer" style="display: none;" class="mt-2 custom-field">
@@ -123,6 +140,11 @@ $(document).ready(function () {
 
     // Generate Plan Upgraded Fields
     function generatePlanUpgradedFields() {
+        // Get existing products_uploaded value from sellerData if available
+        const productsValue = (sellerData && sellerData.products_uploaded !== undefined && sellerData.products_uploaded !== null) 
+            ? sellerData.products_uploaded 
+            : 0;
+        
         return `
             <div class="dynamic-field">
                 <div class="row">
@@ -137,7 +159,7 @@ $(document).ready(function () {
                                 <option value="Welcome">Welcome Plan</option>
                                 <option value="Starter">Starter Plan</option>
                                 <option value="Professional">Professional Plan</option>
-                                <option value="Enterprise">Enterprise Plan</option>
+                                <option value="Intermediate">Intermediate Plan</option>
                                 <option value="other">Other (Custom Plan)</option>
                             </select>
                             <div id="customUpgradedPlanContainer" style="display: none;" class="mt-2 custom-field">
@@ -169,6 +191,28 @@ $(document).ready(function () {
                                     placeholder="e.g., 45 days, 18 months, etc.">
                             </div>
                             <input type="hidden" id="finalUpgradedDuration">
+                        </div>
+                    </div>
+                </div>
+                <!-- Products Uploaded Field -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-cloud-upload text-primary me-1"></i>
+                            Number of Products Uploaded
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-files"></i>
+                            </span>
+                            <input type="number" class="form-control border-start-0" 
+                                id="productsUploaded" 
+                                placeholder="Enter number of products (0-999)"
+                                min="0" max="999" value="${productsValue}">
+                        </div>
+                        <div class="form-text text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Enter 0 if no products uploaded yet
                         </div>
                     </div>
                 </div>
@@ -278,7 +322,81 @@ $(document).ready(function () {
         `;
     }
 
-    // Initialize Datepicker
+    // Generate Refund Fields
+    function generateRefundFields() {
+        return `
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12 col-md-6 mb-3 mb-md-0">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-arrow-return-left text-danger me-1"></i>
+                            Refund For Plan <span class="text-danger">*</span>
+                        </label>
+                        <div class="refund-plan-wrapper">
+                            <select class="form-select" id="refundPlan" required>
+                                <option value="" selected disabled>Select plan to refund</option>
+                                <option value="Welcome">Welcome Plan</option>
+                                <option value="Starter">Starter Plan</option>
+                                <option value="Professional">Professional Plan</option>
+                                <option value="Intermediate">Intermediate Plan</option>
+                                <option value="other">Other (Custom Plan)</option>
+                            </select>
+                            <div id="customRefundPlanContainer" style="display: none;" class="mt-2 custom-field">
+                                <label class="form-label">Enter Custom Plan Name:</label>
+                                <input type="text" class="form-control" id="customRefundPlan" 
+                                    placeholder="e.g., Premium Plan, Gold Plan etc.">
+                            </div>
+                            <input type="hidden" id="finalRefundPlan">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-cash-stack text-warning me-1"></i>
+                            Refund Amount <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-currency-rupee"></i>
+                            </span>
+                            <input type="number" class="form-control border-start-0" 
+                                id="refundAmount" 
+                                placeholder="Enter refund amount"
+                                min="0" step="0.01" value="0" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-calendar-event text-info me-1"></i>
+                            Refund Date
+                        </label>
+                        <div class="input-group date" id="refundDatePicker">
+                            <span class="input-group-text bg-light" id="refundCalendarIcon">
+                                <i class="bi bi-calendar3"></i>
+                            </span>
+                            <input type="text" class="form-control" id="refundDate" 
+                                placeholder="Select refund date" readonly>
+                            <span class="input-group-text bg-light" id="clearRefundDate" style="cursor: pointer;">
+                                <i class="bi bi-x-lg"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-chat-quote text-secondary me-1"></i>
+                            Refund Reason
+                        </label>
+                        <textarea class="form-control" id="refundReason" 
+                            placeholder="Enter reason for refund..." rows="2"></textarea>
+                    </div>
+                </div>
+                <input type="hidden" id="finalRefundInfo">
+            </div>
+        `;
+    }
+
+    // Initialize Datepicker for Schedule
     function initializeDatepicker() {
         if ($('#scheduleDate').length) {
             if ($('#scheduleDate').data('datepicker')) {
@@ -297,6 +415,8 @@ $(document).ready(function () {
                 const selectedDate = $(this).val();
                 if (selectedDate) {
                     $('#finalScheduleDate').val('Schedule at ' + selectedDate);
+                    // Also set call_timing to this value
+                    $('#callTiming').val('Schedule at ' + selectedDate);
                 }
             });
 
@@ -307,6 +427,7 @@ $(document).ready(function () {
             $('#clearDate').click(function () {
                 $('#scheduleDate').val('');
                 $('#finalScheduleDate').val('');
+                $('#callTiming').val('');
             });
 
             // Set existing schedule date
@@ -338,6 +459,64 @@ $(document).ready(function () {
         }
     }
 
+    // Initialize Refund Datepicker
+    function initializeRefundDatepicker() {
+        if ($('#refundDate').length) {
+            if ($('#refundDate').data('datepicker')) {
+                $('#refundDate').datepicker('destroy');
+            }
+
+            $('#refundDate').datepicker({
+                format: 'dd/mm/yyyy',
+                autoclose: true,
+                todayHighlight: true,
+                orientation: 'bottom'
+            });
+
+            $('#refundDate').on('change', function () {
+                const selectedDate = $(this).val();
+                if (selectedDate) {
+                    updateRefundInfo();
+                }
+            });
+
+            $('#refundCalendarIcon').click(function () {
+                $('#refundDate').datepicker('show');
+            });
+
+            $('#clearRefundDate').click(function () {
+                $('#refundDate').val('');
+                updateRefundInfo();
+            });
+
+            // Set existing refund date
+            setTimeout(function () {
+                if (sellerData && sellerData.customer_response === 'Refund') {
+                    const refundInfo = sellerData.remembering_notes || '';
+                    const dateMatch = refundInfo.match(/Date: (\d{2}\/\d{2}\/\d{4})/);
+                    if (dateMatch && dateMatch[1]) {
+                        $('#refundDate').val(dateMatch[1]);
+                    }
+                }
+            }, 200);
+        }
+    }
+
+    // Update refund info hidden field
+    function updateRefundInfo() {
+        const plan = $('#finalRefundPlan').val() || $('#refundPlan').val() || '';
+        const amount = $('#refundAmount').val() || '0';
+        const date = $('#refundDate').val() || '';
+        const reason = $('#refundReason').val() || '';
+        
+        let refundInfo = `Refund - Plan: ${plan}`;
+        if (amount && amount !== '0') refundInfo += `, Amount: ₹${amount}`;
+        if (date) refundInfo += `, Date: ${date}`;
+        if (reason) refundInfo += `, Reason: ${reason}`;
+        
+        $('#finalRefundInfo').val(refundInfo);
+    }
+
     // Initialize form with existing data
     function initializeFormWithData() {
         if (!sellerData) return;
@@ -356,7 +535,7 @@ $(document).ready(function () {
         if (currentResponse === 'Plan Interested') {
             const plansInterested = sellerData.plans_interested || '';
             if (plansInterested) {
-                const standardPlans = ['Welcome', 'Starter', 'Professional', 'Enterprise'];
+                const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
                 if (!standardPlans.includes(plansInterested)) {
                     $('#selectedPlan').val('other').trigger('change');
                     $('#customPlan').val(plansInterested);
@@ -369,26 +548,33 @@ $(document).ready(function () {
         }
 
         if (currentResponse === 'Plan Upgraded') {
-            // For upgraded plan, we need to parse from remembering_notes or other fields
-            // This is a simplified version - you may need to adjust based on how you store this data
-            const rememberingNotes = sellerData.remembering_notes || '';
-            if (rememberingNotes) {
-                // Try to extract plan and duration from notes
-                if (rememberingNotes.includes('Upgraded Duration:')) {
-                    const durationMatch = rememberingNotes.match(/Upgraded Duration: ([^.]+)/);
-                    if (durationMatch && durationMatch[1]) {
-                        const duration = durationMatch[1].trim();
-                        const standardDurations = ['1 Month', '3 Months', '6 Months', '1 Year', '2 Years'];
-                        if (!standardDurations.includes(duration)) {
-                            $('#upgradedDuration').val('other').trigger('change');
-                            $('#customDuration').val(duration);
-                            $('#finalUpgradedDuration').val(duration);
-                        } else {
-                            $('#upgradedDuration').val(duration);
-                            $('#finalUpgradedDuration').val(duration);
-                        }
+            // Set products uploaded value if exists
+            if (sellerData && sellerData.products_uploaded !== undefined && sellerData.products_uploaded !== null) {
+                setTimeout(function() {
+                    if ($('#productsUploaded').length) {
+                        $('#productsUploaded').val(sellerData.products_uploaded);
                     }
+                }, 150);
+            }
+            
+            // Set upgraded plan if it exists in plans_interested
+            const upgradedPlan = sellerData.plans_interested || '';
+            if (upgradedPlan && upgradedPlan !== 'None') {
+                const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
+                if (!standardPlans.includes(upgradedPlan)) {
+                    $('#upgradedPlan').val('other').trigger('change');
+                    $('#customUpgradedPlan').val(upgradedPlan);
+                    $('#finalUpgradedPlan').val(upgradedPlan);
+                } else {
+                    $('#upgradedPlan').val(upgradedPlan);
+                    $('#finalUpgradedPlan').val(upgradedPlan);
                 }
+            }
+            
+            // Set duration - from plan_duration column
+            if (sellerData && sellerData.plan_duration && sellerData.plan_duration !== '') {
+                const duration = sellerData.plan_duration;
+                setDurationValue(duration);
             }
         }
 
@@ -418,6 +604,9 @@ $(document).ready(function () {
                         $('#finalCallBackAt').val(callTiming);
                     }
                 }
+                
+                // Also set the hidden callTiming field
+                $('#callTiming').val(callTiming);
             }
         }
 
@@ -430,6 +619,64 @@ $(document).ready(function () {
                     $('#finalScheduleDate').val(callTiming);
                 }, 200);
             }
+        }
+
+        if (currentResponse === 'Refund') {
+            // Parse refund info from remembering_notes
+            const refundInfo = sellerData.remembering_notes || '';
+            const refundPlan = sellerData.plans_interested || '';
+            
+            // Set refund plan
+            if (refundPlan && refundPlan !== 'None') {
+                const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
+                if (!standardPlans.includes(refundPlan)) {
+                    $('#refundPlan').val('other').trigger('change');
+                    $('#customRefundPlan').val(refundPlan);
+                    $('#finalRefundPlan').val(refundPlan);
+                } else {
+                    $('#refundPlan').val(refundPlan);
+                    $('#finalRefundPlan').val(refundPlan);
+                }
+            }
+            
+            // Parse amount, date, reason from notes
+            if (refundInfo) {
+                // Extract amount
+                const amountMatch = refundInfo.match(/Amount: ₹?([0-9.]+)/);
+                if (amountMatch && amountMatch[1]) {
+                    $('#refundAmount').val(amountMatch[1]);
+                }
+                
+                // Extract date
+                const dateMatch = refundInfo.match(/Date: (\d{2}\/\d{2}\/\d{4})/);
+                if (dateMatch && dateMatch[1]) {
+                    $('#refundDate').val(dateMatch[1]);
+                }
+                
+                // Extract reason
+                const reasonMatch = refundInfo.match(/Reason: ([^.]+)/);
+                if (reasonMatch && reasonMatch[1]) {
+                    $('#refundReason').val(reasonMatch[1].trim());
+                }
+            }
+            
+            // Update refund info
+            setTimeout(function() {
+                updateRefundInfo();
+            }, 200);
+        }
+    }
+
+    // Helper function to set duration value
+    function setDurationValue(duration) {
+        const standardDurations = ['1 Month', '3 Months', '6 Months', '1 Year', '2 Years'];
+        if (!standardDurations.includes(duration)) {
+            $('#upgradedDuration').val('other').trigger('change');
+            $('#customDuration').val(duration);
+            $('#finalUpgradedDuration').val(duration);
+        } else {
+            $('#upgradedDuration').val(duration);
+            $('#finalUpgradedDuration').val(duration);
         }
     }
 
@@ -469,25 +716,57 @@ $(document).ready(function () {
         });
 
         $('#callBackTime').off('change').on('change', function () {
-            if ($(this).val() === 'other') {
+            const val = $(this).val();
+            if (val === 'other') {
                 $('#customCallBackContainer').show();
                 $('#customCallBackTime').prop('required', true);
+                $('#callTiming').val('');
             } else {
                 $('#customCallBackContainer').hide();
                 $('#customCallBackTime').prop('required', false);
-                $('#finalCallBackTime').val($(this).val());
+                $('#finalCallBackTime').val(val);
+                $('#callTiming').val(val);
             }
         });
 
         $('#callBackAt').off('change').on('change', function () {
-            if ($(this).val() === 'other') {
+            const val = $(this).val();
+            if (val === 'other') {
                 $('#customCallBackAtContainer').show();
                 $('#customCallBackAt').prop('required', true);
+                $('#callTiming').val('');
             } else {
                 $('#customCallBackAtContainer').hide();
                 $('#customCallBackAt').prop('required', false);
-                $('#finalCallBackAt').val($(this).val());
+                $('#finalCallBackAt').val(val);
+                $('#callTiming').val(val);
             }
+        });
+
+        // Refund - Custom Plan
+        $('#refundPlan').off('change').on('change', function () {
+            if ($(this).val() === 'other') {
+                $('#customRefundPlanContainer').show();
+                $('#customRefundPlan').prop('required', true);
+            } else {
+                $('#customRefundPlanContainer').hide();
+                $('#customRefundPlan').prop('required', false);
+                $('#finalRefundPlan').val($(this).val());
+                updateRefundInfo();
+            }
+        });
+
+        $('#customRefundPlan').off('input').on('input', function () {
+            $('#finalRefundPlan').val($(this).val());
+            updateRefundInfo();
+        });
+
+        $('#refundAmount').off('input').on('input', function () {
+            updateRefundInfo();
+        });
+
+        $('#refundReason').off('input').on('input', function () {
+            updateRefundInfo();
         });
 
         $('#customPlan').off('input').on('input', function () {
@@ -503,11 +782,15 @@ $(document).ready(function () {
         });
 
         $('#customCallBackTime').off('input').on('input', function () {
-            $('#finalCallBackTime').val($(this).val());
+            const val = $(this).val();
+            $('#finalCallBackTime').val(val);
+            $('#callTiming').val(val);
         });
 
         $('#customCallBackAt').off('input').on('input', function () {
-            $('#finalCallBackAt').val($(this).val());
+            const val = $(this).val();
+            $('#finalCallBackAt').val(val);
+            $('#callTiming').val(val);
         });
     }
 
@@ -533,7 +816,7 @@ $(document).ready(function () {
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
     });
 
-    // Form Submit Handler - FIXED VERSION without optional chaining
+    // Form Submit Handler
     $('#sellerForm').on('submit', function (e) {
         e.preventDefault();
 
@@ -625,24 +908,29 @@ $(document).ready(function () {
             sellerType = $('#sellerType').val() || '';
         }
 
-        // Combine notes for remembering_notes
-        let combinedNotes = rememberingNotes;
-        if (callTiming && callTiming !== '' && !combinedNotes.includes('Call Duration:')) {
-            if (combinedNotes && combinedNotes !== '') {
-                combinedNotes += '. ';
-            } else {
-                combinedNotes = '';
-            }
-            combinedNotes += 'Call Duration: ' + callTiming;
+        // Get products_uploaded value if it exists
+        let productsUploaded = '0';
+        if ($('#productsUploaded').length > 0) {
+            productsUploaded = $('#productsUploaded').val() || '0';
         }
 
-        if (finalUpgradedDuration && finalUpgradedDuration !== '' && !combinedNotes.includes('Upgraded Duration:')) {
+        // Get refund info if it exists
+        let refundInfo = '';
+        if ($('#finalRefundInfo').length > 0) {
+            refundInfo = $('#finalRefundInfo').val() || '';
+        }
+
+        // IMPORTANT: Use only the manually entered remembering notes
+        // Do NOT auto-add any timing or duration information
+        let combinedNotes = rememberingNotes;
+        
+        // Only add refund info to notes if present (this is manual data from form)
+        if (refundInfo && customerResponse === 'Refund') {
             if (combinedNotes && combinedNotes !== '') {
-                combinedNotes += '. ';
+                combinedNotes = refundInfo + '\n' + combinedNotes;
             } else {
-                combinedNotes = '';
+                combinedNotes = refundInfo;
             }
-            combinedNotes += 'Upgraded Duration: ' + finalUpgradedDuration;
         }
 
         // Prepare form data
@@ -654,13 +942,15 @@ $(document).ready(function () {
             customer_response: customerResponse,
             selected_plan: getFinalPlanValue(),
             upgraded_plan: getFinalUpgradedPlanValue(),
-            upgraded_duration: getFinalDurationValue(),
+            upgraded_duration: finalUpgradedDuration,
+            products_uploaded: productsUploaded,
+            refund_info: refundInfo,
             call_back_time: getFinalCallBackValue(),
-            remembering_notes: combinedNotes,
+            remembering_notes: combinedNotes, // Only manual notes, no auto-generated content
             latest_update: latestUpdate,
             current_status: currentStatus,
             customer_queries: customerQueries,
-            call_timing: callTiming,
+            call_timing: callTiming, // Stored in dedicated column, not in notes
             entry_date: entryDate
         };
 
@@ -756,12 +1046,27 @@ $(document).ready(function () {
                 $('#finalScheduleDate').val('Schedule at ' + scheduleDate);
             }
         }
+
+        // Refund
+        if ($('#refundPlan').length > 0) {
+            if ($('#refundPlan').val() === 'other') {
+                if ($('#customRefundPlan').length > 0) {
+                    $('#finalRefundPlan').val($('#customRefundPlan').val());
+                }
+            } else {
+                $('#finalRefundPlan').val($('#refundPlan').val());
+            }
+            updateRefundInfo();
+        }
     }
 
     // Helper functions to get final values
     function getFinalPlanValue() {
         if ($('#selectedPlan').length > 0 && $('#finalSelectedPlan').length > 0) {
             return $('#finalSelectedPlan').val() || '';
+        }
+        if ($('#refundPlan').length > 0 && $('#finalRefundPlan').length > 0) {
+            return $('#finalRefundPlan').val() || '';
         }
         return '';
     }
@@ -818,6 +1123,8 @@ $(document).ready(function () {
                 showToast('warning', 'Warning!', 'Please select or enter the duration');
                 return false;
             }
+            
+            // Products uploaded is optional, no validation needed
         }
 
         if (response === 'Later' || response === 'Call Back AT' || response === 'Schedule') {
@@ -825,6 +1132,21 @@ $(document).ready(function () {
             if (!callBack || callBack === '') {
                 const fieldName = response === 'Schedule' ? 'schedule date' : 'call back time';
                 showToast('warning', 'Warning!', 'Please select or enter ' + fieldName);
+                return false;
+            }
+        }
+
+        if (response === 'Refund') {
+            const plan = getFinalPlanValue();
+            const amount = $('#refundAmount').val();
+            
+            if (!plan || plan === '') {
+                showToast('warning', 'Warning!', 'Please select or enter the plan to refund');
+                return false;
+            }
+            
+            if (!amount || amount === '' || parseFloat(amount) <= 0) {
+                showToast('warning', 'Warning!', 'Please enter a valid refund amount');
                 return false;
             }
         }
