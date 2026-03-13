@@ -352,90 +352,90 @@ $current_indian_time = date('d M Y, h:i A');
                     </div>
                 </div>
 
-<!-- Update History Section -->
-<?php if (!empty($update_history)): ?>
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-clock-history text-primary me-2"></i>
-                    Update History & Tracking (Indian Standard Time)
-                </h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="timeline">
-                    <?php foreach ($update_history as $index => $entry): 
-                        // Use formatted timestamp if available, otherwise format it
-                        $display_time = $entry['timestamp_formatted'] ?? date('d M Y, h:i A', strtotime($entry['timestamp']));
-                    ?>
-                        <div class="timeline-item <?= $index === 0 ? 'latest' : '' ?>">
-                            <div class="timeline-badge">
-                                <i class="bi bi-<?= $index === 0 ? 'star-fill' : 'record-circle' ?>"></i>
-                            </div>
-                            <div class="timeline-content">
-                                <div class="timeline-header">
-                                    <span class="timeline-date">
-                                        <i class="bi bi-calendar3 me-1"></i>
-                                        <?= $display_time ?> IST
-                                    </span>
-                                    <?php if ($index === 0): ?>
-                                        <span class="badge bg-success ms-2">Latest</span>
-                                    <?php endif; ?>
+                <!-- Update History Section -->
+                <?php if (!empty($update_history)): ?>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card shadow-sm border-0">
+                                <div class="card-header bg-white py-3">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-clock-history text-primary me-2"></i>
+                                        Update History & Tracking (Indian Standard Time)
+                                    </h5>
                                 </div>
-                                <?php if (!empty($entry['changes'])): ?>
-                                    <div class="timeline-changes">
-                                        <table class="table table-sm table-borderless mb-0">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th width="30%">Field</th>
-                                                    <th width="35%">Previous Value</th>
-                                                    <th width="35%">New Value</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($entry['changes'] as $change): ?>
-                                                    <tr>
-                                                        <td class="fw-semibold"><?= htmlspecialchars($change['field']) ?></td>
-                                                        <td class="text-muted">
-                                                            <?php 
-                                                            $old_value = $change['old'] ?? '';
-                                                            if ($old_value !== '' && $old_value !== null && $old_value !== '0'): 
-                                                            ?>
-                                                                <span class="badge bg-light text-dark"><?= htmlspecialchars($old_value) ?></span>
-                                                            <?php else: ?>
-                                                                <span class="text-muted fw-bold">-</span>
-                                                            <?php endif; ?>
-                                                        </td>
-                                                        <td class="text-success">
-                                                            <?php 
-                                                            $new_value = $change['new'] ?? '';
-                                                            if ($new_value !== '' && $new_value !== null && $new_value !== '0'): 
-                                                            ?>
-                                                                <span class="badge bg-success-subtle text-success">
-                                                                    <?= htmlspecialchars($new_value) ?>
-                                                                </span>
-                                                            <?php else: ?>
-                                                                <span class="text-muted fw-bold">-</span>
-                                                            <?php endif; ?>
-                                                        </td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
+                                <div class="card-body p-0">
+                                    <div class="timeline">
+                                        <?php foreach ($update_history as $index => $entry):
+                                            // Use formatted timestamp if available, otherwise format it
+                                            $display_time = $entry['timestamp_formatted'] ?? date('d M Y, h:i A', strtotime($entry['timestamp']));
+                                        ?>
+                                            <div class="timeline-item <?= $index === 0 ? 'latest' : '' ?>">
+                                                <div class="timeline-badge">
+                                                    <i class="bi bi-<?= $index === 0 ? 'star-fill' : 'record-circle' ?>"></i>
+                                                </div>
+                                                <div class="timeline-content">
+                                                    <div class="timeline-header">
+                                                        <span class="timeline-date">
+                                                            <i class="bi bi-calendar3 me-1"></i>
+                                                            <?= $display_time ?> IST
+                                                        </span>
+                                                        <?php if ($index === 0): ?>
+                                                            <span class="badge bg-success ms-2">Latest</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <?php if (!empty($entry['changes'])): ?>
+                                                        <div class="timeline-changes">
+                                                            <table class="table table-sm table-borderless mb-0">
+                                                                <thead class="table-light">
+                                                                    <tr>
+                                                                        <th width="30%">Field</th>
+                                                                        <th width="35%">Previous Value</th>
+                                                                        <th width="35%">New Value</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <?php foreach ($entry['changes'] as $change): ?>
+                                                                        <tr>
+                                                                            <td class="fw-semibold"><?= htmlspecialchars($change['field']) ?></td>
+                                                                            <td class="text-muted">
+                                                                                <?php
+                                                                                $old_value = $change['old'] ?? '';
+                                                                                if ($old_value !== '' && $old_value !== null && $old_value !== '0'):
+                                                                                ?>
+                                                                                    <span class="badge bg-light text-dark"><?= htmlspecialchars($old_value) ?></span>
+                                                                                <?php else: ?>
+                                                                                    <span class="text-muted fw-bold">-</span>
+                                                                                <?php endif; ?>
+                                                                            </td>
+                                                                            <td class="text-success">
+                                                                                <?php
+                                                                                $new_value = $change['new'] ?? '';
+                                                                                if ($new_value !== '' && $new_value !== null && $new_value !== '0'):
+                                                                                ?>
+                                                                                    <span class="badge bg-success-subtle text-success">
+                                                                                        <?= htmlspecialchars($new_value) ?>
+                                                                                    </span>
+                                                                                <?php else: ?>
+                                                                                    <span class="text-muted fw-bold">-</span>
+                                                                                <?php endif; ?>
+                                                                            </td>
+                                                                        </tr>
+                                                                    <?php endforeach; ?>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <p class="text-muted mb-0">No specific field changes recorded</p>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
-                                <?php else: ?>
-                                    <p class="text-muted mb-0">No specific field changes recorded</p>
-                                <?php endif; ?>
+                                </div>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
+                    </div>
+                <?php endif; ?>
             </main>
         </div>
     </div>
