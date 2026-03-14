@@ -23,7 +23,6 @@ $(document).ready(function () {
                 html = generateLaterFields();
                 break;
 
-
             case 'Schedule':
                 html = generateScheduleFields();
                 break;
@@ -76,7 +75,6 @@ $(document).ready(function () {
         `;
     }
 
-    // Generate Plan Upgraded Fields
     // Generate Plan Upgraded Fields
     function generatePlanUpgradedFields() {
         return `
@@ -189,7 +187,6 @@ $(document).ready(function () {
             </div>
         `;
     }
-
 
     // Generate Schedule Fields with Datepicker
     function generateScheduleFields() {
@@ -323,10 +320,6 @@ $(document).ready(function () {
         $('#customCallBackTime').on('input', function () {
             $('#finalCallBackTime').val($(this).val());
         });
-
-        $('#customCallBackAt').on('input', function () {
-            $('#finalCallBackAt').val($(this).val());
-        });
     }
 
     // Call Duration Handler
@@ -363,6 +356,9 @@ $(document).ready(function () {
         const businessName = $('#businessName').val().trim();
         const phoneNumber = $('#phoneNumber').val().trim();
         const customerResponse = $('#customerResponse').val();
+        
+        // Get seller_id value directly from input field at submission time
+        const sellerID = $('#sellerID').val().trim() || '';
 
         if (!businessName) {
             showToast('warning', 'Warning!', 'Business Name is required');
@@ -398,24 +394,22 @@ $(document).ready(function () {
         }
 
         // Collect form data
-        // In the form submit handler, add this line to collect products_uploaded value
         const formData = {
             business_name: businessName,
             seller_type: $('#sellerType').val() || '',
             phone_number: phoneNumber,
+            seller_id: sellerID,
             customer_response: customerResponse,
             selected_plan: getFinalPlanValue(),
             upgraded_plan: getFinalUpgradedPlanValue(),
             upgraded_duration: getFinalDurationValue(),
-            products_uploaded: $('#productsUploaded').length ? $('#productsUploaded').val() || '0' : '0', // Add this line
+            products_uploaded: $('#productsUploaded').length ? $('#productsUploaded').val() || '0' : '0',
             call_back_time: getFinalCallBackValue(),
             customer_queries: $('#customerQueries').val().trim() || '',
             customer_status: $('#customerStatus').val() || '',
             call_duration: $('#callDuration').val() || '',
             additional_notes: $('#additionalNotes').val().trim() || ''
         };
-
-        console.log('Submitting form data:', formData); // For debugging
 
         // Show loading state
         const $submitBtn = $(this).find('button[type="submit"]');
@@ -444,10 +438,6 @@ $(document).ready(function () {
                 }
             },
             error: function (xhr, status, error) {
-                console.error('AJAX Error:', error);
-                console.error('Status:', status);
-                console.error('Response:', xhr.responseText);
-
                 let errorMessage = 'Failed to save seller. Please try again.';
                 try {
                     const response = JSON.parse(xhr.responseText);
@@ -504,15 +494,6 @@ $(document).ready(function () {
             }
         }
 
-        // Call Back AT
-        if ($('#callBackAt').length) {
-            if ($('#callBackAt').val() === 'other') {
-                $('#finalCallBackAt').val($('#customCallBackAt').val());
-            } else {
-                $('#finalCallBackAt').val($('#callBackAt').val());
-            }
-        }
-
         // Schedule Date
         if ($('#scheduleDate').length) {
             const scheduleDate = $('#scheduleDate').val();
@@ -551,9 +532,6 @@ $(document).ready(function () {
         if ($('#callBackTime').length) {
             return $('#finalCallBackTime').val() || '';
         }
-        if ($('#callBackAt').length) {
-            return $('#finalCallBackAt').val() || '';
-        }
         if ($('#finalScheduleDate').length) {
             return $('#finalScheduleDate').val() || '';
         }
@@ -587,7 +565,7 @@ $(document).ready(function () {
             }
         }
 
-        if (response === 'Later' || response === 'Call Back AT' || response === 'Schedule') {
+        if (response === 'Later' || response === 'Schedule') {
             const callBack = getFinalCallBackValue();
             if (!callBack) {
                 const fieldName = response === 'Schedule' ? 'schedule date' : 'call back time';

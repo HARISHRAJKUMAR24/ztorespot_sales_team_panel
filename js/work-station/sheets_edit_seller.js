@@ -13,6 +13,11 @@ $(document).ready(function () {
         console.error('Error parsing seller data:', e);
     }
 
+    let sellerID = '';
+    if ($('#sellerID').length > 0) {
+        sellerID = $('#sellerID').val() || '';
+    }
+
     // Store original values
     let originalValues = {};
     if (sellerData) {
@@ -141,10 +146,10 @@ $(document).ready(function () {
     // Generate Plan Upgraded Fields
     function generatePlanUpgradedFields() {
         // Get existing products_uploaded value from sellerData if available
-        const productsValue = (sellerData && sellerData.products_uploaded !== undefined && sellerData.products_uploaded !== null) 
-            ? sellerData.products_uploaded 
+        const productsValue = (sellerData && sellerData.products_uploaded !== undefined && sellerData.products_uploaded !== null)
+            ? sellerData.products_uploaded
             : 0;
-        
+
         return `
             <div class="dynamic-field">
                 <div class="row">
@@ -508,12 +513,12 @@ $(document).ready(function () {
         const amount = $('#refundAmount').val() || '0';
         const date = $('#refundDate').val() || '';
         const reason = $('#refundReason').val() || '';
-        
+
         let refundInfo = `Refund - Plan: ${plan}`;
         if (amount && amount !== '0') refundInfo += `, Amount: ₹${amount}`;
         if (date) refundInfo += `, Date: ${date}`;
         if (reason) refundInfo += `, Reason: ${reason}`;
-        
+
         $('#finalRefundInfo').val(refundInfo);
     }
 
@@ -528,144 +533,144 @@ $(document).ready(function () {
         }
     }
 
-// Set existing dynamic field values
-function setExistingDynamicValues(currentResponse) {
-    if (!sellerData) return;
+    // Set existing dynamic field values
+    function setExistingDynamicValues(currentResponse) {
+        if (!sellerData) return;
 
-    if (currentResponse === 'Plan Interested') {
-        const plansInterested = sellerData.plans_interested || '';
-        if (plansInterested && plansInterested !== '' && plansInterested !== 'None') {
-            const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
-            if (!standardPlans.includes(plansInterested)) {
-                $('#selectedPlan').val('other').trigger('change');
-                $('#customPlan').val(plansInterested);
-                $('#finalSelectedPlan').val(plansInterested);
-            } else {
-                $('#selectedPlan').val(plansInterested);
-                $('#finalSelectedPlan').val(plansInterested);
-            }
-        }
-    }
-
-    if (currentResponse === 'Plan Upgraded') {
-        // Set products uploaded value if exists
-        if (sellerData && sellerData.products_uploaded !== undefined && sellerData.products_uploaded !== null && sellerData.products_uploaded > 0) {
-            setTimeout(function() {
-                if ($('#productsUploaded').length) {
-                    $('#productsUploaded').val(sellerData.products_uploaded);
-                }
-            }, 150);
-        }
-        
-        // Set upgraded plan if it exists in plans_interested
-        const upgradedPlan = sellerData.plans_interested || '';
-        if (upgradedPlan && upgradedPlan !== '' && upgradedPlan !== 'None') {
-            const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
-            if (!standardPlans.includes(upgradedPlan)) {
-                $('#upgradedPlan').val('other').trigger('change');
-                $('#customUpgradedPlan').val(upgradedPlan);
-                $('#finalUpgradedPlan').val(upgradedPlan);
-            } else {
-                $('#upgradedPlan').val(upgradedPlan);
-                $('#finalUpgradedPlan').val(upgradedPlan);
-            }
-        }
-        
-        // Set duration - from plan_duration column
-        if (sellerData && sellerData.plan_duration && sellerData.plan_duration !== '') {
-            const duration = sellerData.plan_duration;
-            setDurationValue(duration);
-        }
-    }
-
-    if (currentResponse === 'Later' || currentResponse === 'Call Back AT') {
-        const callTiming = sellerData.call_timing || '';
-        if (callTiming && callTiming !== '') {
-            const standardTimes = currentResponse === 'Later'
-                ? ['After 1 hour', 'After 2 hours', 'After 3 hours', 'After 6 hours', 'Tomorrow', 'After 2 days', 'After 1 week', 'Next month']
-                : ['Morning 9-11 AM', 'Late Morning 11-1 PM', 'Afternoon 2-4 PM', 'Evening 4-6 PM', 'Night 7-9 PM'];
-
-            if (!standardTimes.includes(callTiming)) {
-                if (currentResponse === 'Later') {
-                    $('#callBackTime').val('other').trigger('change');
-                    $('#customCallBackTime').val(callTiming);
-                    $('#finalCallBackTime').val(callTiming);
+        if (currentResponse === 'Plan Interested') {
+            const plansInterested = sellerData.plans_interested || '';
+            if (plansInterested && plansInterested !== '' && plansInterested !== 'None') {
+                const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
+                if (!standardPlans.includes(plansInterested)) {
+                    $('#selectedPlan').val('other').trigger('change');
+                    $('#customPlan').val(plansInterested);
+                    $('#finalSelectedPlan').val(plansInterested);
                 } else {
-                    $('#callBackAt').val('other').trigger('change');
-                    $('#customCallBackAt').val(callTiming);
-                    $('#finalCallBackAt').val(callTiming);
-                }
-            } else {
-                if (currentResponse === 'Later') {
-                    $('#callBackTime').val(callTiming);
-                    $('#finalCallBackTime').val(callTiming);
-                } else {
-                    $('#callBackAt').val(callTiming);
-                    $('#finalCallBackAt').val(callTiming);
+                    $('#selectedPlan').val(plansInterested);
+                    $('#finalSelectedPlan').val(plansInterested);
                 }
             }
-            
-            // Also set the hidden callTiming field
-            $('#callTiming').val(callTiming);
         }
-    }
 
-    if (currentResponse === 'Schedule') {
-        const callTiming = sellerData.call_timing || '';
-        if (callTiming && callTiming.startsWith('Schedule at ') && callTiming !== '') {
-            const datePart = callTiming.replace('Schedule at ', '');
+        if (currentResponse === 'Plan Upgraded') {
+            // Set products uploaded value if exists
+            if (sellerData && sellerData.products_uploaded !== undefined && sellerData.products_uploaded !== null && sellerData.products_uploaded > 0) {
+                setTimeout(function () {
+                    if ($('#productsUploaded').length) {
+                        $('#productsUploaded').val(sellerData.products_uploaded);
+                    }
+                }, 150);
+            }
+
+            // Set upgraded plan if it exists in plans_interested
+            const upgradedPlan = sellerData.plans_interested || '';
+            if (upgradedPlan && upgradedPlan !== '' && upgradedPlan !== 'None') {
+                const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
+                if (!standardPlans.includes(upgradedPlan)) {
+                    $('#upgradedPlan').val('other').trigger('change');
+                    $('#customUpgradedPlan').val(upgradedPlan);
+                    $('#finalUpgradedPlan').val(upgradedPlan);
+                } else {
+                    $('#upgradedPlan').val(upgradedPlan);
+                    $('#finalUpgradedPlan').val(upgradedPlan);
+                }
+            }
+
+            // Set duration - from plan_duration column
+            if (sellerData && sellerData.plan_duration && sellerData.plan_duration !== '') {
+                const duration = sellerData.plan_duration;
+                setDurationValue(duration);
+            }
+        }
+
+        if (currentResponse === 'Later' || currentResponse === 'Call Back AT') {
+            const callTiming = sellerData.call_timing || '';
+            if (callTiming && callTiming !== '') {
+                const standardTimes = currentResponse === 'Later'
+                    ? ['After 1 hour', 'After 2 hours', 'After 3 hours', 'After 6 hours', 'Tomorrow', 'After 2 days', 'After 1 week', 'Next month']
+                    : ['Morning 9-11 AM', 'Late Morning 11-1 PM', 'Afternoon 2-4 PM', 'Evening 4-6 PM', 'Night 7-9 PM'];
+
+                if (!standardTimes.includes(callTiming)) {
+                    if (currentResponse === 'Later') {
+                        $('#callBackTime').val('other').trigger('change');
+                        $('#customCallBackTime').val(callTiming);
+                        $('#finalCallBackTime').val(callTiming);
+                    } else {
+                        $('#callBackAt').val('other').trigger('change');
+                        $('#customCallBackAt').val(callTiming);
+                        $('#finalCallBackAt').val(callTiming);
+                    }
+                } else {
+                    if (currentResponse === 'Later') {
+                        $('#callBackTime').val(callTiming);
+                        $('#finalCallBackTime').val(callTiming);
+                    } else {
+                        $('#callBackAt').val(callTiming);
+                        $('#finalCallBackAt').val(callTiming);
+                    }
+                }
+
+                // Also set the hidden callTiming field
+                $('#callTiming').val(callTiming);
+            }
+        }
+
+        if (currentResponse === 'Schedule') {
+            const callTiming = sellerData.call_timing || '';
+            if (callTiming && callTiming.startsWith('Schedule at ') && callTiming !== '') {
+                const datePart = callTiming.replace('Schedule at ', '');
+                setTimeout(function () {
+                    $('#scheduleDate').val(datePart);
+                    $('#finalScheduleDate').val(callTiming);
+                }, 200);
+            }
+        }
+
+        if (currentResponse === 'Refund') {
+            // Parse refund info from remembering_notes
+            const refundInfo = sellerData.remembering_notes || '';
+            const refundPlan = sellerData.plans_interested || '';
+
+            // Set refund plan
+            if (refundPlan && refundPlan !== '' && refundPlan !== 'None') {
+                const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
+                if (!standardPlans.includes(refundPlan)) {
+                    $('#refundPlan').val('other').trigger('change');
+                    $('#customRefundPlan').val(refundPlan);
+                    $('#finalRefundPlan').val(refundPlan);
+                } else {
+                    $('#refundPlan').val(refundPlan);
+                    $('#finalRefundPlan').val(refundPlan);
+                }
+            }
+
+            // Parse amount, date, reason from notes
+            if (refundInfo && refundInfo !== '') {
+                // Extract amount
+                const amountMatch = refundInfo.match(/Amount: ₹?([0-9.]+)/);
+                if (amountMatch && amountMatch[1]) {
+                    $('#refundAmount').val(amountMatch[1]);
+                }
+
+                // Extract date
+                const dateMatch = refundInfo.match(/Date: (\d{2}\/\d{2}\/\d{4})/);
+                if (dateMatch && dateMatch[1]) {
+                    $('#refundDate').val(dateMatch[1]);
+                }
+
+                // Extract reason
+                const reasonMatch = refundInfo.match(/Reason: ([^.]+)/);
+                if (reasonMatch && reasonMatch[1]) {
+                    $('#refundReason').val(reasonMatch[1].trim());
+                }
+            }
+
+            // Update refund info
             setTimeout(function () {
-                $('#scheduleDate').val(datePart);
-                $('#finalScheduleDate').val(callTiming);
+                updateRefundInfo();
             }, 200);
         }
     }
-
-    if (currentResponse === 'Refund') {
-        // Parse refund info from remembering_notes
-        const refundInfo = sellerData.remembering_notes || '';
-        const refundPlan = sellerData.plans_interested || '';
-        
-        // Set refund plan
-        if (refundPlan && refundPlan !== '' && refundPlan !== 'None') {
-            const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
-            if (!standardPlans.includes(refundPlan)) {
-                $('#refundPlan').val('other').trigger('change');
-                $('#customRefundPlan').val(refundPlan);
-                $('#finalRefundPlan').val(refundPlan);
-            } else {
-                $('#refundPlan').val(refundPlan);
-                $('#finalRefundPlan').val(refundPlan);
-            }
-        }
-        
-        // Parse amount, date, reason from notes
-        if (refundInfo && refundInfo !== '') {
-            // Extract amount
-            const amountMatch = refundInfo.match(/Amount: ₹?([0-9.]+)/);
-            if (amountMatch && amountMatch[1]) {
-                $('#refundAmount').val(amountMatch[1]);
-            }
-            
-            // Extract date
-            const dateMatch = refundInfo.match(/Date: (\d{2}\/\d{2}\/\d{4})/);
-            if (dateMatch && dateMatch[1]) {
-                $('#refundDate').val(dateMatch[1]);
-            }
-            
-            // Extract reason
-            const reasonMatch = refundInfo.match(/Reason: ([^.]+)/);
-            if (reasonMatch && reasonMatch[1]) {
-                $('#refundReason').val(reasonMatch[1].trim());
-            }
-        }
-        
-        // Update refund info
-        setTimeout(function() {
-            updateRefundInfo();
-        }, 200);
-    }
-}
 
     // Helper function to set duration value
     function setDurationValue(duration) {
@@ -923,7 +928,7 @@ function setExistingDynamicValues(currentResponse) {
         // IMPORTANT: Use only the manually entered remembering notes
         // Do NOT auto-add any timing or duration information
         let combinedNotes = rememberingNotes;
-        
+
         // Only add refund info to notes if present (this is manual data from form)
         if (refundInfo && customerResponse === 'Refund') {
             if (combinedNotes && combinedNotes !== '') {
@@ -939,6 +944,8 @@ function setExistingDynamicValues(currentResponse) {
             business_name: businessName.trim(),
             seller_type: sellerType,
             phone_number: cleanPhone,
+            seller_id: sellerID, // Add this line
+            seller_id: sellerID, // Add this line
             customer_response: customerResponse,
             selected_plan: getFinalPlanValue(),
             upgraded_plan: getFinalUpgradedPlanValue(),
@@ -1123,7 +1130,7 @@ function setExistingDynamicValues(currentResponse) {
                 showToast('warning', 'Warning!', 'Please select or enter the duration');
                 return false;
             }
-            
+
             // Products uploaded is optional, no validation needed
         }
 
@@ -1139,12 +1146,12 @@ function setExistingDynamicValues(currentResponse) {
         if (response === 'Refund') {
             const plan = getFinalPlanValue();
             const amount = $('#refundAmount').val();
-            
+
             if (!plan || plan === '') {
                 showToast('warning', 'Warning!', 'Please select or enter the plan to refund');
                 return false;
             }
-            
+
             if (!amount || amount === '' || parseFloat(amount) <= 0) {
                 showToast('warning', 'Warning!', 'Please enter a valid refund amount');
                 return false;

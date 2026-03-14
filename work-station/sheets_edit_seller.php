@@ -49,6 +49,7 @@ $form_data = [
     'seller_type' => $seller['source_type'] ?? '',
     'registration_status' => $seller['registration_status'] ?? '',
     'phone_number' => $seller['phone_number'] ?? '',
+    'seller_id' => $seller['seller_id'] ?? '', // Add this line
     'plans_interested' => $seller['plans_interested'] ?? '',
     'plan_duration' => $seller['plan_duration'] ?? '',
     'products_uploaded' => $seller['products_uploaded'] ?? 0,
@@ -177,7 +178,30 @@ $current_indian_time = date('d M Y, h:i A');
                                             </div>
                                         </div>
                                     </div>
-
+                                    <!-- Row 2.5: Seller ID (Optional) -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <label class="form-label fw-semibold">
+                                                <i class="bi bi-upc-scan text-success me-1"></i>
+                                                Seller ID (Optional)
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="bi bi-upc-scan"></i>
+                                                </span>
+                                                <input type="text" class="form-control border-start-0"
+                                                    placeholder="Enter seller ID (optional)"
+                                                    id="sellerID" value="<?= htmlspecialchars($seller['seller_id'] ?? '') ?>">
+                                                <span class="input-group-text bg-light border-start-0">
+                                                    <i class="bi bi-question-circle text-muted" title="This field is optional"></i>
+                                                </span>
+                                            </div>
+                                            <div class="form-text text-muted small">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                You can enter any seller ID or leave it empty
+                                            </div>
+                                        </div>
+                                    </div>
                                     <!-- Row 3: Customer Response -->
                                     <div class="row mb-3">
                                         <div class="col-12">
@@ -352,7 +376,7 @@ $current_indian_time = date('d M Y, h:i A');
                     </div>
                 </div>
 
-                <!-- Update History Section -->
+                <!-- Very Simple Update History -->
                 <?php if (!empty($update_history)): ?>
                     <div class="row mt-4">
                         <div class="col-12">
@@ -360,74 +384,41 @@ $current_indian_time = date('d M Y, h:i A');
                                 <div class="card-header bg-white py-3">
                                     <h5 class="card-title mb-0">
                                         <i class="bi bi-clock-history text-primary me-2"></i>
-                                        Update History & Tracking (Indian Standard Time)
+                                        Update History
                                     </h5>
                                 </div>
-                                <div class="card-body p-0">
-                                    <div class="timeline">
+                                <div class="card-body p-3">
+                                    <div class="list-group list-group-flush">
                                         <?php foreach ($update_history as $index => $entry):
-                                            // Use formatted timestamp if available, otherwise format it
                                             $display_time = $entry['timestamp_formatted'] ?? date('d M Y, h:i A', strtotime($entry['timestamp']));
                                         ?>
-                                            <div class="timeline-item <?= $index === 0 ? 'latest' : '' ?>">
-                                                <div class="timeline-badge">
-                                                    <i class="bi bi-<?= $index === 0 ? 'star-fill' : 'record-circle' ?>"></i>
-                                                </div>
-                                                <div class="timeline-content">
-                                                    <div class="timeline-header">
-                                                        <span class="timeline-date">
-                                                            <i class="bi bi-calendar3 me-1"></i>
-                                                            <?= $display_time ?> IST
-                                                        </span>
+                                            <div class="list-group-item px-0 <?= $index === 0 ? 'bg-light' : '' ?>">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h6 class="mb-1">
                                                         <?php if ($index === 0): ?>
-                                                            <span class="badge bg-success ms-2">Latest</span>
+                                                            <span class="badge bg-success me-2">Latest</span>
                                                         <?php endif; ?>
-                                                    </div>
-                                                    <?php if (!empty($entry['changes'])): ?>
-                                                        <div class="timeline-changes">
-                                                            <table class="table table-sm table-borderless mb-0">
-                                                                <thead class="table-light">
-                                                                    <tr>
-                                                                        <th width="30%">Field</th>
-                                                                        <th width="35%">Previous Value</th>
-                                                                        <th width="35%">New Value</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <?php foreach ($entry['changes'] as $change): ?>
-                                                                        <tr>
-                                                                            <td class="fw-semibold"><?= htmlspecialchars($change['field']) ?></td>
-                                                                            <td class="text-muted">
-                                                                                <?php
-                                                                                $old_value = $change['old'] ?? '';
-                                                                                if ($old_value !== '' && $old_value !== null && $old_value !== '0'):
-                                                                                ?>
-                                                                                    <span class="badge bg-light text-dark"><?= htmlspecialchars($old_value) ?></span>
-                                                                                <?php else: ?>
-                                                                                    <span class="text-muted fw-bold">-</span>
-                                                                                <?php endif; ?>
-                                                                            </td>
-                                                                            <td class="text-success">
-                                                                                <?php
-                                                                                $new_value = $change['new'] ?? '';
-                                                                                if ($new_value !== '' && $new_value !== null && $new_value !== '0'):
-                                                                                ?>
-                                                                                    <span class="badge bg-success-subtle text-success">
-                                                                                        <?= htmlspecialchars($new_value) ?>
-                                                                                    </span>
-                                                                                <?php else: ?>
-                                                                                    <span class="text-muted fw-bold">-</span>
-                                                                                <?php endif; ?>
-                                                                            </td>
-                                                                        </tr>
-                                                                    <?php endforeach; ?>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    <?php else: ?>
-                                                        <p class="text-muted mb-0">No specific field changes recorded</p>
-                                                    <?php endif; ?>
+                                                        <small class="text-muted"><?= $display_time ?></small>
+                                                    </h6>
                                                 </div>
+
+                                                <?php if (!empty($entry['changes'])): ?>
+                                                    <ul class="mb-1 ps-3">
+                                                        <?php foreach ($entry['changes'] as $change):
+                                                            $old = $change['old'] ?? '-';
+                                                            $new = $change['new'] ?? '-';
+                                                        ?>
+                                                            <li>
+                                                                <strong><?= htmlspecialchars($change['field']) ?>:</strong>
+                                                                <span class="text-muted"><?= htmlspecialchars($old) ?></span>
+                                                                <i class="bi bi-arrow-right mx-1 text-primary"></i>
+                                                                <span class="text-success"><?= htmlspecialchars($new) ?></span>
+                                                            </li>
+                                                        <?php endforeach; ?>
+                                                    </ul>
+                                                <?php else: ?>
+                                                    <p class="text-muted mb-0">No changes</p>
+                                                <?php endif; ?>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>

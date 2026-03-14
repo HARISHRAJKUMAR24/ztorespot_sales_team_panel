@@ -118,6 +118,31 @@ $profile_image = !empty($user['profile_image'])
                                         </div>
                                     </div>
 
+                                    <!-- Row 2.5: Seller ID (Optional) -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <label class="form-label fw-semibold">
+                                                <i class="bi bi-upc-scan text-primary me-1"></i>
+                                                Seller ID (Optional)
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="bi bi-upc-scan"></i>
+                                                </span>
+                                                <input type="text" class="form-control border-start-0"
+                                                    placeholder="Enter seller ID (optional)"
+                                                    id="sellerID">
+                                                <span class="input-group-text bg-light border-start-0">
+                                                    <i class="bi bi-question-circle text-muted" title="This field is optional"></i>
+                                                </span>
+                                            </div>
+                                            <div class="form-text text-muted small">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                You can enter any seller ID or leave it empty
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                     <!-- Row 3: Customer Response -->
                                     <div class="row mb-3">
                                         <div class="col-12">
@@ -140,7 +165,6 @@ $profile_image = !empty($user['profile_image'])
                                                     <option value="Switch Off">Switch Off</option>
                                                     <option value="No Business">No Business</option>
                                                     <option value="Whatsapp Details sent">Whatsapp Details sent</option>
-                                                    
                                                     <option value="Out of Service">Out of Service</option>
                                                     <option value="Testing">Testing</option>
                                                     <option value="Renewals">Renewals</option>

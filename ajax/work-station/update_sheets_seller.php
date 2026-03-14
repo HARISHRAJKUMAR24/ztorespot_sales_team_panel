@@ -29,11 +29,12 @@ try {
     $pdo = db();
     $user_uid = $_SESSION['user_uid'];
 
-    // Get and sanitize POST data
+    // Get and sanitize POST data - ADDED seller_id
     $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
     $business_name = trim($_POST['business_name'] ?? '');
     $seller_type = trim($_POST['seller_type'] ?? '');
     $phone_number = trim($_POST['phone_number'] ?? '');
+    $seller_id = trim($_POST['seller_id'] ?? ''); // NEW FIELD
     $customer_response = trim($_POST['customer_response'] ?? '');
     $selected_plan = trim($_POST['selected_plan'] ?? '');
     $upgraded_plan = trim($_POST['upgraded_plan'] ?? '');
@@ -166,11 +167,12 @@ try {
         'changes' => []
     ];
 
-    // Track changes
+    // Track changes - ADDED seller_id to tracking
     $fields_to_track = [
         'work_details_update' => ['label' => 'Business Name', 'old' => $existing['work_details_update'], 'new' => $business_name],
         'source_type' => ['label' => 'Seller Type', 'old' => $existing['source_type'], 'new' => $seller_type],
         'phone_number' => ['label' => 'Phone Number', 'old' => $existing['phone_number'], 'new' => $phone_number],
+        'seller_id' => ['label' => 'Seller ID', 'old' => $existing['seller_id'] ?? '', 'new' => $seller_id], // NEW FIELD
         'customer_response' => ['label' => 'Customer Response', 'old' => $existing['customer_response'], 'new' => $customer_response],
         'plans_interested' => ['label' => 'Plan', 'old' => $existing['plans_interested'], 'new' => $plans_interested],
         'plan_duration' => ['label' => 'Duration', 'old' => $existing['plan_duration'], 'new' => $upgraded_duration],
@@ -179,6 +181,7 @@ try {
         'call_timing' => ['label' => 'Call Timing', 'old' => $existing['call_timing'], 'new' => $final_call_timing]
     ];
 
+    // Process each field for changes
     foreach ($fields_to_track as $field => $data) {
         // Convert to string for comparison to handle null/empty properly
         $old_val = trim((string)($data['old'] ?? ''));
@@ -190,20 +193,6 @@ try {
                 'field' => $data['label'],
                 'old' => $old_val !== '' ? $old_val : '-',
                 'new' => $new_val !== '' ? $new_val : '-'
-            ];
-        }
-    }
-
-    foreach ($fields_to_track as $field => $data) {
-        // Convert to string for comparison to handle null/empty properly
-        $old_val = (string)$data['old'];
-        $new_val = (string)$data['new'];
-
-        if ($old_val !== $new_val) {
-            $history_entry['changes'][$field] = [
-                'field' => $data['label'],
-                'old' => $data['old'],
-                'new' => $data['new']
             ];
         }
     }
@@ -225,12 +214,13 @@ try {
     // Encode history back to JSON
     $update_history_json = !empty($update_history) ? json_encode($update_history, JSON_PRETTY_PRINT) : null;
 
-    // Update the record
+    // Update the record - ADDED seller_id to SQL query
     $sql = "UPDATE sales_person_sellers SET 
                 work_details_update = ?,
                 source_type = ?,
                 registration_status = ?,
                 phone_number = ?,
+                seller_id = ?,  -- NEW FIELD
                 plans_interested = ?,
                 plan_duration = ?,
                 products_uploaded = ?,
@@ -249,11 +239,13 @@ try {
 
     $stmt = $pdo->prepare($sql);
 
+    // Update params array - ADDED seller_id
     $params = [
         $business_name,
         $seller_type,
         $registration_status,
         $phone_number,
+        $seller_id,  // NEW FIELD
         $plans_interested,
         $upgraded_duration,
         $products_uploaded,
@@ -309,3 +301,4 @@ try {
         'message' => 'Error: ' . $e->getMessage()
     ]);
 }
+?>

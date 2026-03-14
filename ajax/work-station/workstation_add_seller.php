@@ -30,6 +30,7 @@ try {
     $business_name = trim($_POST['business_name'] ?? '');
     $seller_type = trim($_POST['seller_type'] ?? '');
     $phone_number = trim($_POST['phone_number'] ?? '');
+    $seller_id = trim($_POST['seller_id'] ?? '');
     $customer_response = trim($_POST['customer_response'] ?? '');
     $selected_plan = trim($_POST['selected_plan'] ?? '');
     $upgraded_plan = trim($_POST['upgraded_plan'] ?? '');
@@ -94,6 +95,9 @@ try {
         $plans_interested = $upgraded_plan;
     }
 
+    // Set plan_duration from upgraded_duration
+    $plan_duration = $upgraded_duration;
+
     // Build remembering_notes
     $remembering_notes = [];
     if (!empty($call_duration)) {
@@ -124,14 +128,16 @@ try {
             $latest_update = $customer_response;
     }
 
-    // CORRECTED SQL - removed the comments inside the query
+    // CORRECTED SQL - ADDED plan_duration column
     $sql = "INSERT INTO sales_person_sellers (
                 user_uid, 
                 work_details_update, 
                 source_type, 
                 registration_status, 
                 phone_number, 
+                seller_id,
                 plans_interested, 
+                plan_duration,  -- ADDED THIS MISSING COLUMN
                 products_uploaded,
                 customer_response, 
                 remembering_notes, 
@@ -143,19 +149,21 @@ try {
                 entry_date, 
                 created_at
             ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), NOW()
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), NOW()
             )";
 
     $stmt = $pdo->prepare($sql);
 
-    // CORRECTED PARAMS - fixed the number of parameters to match the query
+    // CORRECTED PARAMS - ADDED plan_duration
     $params = [
         $user_uid,
         $business_name,
         $seller_type,
         $registration_status,
         $phone_number,
+        $seller_id,
         $plans_interested,
+        $plan_duration,  // ADDED THIS PARAMETER
         $products_uploaded,
         $customer_response,
         $remembering_notes_str,
