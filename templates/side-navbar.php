@@ -137,7 +137,7 @@
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="#">
+                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>work-station/share-sellers/share-seller.php">
                     <svg class="bi" aria-hidden="true" width="14" height="14">
                       <use xlink:href="#share-fill"></use>
                     </svg>
