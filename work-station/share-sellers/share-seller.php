@@ -93,42 +93,59 @@ $profile_image = !empty($user['profile_image'])
                                     <div class="row mb-4">
                                         <div class="col-12">
                                             <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="shareOption" id="existingSeller" value="existing" checked>
-                                                <label class="form-check-label" for="existingSeller">
-                                                    <i class="bi bi-shop me-1"></i>Select Existing Seller(s)
+                                                <input class="form-check-input" type="radio" name="shareOption" id="newSeller" value="new" checked>
+                                                <label class="form-check-label" for="newSeller">
+                                                    <i class="bi bi-plus-circle me-1"></i>Add New Seller Details
                                                 </label>
                                             </div>
                                             <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="radio" name="shareOption" id="newSeller" value="new">
-                                                <label class="form-check-label" for="newSeller">
-                                                    <i class="bi bi-plus-circle me-1"></i>Add New Seller Details
+                                                <input class="form-check-input" type="radio" name="shareOption" id="existingSeller" value="existing">
+                                                <label class="form-check-label" for="existingSeller">
+                                                    <i class="bi bi-shop me-1"></i>Select Existing Seller(s)
                                                 </label>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Existing Seller Selection (Multi-select) -->
-                                    <div id="existingSellerSection">
+                                    <!-- Existing Seller Selection (Multi-select) - Hidden by default -->
+                                    <div id="existingSellerSection" style="display: none;">
                                         <div class="row mb-4">
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">
                                                     <i class="bi bi-person-badge text-primary me-1"></i>
                                                     Select Sellers to Share <span class="text-danger">*</span>
                                                 </label>
+                                                
+                                                <!-- Search Box for Sellers -->
+                                                <div class="mb-3">
+                                                    <div class="input-group">
+                                                        <span class="input-group-text bg-light">
+                                                            <i class="bi bi-search"></i>
+                                                        </span>
+                                                        <input type="text" class="form-control" id="sellerSearch" 
+                                                               placeholder="Search sellers by ID, name or phone...">
+                                                        <button class="btn btn-outline-secondary" type="button" id="clearSellerSearch">
+                                                            <i class="bi bi-x"></i> Clear
+                                                        </button>
+                                                    </div>
+                                                    <small class="text-muted" id="searchResultsCount"></small>
+                                                </div>
+                                                
                                                 <div class="mb-2">
                                                     <small class="text-muted">
                                                         <i class="bi bi-info-circle me-1"></i>
                                                         Hold Ctrl (Cmd on Mac) to select multiple sellers
                                                     </small>
                                                 </div>
+                                                
                                                 <div class="input-group">
                                                     <span class="input-group-text bg-light border-end-0">
                                                         <i class="bi bi-shop"></i>
                                                     </span>
-                                                    <select class="form-select border-start-0" id="sellerIds" name="seller_ids[]" multiple size="6">
+                                                    <select class="form-select border-start-0" id="sellerIds" name="seller_ids[]" multiple size="8">
                                                         <option value="" disabled>Choose sellers to share</option>
                                                         <?php foreach ($sellers as $seller): ?>
-                                                            <option value="<?= htmlspecialchars($seller['id']) ?>" 
+                                                            <option value="<?= htmlspecialchars($seller['id']) ?>"
                                                                     data-business="<?= htmlspecialchars($seller['business_name']) ?>"
                                                                     data-phone="<?= htmlspecialchars($seller['phone_number']) ?>"
                                                                     data-response="<?= htmlspecialchars($seller['customer_response']) ?>">
@@ -139,7 +156,7 @@ $profile_image = !empty($user['profile_image'])
                                                         <?php endforeach; ?>
                                                     </select>
                                                 </div>
-                                                
+
                                                 <!-- Quick Select Buttons -->
                                                 <div class="mt-2 d-flex gap-2 flex-wrap">
                                                     <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllSellers">
@@ -148,8 +165,14 @@ $profile_image = !empty($user['profile_image'])
                                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllSellers">
                                                         <i class="bi bi-x"></i> Deselect All
                                                     </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-info" id="showSelectedOnly">
+                                                        <i class="bi bi-eye"></i> Show Selected Only
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="showAllSellers">
+                                                        <i class="bi bi-list"></i> Show All
+                                                    </button>
                                                 </div>
-                                                
+
                                                 <?php if (empty($sellers)): ?>
                                                     <div class="alert alert-warning mt-2 mb-0 py-2">
                                                         <i class="bi bi-exclamation-triangle me-2"></i>
@@ -176,6 +199,7 @@ $profile_image = !empty($user['profile_image'])
                                                                         <th>Business Name</th>
                                                                         <th>Phone</th>
                                                                         <th>Response</th>
+                                                                        <th>Action</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody id="previewTableBody">
@@ -189,16 +213,16 @@ $profile_image = !empty($user['profile_image'])
                                         </div>
                                     </div>
 
-                                    <!-- New Seller Section (hidden by default) -->
-                                    <div id="newSellerSection" style="display: none;">
+                                    <!-- New Seller Section (Visible by default) -->
+                                    <div id="newSellerSection">
                                         <div class="row mb-3">
                                             <div class="col-md-6">
                                                 <label class="form-label fw-semibold">
                                                     <i class="bi bi-hash text-primary me-1"></i>
                                                     Seller ID <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="number" class="form-control" id="newSellerId" 
-                                                    placeholder="Enter seller ID" min="1">
+                                                <input type="number" class="form-control" id="newSellerId"
+                                                    placeholder="Enter seller ID" min="1" required>
                                                 <small class="text-muted">Enter a unique numeric ID for the seller</small>
                                             </div>
                                             <div class="col-md-6">
@@ -206,8 +230,8 @@ $profile_image = !empty($user['profile_image'])
                                                     <i class="bi bi-person-circle text-primary me-1"></i>
                                                     Customer / Business Name <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="text" class="form-control" id="newCustomerName" 
-                                                    placeholder="Enter customer or business name">
+                                                <input type="text" class="form-control" id="newCustomerName"
+                                                    placeholder="Enter customer or business name" required>
                                             </div>
                                         </div>
                                         <div class="row mb-3">
@@ -216,15 +240,15 @@ $profile_image = !empty($user['profile_image'])
                                                     <i class="bi bi-telephone text-primary me-1"></i>
                                                     Phone Number <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="tel" class="form-control" id="newPhoneNumber" 
-                                                    placeholder="10 digit mobile number" maxlength="10">
+                                                <input type="tel" class="form-control" id="newPhoneNumber"
+                                                    placeholder="10 digit mobile number" maxlength="10" required>
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label fw-semibold">
                                                     <i class="bi bi-chat-dots text-primary me-1"></i>
                                                     Customer Response <span class="text-danger">*</span>
                                                 </label>
-                                                <select class="form-select" id="newCustomerResponse">
+                                                <select class="form-select" id="newCustomerResponse" required>
                                                     <option value="" selected disabled>Select response type</option>
                                                     <option value="Plan Upgraded">Plan Upgraded</option>
                                                     <option value="Plan Interested">Plan Interested</option>
@@ -281,7 +305,7 @@ $profile_image = !empty($user['profile_image'])
                                                 <i class="bi bi-people-fill text-primary me-1"></i>
                                                 Share With Users <span class="text-danger">*</span>
                                             </label>
-                                            
+
                                             <!-- Send to All Option -->
                                             <div class="form-check mb-3">
                                                 <input class="form-check-input" type="checkbox" id="shareToAll">
@@ -291,7 +315,7 @@ $profile_image = !empty($user['profile_image'])
                                                     <small class="text-muted d-block">Share this seller with all registered users</small>
                                                 </label>
                                             </div>
-                                            
+
                                             <!-- Individual User Selection -->
                                             <div id="userSelectionSection">
                                                 <div class="mb-2">
@@ -308,14 +332,14 @@ $profile_image = !empty($user['profile_image'])
                                                         <option value="" disabled>Select users to share with</option>
                                                         <?php foreach ($users as $shareUser): ?>
                                                             <option value="<?= htmlspecialchars($shareUser['user_uid']) ?>">
-                                                                <?= htmlspecialchars($shareUser['name']) ?> 
+                                                                <?= htmlspecialchars($shareUser['name']) ?>
                                                                 (<?= htmlspecialchars($shareUser['phone']) ?>)
                                                             </option>
                                                         <?php endforeach; ?>
                                                     </select>
                                                 </div>
                                             </div>
-                                            
+
                                             <!-- Quick Select Buttons for Users -->
                                             <div class="mt-2 d-flex gap-2 flex-wrap" id="userQuickButtons">
                                                 <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllUsers">
@@ -325,7 +349,7 @@ $profile_image = !empty($user['profile_image'])
                                                     <i class="bi bi-x"></i> Deselect All
                                                 </button>
                                             </div>
-                                            
+
                                             <!-- Note when "Send to All" is selected -->
                                             <div class="alert alert-info mt-2 mb-0 py-2 select-all-note" style="display: none;">
                                                 <i class="bi bi-send-check me-2"></i>
@@ -430,66 +454,89 @@ $profile_image = !empty($user['profile_image'])
     </div>
 
     <style>
-        .form-label { font-size: 0.9rem; margin-bottom: 0.35rem; }
-        .input-group-text { background-color: #f8f9fa; }
-        .badge-pending { background-color: #ffc107; color: #000; }
-        .badge-accepted { background-color: #198754; color: #fff; }
-        .badge-rejected { background-color: #dc3545; color: #fff; }
-        
+        .form-label {
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .input-group-text {
+            background-color: #f8f9fa;
+        }
+
+        .badge-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-accepted {
+            background-color: #198754;
+            color: #fff;
+        }
+
+        .badge-rejected {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
         /* Multi-select styling */
-        #sellerIds[multiple], #sharedWithUser[multiple] {
+        #sellerIds[multiple],
+        #sharedWithUser[multiple] {
             min-height: 150px;
             padding: 8px;
         }
-        
-        #sellerIds[multiple] option, #sharedWithUser[multiple] option {
+
+        #sellerIds[multiple] option,
+        #sharedWithUser[multiple] option {
             padding: 8px 12px;
             border-bottom: 1px solid #eee;
         }
-        
-        #sellerIds[multiple] option:checked, #sharedWithUser[multiple] option:checked {
+
+        #sellerIds[multiple] option:checked,
+        #sharedWithUser[multiple] option:checked {
             background: #0d6efd linear-gradient(0deg, #0d6efd 0%, #0d6efd 100%);
             color: white;
         }
-        
+
         /* Preview table styling */
         #previewTableBody tr td {
             padding: 4px 8px;
             font-size: 0.9rem;
         }
-        
+
         /* Send to all note animation */
         .select-all-note {
             animation: slideDown 0.3s ease;
         }
-        
+
         @keyframes slideDown {
             from {
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         /* Quick select buttons */
         .btn-sm {
             font-size: 0.8rem;
             padding: 0.25rem 0.5rem;
         }
-        
+
         /* New seller preview animation */
         #newSellerPreview {
             animation: fadeIn 0.3s ease;
         }
-        
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);

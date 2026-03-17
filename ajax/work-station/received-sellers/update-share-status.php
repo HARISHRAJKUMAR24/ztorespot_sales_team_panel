@@ -37,7 +37,7 @@ try {
         exit;
     }
 
-    // Check if user is the recipient of this share
+    // Check if user is the recipient of this share (ONLY recipient can update status)
     $check_sql = "SELECT id FROM shared_sellers WHERE id = ? AND shared_with_user_uid = ?";
     $check_stmt = $pdo->prepare($check_sql);
     $check_stmt->execute([$share_id, $user_uid]);

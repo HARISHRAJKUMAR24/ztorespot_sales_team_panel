@@ -44,16 +44,25 @@ $profile_image = !empty($user['profile_image'])
                 <!-- Header -->
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap flex-md-nowrap pt-3 pb-2 mb-4 border-bottom gap-2">
                     <h1 class="h2 mb-2 mb-sm-0">
-                        <i class="bi bi-share-fill text-primary me-2"></i>
-                        Shared Sellers
+                        <i class="bi bi-inbox-fill text-success me-2"></i>
+                        Received Sellers
                     </h1>
                     <div class="d-flex gap-2">
                         <a href="share-seller.php" class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-1"></i>Share New Seller
+                            <i class="bi bi-share me-1"></i>Share Sellers
                         </a>
                         <a href="workstation_sellers_list.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Sellers
+                            <i class="bi bi-arrow-left me-1"></i>Back
                         </a>
+                    </div>
+                </div>
+
+                <!-- Info Card -->
+                <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                    <div>
+                        <strong>Sellers Shared With You</strong><br>
+                        These are sellers that other team members have shared with you. You can view their details and update their status.
                     </div>
                 </div>
 
@@ -64,14 +73,6 @@ $profile_image = !empty($user['profile_image'])
                             <div class="card-body p-3">
                                 <div class="row g-3">
                                     <div class="col-md-3">
-                                        <label class="form-label fw-semibold">Share Type</label>
-                                        <select class="form-select" id="filterType">
-                                            <option value="all">All Shares</option>
-                                            <option value="sent">Sent by Me</option>
-                                            <option value="received">Received by Me</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
                                         <label class="form-label fw-semibold">Status</label>
                                         <select class="form-select" id="filterStatus">
                                             <option value="all">All Status</option>
@@ -80,13 +81,37 @@ $profile_image = !empty($user['profile_image'])
                                             <option value="rejected">Rejected</option>
                                         </select>
                                     </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Shared By</label>
+                                        <select class="form-select" id="filterSharedBy">
+                                            <option value="all">All Users</option>
+                                            <?php
+                                            // Get distinct users who have shared with current user
+                                            $users_stmt = $pdo->prepare("
+                                                SELECT DISTINCT u.user_uid, u.name 
+                                                FROM shared_sellers s
+                                                JOIN users u ON s.shared_by_user_uid = u.user_uid
+                                                WHERE s.shared_with_user_uid = ?
+                                                ORDER BY u.name
+                                            ");
+                                            $users_stmt->execute([$user_uid]);
+                                            $shared_by_users = $users_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                                            foreach ($shared_by_users as $shared_by):
+                                            ?>
+                                                <option value="<?= htmlspecialchars($shared_by['user_uid']) ?>">
+                                                    <?= htmlspecialchars($shared_by['name']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold">Search</label>
                                         <input type="text" class="form-control" id="searchInput" placeholder="Search by seller name or phone...">
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
-                                        <button class="btn btn-primary w-100" id="applyFilters">
-                                            <i class="bi bi-filter me-1"></i>Apply Filters
+                                        <button class="btn btn-success w-100" id="applyFilters">
+                                            <i class="bi bi-filter me-1"></i>Apply
                                         </button>
                                     </div>
                                 </div>
@@ -95,37 +120,36 @@ $profile_image = !empty($user['profile_image'])
                     </div>
                 </div>
 
-                <!-- Shared Sellers Table -->
+                <!-- Received Sellers Table -->
                 <div class="row">
                     <div class="col-12">
                         <div class="card shadow-sm border-0">
                             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">
-                                    <i class="bi bi-list-ul text-primary me-2"></i>
-                                    All Shared Sellers
+                                    <i class="bi bi-inbox text-success me-2"></i>
+                                    Sellers Shared With Me
                                 </h5>
-                                <span class="badge bg-primary" id="totalCount">0</span>
+                                <span class="badge bg-success" id="totalCount">0</span>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>Type</th>
-                                                <th>Seller ID</th>
+                                                <th>ID</th>
                                                 <th>Seller Details</th>
-                                                <th>Shared With/By</th>
+                                                <th>Shared By</th>
                                                 <th>Response</th>
                                                 <th>Status</th>
                                                 <th>Shared At</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="sharedSellersTable">
+                                        <tbody id="receivedSellersTable">
                                             <tr>
-                                                <td colspan="8" class="text-center py-4 text-muted">
+                                                <td colspan="7" class="text-center py-4 text-muted">
                                                     <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                                                    Loading shared sellers...
+                                                    Loading received sellers...
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -153,12 +177,12 @@ $profile_image = !empty($user['profile_image'])
     <div class="modal fade" id="shareDetailsModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-success text-white">
                     <h5 class="modal-title">
-                        <i class="bi bi-info-circle text-primary me-2"></i>
-                        Share Details
+                        <i class="bi bi-info-circle me-2"></i>
+                        Received Seller Details
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="shareDetailsContent">
                     Loading...
@@ -174,12 +198,12 @@ $profile_image = !empty($user['profile_image'])
     <div class="modal fade" id="updateStatusModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-success text-white">
                     <h5 class="modal-title">
-                        <i class="bi bi-arrow-repeat text-primary me-2"></i>
-                        Update Share Status
+                        <i class="bi bi-arrow-repeat me-2"></i>
+                        Update Status
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="updateShareId">
@@ -194,38 +218,57 @@ $profile_image = !empty($user['profile_image'])
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmUpdate">Update Status</button>
+                    <button type="button" class="btn btn-success" id="confirmUpdate">Update Status</button>
                 </div>
             </div>
         </div>
     </div>
 
     <style>
-        .badge-sent { background-color: #0d6efd; color: white; }
-        .badge-received { background-color: #198754; color: white; }
-        .badge-pending { background-color: #ffc107; color: #000; }
-        .badge-accepted { background-color: #198754; color: #fff; }
-        .badge-rejected { background-color: #dc3545; color: #fff; }
-        
+        .badge-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-accepted {
+            background-color: #198754;
+            color: #fff;
+        }
+
+        .badge-rejected {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
         .table td {
             vertical-align: middle;
         }
-        
-        .share-type-badge {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-        }
-        
+
         .action-buttons .btn {
             padding: 0.25rem 0.5rem;
             font-size: 0.875rem;
+        }
+
+        .modal-header.bg-success {
+            background-color: #198754 !important;
+        }
+
+        .btn-success {
+            background-color: #198754;
+            border-color: #198754;
+        }
+
+        .btn-success:hover {
+            background-color: #157347;
+            border-color: #146c43;
         }
     </style>
 
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
-    <script src="<?= BASE_URL ?>js/work-station/recived-sellers/recived-sellers.js"></script>
+    <script src="<?= BASE_URL ?>js/work-station/received-sellers/received-sellers.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>
+
 </html>

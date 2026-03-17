@@ -1,51 +1,47 @@
 $(document).ready(function () {
     let currentPage = 1;
     let totalPages = 1;
-    let allShares = [];
+    let allReceivedSellers = [];
 
-    // Load shared sellers
-    loadSharedSellers();
+    // Load received sellers
+    loadReceivedSellers();
 
     // Apply filters
     $('#applyFilters').on('click', function () {
         currentPage = 1;
-        loadSharedSellers();
+        filterAndDisplaySellers();
     });
 
     // Search on enter key
     $('#searchInput').on('keypress', function (e) {
         if (e.which === 13) {
             currentPage = 1;
-            loadSharedSellers();
+            filterAndDisplaySellers();
         }
     });
 
-    // Load shared sellers function
-    function loadSharedSellers() {
-        const filterType = $('#filterType').val();
-        const filterStatus = $('#filterStatus').val();
-        const search = $('#searchInput').val();
-
+    // Load received sellers function - ONLY shows sellers shared WITH current user
+    function loadReceivedSellers() {
         $.ajax({
-            url: BASE_URL + 'ajax/work-station/recived-sellers/get-recent-shares.php',
+            url: BASE_URL + 'ajax/work-station/received-sellers/get-received-sellers.php',
             type: 'GET',
             dataType: 'json',
             success: function (response) {
-                console.log('Shares response:', response);
+                console.log('Received sellers response:', response);
                 if (response.status === 'success' && response.data) {
-                    allShares = response.data;
-                    filterAndDisplayShares(filterType, filterStatus, search);
+                    allReceivedSellers = response.data;
+                    filterAndDisplaySellers();
                 } else {
-                    showEmptyState();
+                    showEmptyState('No sellers have been shared with you yet');
                 }
             },
             error: function (xhr, status, error) {
-                console.error('Error loading shares:', error);
-                $('#sharedSellersTable').html(`
+                console.error('Error loading received sellers:', error);
+                $('#receivedSellersTable').html(`
                     <tr>
-                        <td colspan="8" class="text-center py-4 text-danger">
+                        <td colspan="7" class="text-center py-4 text-danger">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            Failed to load shared sellers
+                            Failed to load received sellers
                         </td>
                     </tr>
                 `);
@@ -53,120 +49,103 @@ $(document).ready(function () {
         });
     }
 
-    // Filter and display shares
-    function filterAndDisplayShares(type, status, search) {
-        let filteredShares = [...allShares];
+    // Filter and display sellers
+    function filterAndDisplaySellers() {
+        const status = $('#filterStatus').val();
+        const sharedBy = $('#filterSharedBy').val();
+        const search = $('#searchInput').val().toLowerCase();
 
-        // Filter by type
-        if (type !== 'all') {
-            filteredShares = filteredShares.filter(share => share.share_type === type);
-        }
+        let filteredSellers = [...allReceivedSellers];
 
         // Filter by status
         if (status !== 'all') {
-            filteredShares = filteredShares.filter(share => share.status === status);
+            filteredSellers = filteredSellers.filter(seller => seller.status === status);
+        }
+
+        // Filter by shared by user
+        if (sharedBy !== 'all') {
+            filteredSellers = filteredSellers.filter(seller => seller.shared_by_user_uid === sharedBy);
         }
 
         // Filter by search
         if (search) {
-            const searchLower = search.toLowerCase();
-            filteredShares = filteredShares.filter(share => 
-                (share.customer_name && share.customer_name.toLowerCase().includes(searchLower)) ||
-                (share.phone_number && share.phone_number.includes(search))
+            filteredSellers = filteredSellers.filter(seller => 
+                (seller.customer_name && seller.customer_name.toLowerCase().includes(search)) ||
+                (seller.phone_number && seller.phone_number.includes(search))
             );
         }
 
         // Update total count
-        $('#totalCount').text(filteredShares.length);
+        $('#totalCount').text(filteredSellers.length);
 
         // Paginate
         const itemsPerPage = 10;
-        totalPages = Math.ceil(filteredShares.length / itemsPerPage);
+        totalPages = Math.ceil(filteredSellers.length / itemsPerPage);
         const start = (currentPage - 1) * itemsPerPage;
-        const paginatedShares = filteredShares.slice(start, start + itemsPerPage);
+        const paginatedSellers = filteredSellers.slice(start, start + itemsPerPage);
 
-        if (paginatedShares.length > 0) {
-            renderSharesTable(paginatedShares);
+        if (paginatedSellers.length > 0) {
+            renderSellersTable(paginatedSellers);
             renderPagination();
         } else {
-            $('#sharedSellersTable').html(`
-                <tr>
-                    <td colspan="8" class="text-center py-4 text-muted">
-                        <i class="bi bi-inbox me-2"></i>
-                        No shares found matching your filters
-                    </td>
-                </tr>
-            `);
-            $('#pagination').empty();
+            showEmptyState('No sellers match your filters');
         }
     }
 
-    // Render shares table
-    function renderSharesTable(shares) {
+    // Render sellers table
+    function renderSellersTable(sellers) {
         let html = '';
 
-        shares.forEach(function (share) {
-            const typeClass = share.share_type === 'sent' ? 'badge-sent' : 'badge-received';
-            const typeText = share.share_type === 'sent' ? 'Sent' : 'Received';
-            
+        sellers.forEach(function (seller) {
             const statusClass = 
-                share.status === 'accepted' ? 'badge-accepted' :
-                share.status === 'rejected' ? 'badge-rejected' : 
+                seller.status === 'accepted' ? 'badge-accepted' :
+                seller.status === 'rejected' ? 'badge-rejected' : 
                 'badge-pending';
             
-            const statusText = share.status.charAt(0).toUpperCase() + share.status.slice(1);
+            const statusText = seller.status.charAt(0).toUpperCase() + seller.status.slice(1);
 
             html += `
                 <tr>
                     <td>
-                        <span class="badge ${typeClass} share-type-badge">${typeText}</span>
+                        <span class="badge bg-secondary">${escapeHtml(seller.seller_id) || 'N/A'}</span>
                     </td>
                     <td>
-                        <span class="badge bg-secondary">${escapeHtml(share.seller_id) || 'N/A'}</span>
+                        <div class="fw-bold">${escapeHtml(seller.customer_name)}</div>
+                        <small class="text-muted">${escapeHtml(seller.phone_number)}</small>
                     </td>
                     <td>
-                        <div class="fw-bold">${escapeHtml(share.customer_name)}</div>
-                        <small class="text-muted">${escapeHtml(share.phone_number)}</small>
+                        <div class="fw-bold">${escapeHtml(seller.shared_by_name)}</div>
+                        <small class="text-muted">${escapeHtml(seller.shared_by_phone)}</small>
                     </td>
                     <td>
-                        ${share.share_type === 'sent' 
-                            ? `<div class="fw-bold">To: ${escapeHtml(share.shared_with_name)}</div>
-                               <small class="text-muted">${escapeHtml(share.shared_with_phone)}</small>`
-                            : `<div class="fw-bold">From: ${escapeHtml(share.shared_by_name)}</div>
-                               <small class="text-muted">${escapeHtml(share.shared_by_phone)}</small>`
-                        }
-                    </td>
-                    <td>
-                        <span class="badge bg-light text-dark">${escapeHtml(share.customer_response)}</span>
+                        <span class="badge bg-light text-dark">${escapeHtml(seller.customer_response)}</span>
                     </td>
                     <td>
                         <span class="badge ${statusClass}">${statusText}</span>
                     </td>
                     <td>
-                        <small>${formatDate(share.shared_at)}</small>
+                        <small>${formatDate(seller.shared_at)}</small>
                     </td>
                     <td>
                         <div class="btn-group action-buttons">
-                            <button class="btn btn-sm btn-outline-primary view-share" 
-                                    data-id="${share.id}"
+                            <button class="btn btn-sm btn-outline-success view-share" 
+                                    data-id="${seller.id}"
                                     title="View Details">
-                                <i class="bi bi-eye"></i>
+                                <i class="bi bi-eye"></i> View
                             </button>
-                            ${share.share_type === 'received' && share.status === 'pending' ? `
-                                <button class="btn btn-sm btn-outline-success update-status" 
-                                        data-id="${share.id}"
-                                        data-status="${share.status}"
-                                        title="Update Status">
-                                    <i class="bi bi-arrow-repeat"></i>
-                                </button>
-                            ` : ''}
+                            <button class="btn btn-sm btn-outline-warning update-status" 
+                                    data-id="${seller.id}"
+                                    data-status="${seller.status}"
+                                    title="Update Status">
+                                <i class="bi bi-arrow-repeat"></i> Update
+                            </button>
                         </div>
                     </td>
                 </tr>
             `;
         });
 
-        $('#sharedSellersTable').html(html);
+        $('#receivedSellersTable').html(html);
 
         // Attach view handlers
         $('.view-share').on('click', function () {
@@ -182,6 +161,21 @@ $(document).ready(function () {
         });
     }
 
+    // Show empty state
+    function showEmptyState(message) {
+        $('#receivedSellersTable').html(`
+            <tr>
+                <td colspan="7" class="text-center py-5">
+                    <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                    <h5 class="text-muted">${message || 'No sellers shared with you'}</h5>
+                    <p class="text-muted">When someone shares a seller with you, it will appear here</p>
+                </td>
+            </tr>
+        `);
+        $('#totalCount').text('0');
+        $('#pagination').empty();
+    }
+
     // Render pagination
     function renderPagination() {
         let paginationHtml = '';
@@ -189,7 +183,7 @@ $(document).ready(function () {
         if (currentPage > 1) {
             paginationHtml += `
                 <li class="page-item">
-                    <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+                    <a class="page-link text-success" href="#" data-page="${currentPage - 1}">Previous</a>
                 </li>
             `;
         }
@@ -198,7 +192,8 @@ $(document).ready(function () {
             if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
                 paginationHtml += `
                     <li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                        <a class="page-link ${i === currentPage ? 'bg-success border-success' : 'text-success'}" 
+                           href="#" data-page="${i}">${i}</a>
                     </li>
                 `;
             } else if (i === currentPage - 3 || i === currentPage + 3) {
@@ -209,7 +204,7 @@ $(document).ready(function () {
         if (currentPage < totalPages) {
             paginationHtml += `
                 <li class="page-item">
-                    <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+                    <a class="page-link text-success" href="#" data-page="${currentPage + 1}">Next</a>
                 </li>
             `;
         }
@@ -222,32 +217,15 @@ $(document).ready(function () {
             const page = $(this).data('page');
             if (page) {
                 currentPage = page;
-                const filterType = $('#filterType').val();
-                const filterStatus = $('#filterStatus').val();
-                const search = $('#searchInput').val();
-                filterAndDisplayShares(filterType, filterStatus, search);
+                filterAndDisplaySellers();
             }
         });
-    }
-
-    // Show empty state
-    function showEmptyState() {
-        $('#sharedSellersTable').html(`
-            <tr>
-                <td colspan="8" class="text-center py-4 text-muted">
-                    <i class="bi bi-inbox me-2"></i>
-                    No shared sellers found
-                </td>
-            </tr>
-        `);
-        $('#totalCount').text('0');
-        $('#pagination').empty();
     }
 
     // View share details
     function viewShareDetails(shareId) {
         $.ajax({
-            url: BASE_URL + 'ajax/work-station/recived-sellers/get-share-details.php',
+            url: BASE_URL + 'ajax/work-station/received-sellers/get-share-details.php',
             type: 'GET',
             data: { share_id: shareId },
             dataType: 'json',
@@ -266,9 +244,6 @@ $(document).ready(function () {
 
     // Show share details modal
     function showShareDetailsModal(share) {
-        const typeClass = share.share_type === 'sent' ? 'badge-sent' : 'badge-received';
-        const typeText = share.share_type === 'sent' ? 'Sent' : 'Received';
-        
         const statusClass = 
             share.status === 'accepted' ? 'badge-accepted' :
             share.status === 'rejected' ? 'badge-rejected' : 
@@ -280,43 +255,34 @@ $(document).ready(function () {
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label class="fw-bold">Share Type:</label>
-                        <div><span class="badge ${typeClass}">${typeText}</span></div>
+                        <label class="fw-bold text-success">Seller ID:</label>
+                        <div><span class="badge bg-secondary fs-6">${escapeHtml(share.seller_id) || 'N/A'}</span></div>
                     </div>
                     <div class="mb-3">
-                        <label class="fw-bold">Seller ID:</label>
-                        <div><span class="badge bg-secondary">${escapeHtml(share.seller_id) || 'N/A'}</span></div>
+                        <label class="fw-bold text-success">Customer Name:</label>
+                        <div class="fs-5">${escapeHtml(share.customer_name)}</div>
                     </div>
                     <div class="mb-3">
-                        <label class="fw-bold">Customer Name:</label>
-                        <div>${escapeHtml(share.customer_name)}</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="fw-bold">Phone Number:</label>
+                        <label class="fw-bold text-success">Phone Number:</label>
                         <div>${escapeHtml(share.phone_number)}</div>
                     </div>
                     <div class="mb-3">
-                        <label class="fw-bold">Customer Response:</label>
-                        <div><span class="badge bg-light text-dark">${escapeHtml(share.customer_response)}</span></div>
+                        <label class="fw-bold text-success">Customer Response:</label>
+                        <div><span class="badge bg-light text-dark fs-6">${escapeHtml(share.customer_response)}</span></div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label class="fw-bold">Shared By:</label>
-                        <div>${escapeHtml(share.shared_by_name)}</div>
+                        <label class="fw-bold text-success">Shared By:</label>
+                        <div class="fw-bold">${escapeHtml(share.shared_by_name)}</div>
                         <small class="text-muted">${escapeHtml(share.shared_by_phone)}</small>
                     </div>
                     <div class="mb-3">
-                        <label class="fw-bold">Shared With:</label>
-                        <div>${escapeHtml(share.shared_with_name)}</div>
-                        <small class="text-muted">${escapeHtml(share.shared_with_phone)}</small>
+                        <label class="fw-bold text-success">Status:</label>
+                        <div><span class="badge ${statusClass} fs-6">${statusText}</span></div>
                     </div>
                     <div class="mb-3">
-                        <label class="fw-bold">Status:</label>
-                        <div><span class="badge ${statusClass}">${statusText}</span></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="fw-bold">Shared At:</label>
+                        <label class="fw-bold text-success">Shared At:</label>
                         <div>${formatDate(share.shared_at)}</div>
                     </div>
                 </div>
@@ -325,7 +291,7 @@ $(document).ready(function () {
             <div class="row">
                 <div class="col-12">
                     <div class="mb-3">
-                        <label class="fw-bold">Notes:</label>
+                        <label class="fw-bold text-success">Notes from sharer:</label>
                         <div class="p-3 bg-light rounded">${escapeHtml(share.notes)}</div>
                     </div>
                 </div>
@@ -350,7 +316,7 @@ $(document).ready(function () {
         const newStatus = $('#updateStatus').val();
 
         $.ajax({
-            url: BASE_URL + 'ajax/work-station/recived-sellers/update-share-status.php',
+            url: BASE_URL + 'ajax/work-station/received-sellers/update-share-status.php',
             type: 'POST',
             data: {
                 share_id: shareId,
@@ -361,7 +327,7 @@ $(document).ready(function () {
                 if (response.status === 'success') {
                     showToast('success', 'Success!', 'Status updated successfully');
                     $('#updateStatusModal').modal('hide');
-                    loadSharedSellers(); // Reload the list
+                    loadReceivedSellers(); // Reload the list
                 } else {
                     showToast('danger', 'Error!', response.message);
                 }
@@ -389,8 +355,8 @@ $(document).ready(function () {
     function showToast(type, title, message) {
         const id = 'toast-' + Date.now();
         const bgClass = type === 'success' ? 'bg-success' :
-            type === 'danger' ? 'bg-danger' :
-            type === 'warning' ? 'bg-warning' : 'bg-info';
+                       type === 'danger' ? 'bg-danger' :
+                       type === 'warning' ? 'bg-warning' : 'bg-info';
 
         const html = `
             <div id="${id}" class="toast text-white ${bgClass}" role="alert" 

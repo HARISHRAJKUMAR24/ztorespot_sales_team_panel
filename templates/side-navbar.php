@@ -51,7 +51,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/recived-sellers/recived-sellers.php">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/received-sellers/received-sellers.php">
             <svg class="bi" aria-hidden="true">
               <use xlink:href="#shared-sellers"></use>
             </svg>

@@ -2,6 +2,10 @@
 require_once "../../../config/config.php";
 require_once "../../../lib/functions.php";
 
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Start output buffering
 ob_start();
 
@@ -22,9 +26,9 @@ try {
     $pdo = db();
     $user_uid = $_SESSION['user_uid'];
 
-    error_log("Loading shares for user: " . $user_uid);
+    error_log("Loading shared sellers for user: " . $user_uid);
 
-    // Get recent shares - only show shares where current user is either sender OR recipient
+    // Get all shares where user is either sender or recipient
     $sql = "SELECT 
                 s.id,
                 s.seller_id,
@@ -34,10 +38,14 @@ try {
                 s.notes,
                 s.status,
                 s.shared_at,
+                s.shared_by_user_uid,
+                s.shared_with_user_uid,
                 ub.name as shared_by_name,
                 ub.phone as shared_by_phone,
+                ub.email as shared_by_email,
                 uw.name as shared_with_name,
                 uw.phone as shared_with_phone,
+                uw.email as shared_with_email,
                 CASE 
                     WHEN s.shared_by_user_uid = ? THEN 'sent'
                     ELSE 'received'
@@ -46,8 +54,7 @@ try {
             LEFT JOIN users ub ON s.shared_by_user_uid = ub.user_uid
             LEFT JOIN users uw ON s.shared_with_user_uid = uw.user_uid
             WHERE s.shared_by_user_uid = ? OR s.shared_with_user_uid = ?
-            ORDER BY s.shared_at DESC
-            LIMIT 50";
+            ORDER BY s.shared_at DESC";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$user_uid, $user_uid, $user_uid]);
@@ -66,16 +73,14 @@ try {
     ]);
 
 } catch (PDOException $e) {
-    error_log("Database Error in get-recent-shares: " . $e->getMessage());
-    error_log("SQL State: " . $e->getCode());
+    error_log("Database Error in get-shared-sellers: " . $e->getMessage());
     ob_end_clean();
     echo json_encode([
         'status' => 'error',
         'message' => 'Database error: ' . $e->getMessage()
     ]);
 } catch (Exception $e) {
-    error_log("General Error in get-recent-shares: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
+    error_log("General Error in get-shared-sellers: " . $e->getMessage());
     ob_end_clean();
     echo json_encode([
         'status' => 'error',

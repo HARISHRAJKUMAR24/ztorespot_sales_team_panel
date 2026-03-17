@@ -1,6 +1,19 @@
 $(document).ready(function () {
+    // Initialize form with New Seller as default
+    $('#newSellerSection').show();
+    $('#existingSellerSection').hide();
+    
+    // Set required attributes for new seller fields
+    $('#newSellerId').prop('required', true);
+    $('#newCustomerName').prop('required', true);
+    $('#newPhoneNumber').prop('required', true);
+    $('#newCustomerResponse').prop('required', true);
+
     // Load recent shares
     loadRecentShares();
+    
+    // Initialize seller search
+    initializeSellerSearch();
 
     // Toggle between existing and new seller
     $('input[name="shareOption"]').on('change', function () {
@@ -59,6 +72,91 @@ $(document).ready(function () {
         }
     });
 
+    // Seller search functionality
+    let originalSellerOptions = [];
+
+    function initializeSellerSearch() {
+        // Store original options
+        $('#sellerIds option').each(function() {
+            if ($(this).val()) {
+                originalSellerOptions.push({
+                    value: $(this).val(),
+                    text: $(this).text(),
+                    business: $(this).data('business'),
+                    phone: $(this).data('phone'),
+                    response: $(this).data('response')
+                });
+            }
+        });
+        
+        // Update search results count
+        updateSearchResultsCount();
+    }
+
+    function updateSearchResultsCount() {
+        const visibleCount = $('#sellerIds option:visible').length;
+        const totalCount = originalSellerOptions.length;
+        $('#searchResultsCount').text(`Showing ${visibleCount} of ${totalCount} sellers`);
+    }
+
+    // Filter sellers based on search
+    $('#sellerSearch').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase().trim();
+        
+        if (searchTerm === '') {
+            $('#sellerIds option').show();
+        } else {
+            $('#sellerIds option').hide();
+            
+            $('#sellerIds option').filter(function() {
+                const optionText = $(this).text().toLowerCase();
+                const businessName = $(this).data('business') ? $(this).data('business').toLowerCase() : '';
+                const phoneNumber = $(this).data('phone') ? $(this).data('phone').toLowerCase() : '';
+                const sellerId = $(this).val().toString();
+                
+                return optionText.includes(searchTerm) || 
+                       businessName.includes(searchTerm) || 
+                       phoneNumber.includes(searchTerm) ||
+                       sellerId.includes(searchTerm);
+            }).show();
+        }
+        
+        updateSearchResultsCount();
+    });
+
+    // Clear search
+    $('#clearSellerSearch').on('click', function() {
+        $('#sellerSearch').val('');
+        $('#sellerIds option').show();
+        updateSearchResultsCount();
+    });
+
+    // Show selected only
+    $('#showSelectedOnly').on('click', function() {
+        const selectedValues = $('#sellerIds').val() || [];
+        
+        if (selectedValues.length === 0) {
+            showToast('info', 'Info', 'No sellers selected');
+            return;
+        }
+        
+        $('#sellerIds option').hide();
+        
+        selectedValues.forEach(function(value) {
+            $(`#sellerIds option[value="${value}"]`).show();
+        });
+        
+        updateSearchResultsCount();
+        $('#sellerSearch').val('');
+    });
+
+    // Show all sellers
+    $('#showAllSellers').on('click', function() {
+        $('#sellerIds option').show();
+        $('#sellerSearch').val('');
+        updateSearchResultsCount();
+    });
+
     // Seller selection change handler
     $('#sellerIds').on('change', function () {
         const selectedOptions = $(this).find('option:selected');
@@ -79,6 +177,13 @@ $(document).ready(function () {
                         <td>${escapeHtml(businessName)}</td>
                         <td>${escapeHtml(phoneNumber)}</td>
                         <td><span class="badge bg-light text-dark">${escapeHtml(response)}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger remove-seller" 
+                                    data-id="${sellerId}"
+                                    title="Remove from selection">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
@@ -86,14 +191,21 @@ $(document).ready(function () {
             $('#selectedCount').text(selectedCount);
             $('#previewTableBody').html(previewHtml);
             $('#sellersPreview').show();
+            
+            // Add remove functionality
+            $('.remove-seller').on('click', function() {
+                const sellerId = $(this).data('id');
+                $(`#sellerIds option[value="${sellerId}"]`).prop('selected', false);
+                $('#sellerIds').trigger('change');
+            });
         } else {
             $('#sellersPreview').hide();
         }
     });
 
-    // Select all sellers
+    // Select all visible sellers
     $('#selectAllSellers').on('click', function () {
-        $('#sellerIds option').prop('selected', true);
+        $('#sellerIds option:visible').prop('selected', true);
         $('#sellerIds').trigger('change');
     });
 
@@ -133,9 +245,18 @@ $(document).ready(function () {
         $('#shareSellerForm')[0].reset();
         $('#sellersPreview').hide();
         $('#newSellerPreview').hide();
-        $('#existingSellerSection').show();
-        $('#newSellerSection').hide();
-        $('input[name="shareOption"][value="existing"]').prop('checked', true);
+        
+        // Reset to New Seller (default)
+        $('#existingSellerSection').hide();
+        $('#newSellerSection').show();
+        $('input[name="shareOption"][value="new"]').prop('checked', true);
+        
+        // Set required attributes for new seller fields
+        $('#newSellerId').prop('required', true);
+        $('#newCustomerName').prop('required', true);
+        $('#newPhoneNumber').prop('required', true);
+        $('#newCustomerResponse').prop('required', true);
+        
         $('#shareToAll').prop('checked', false);
         $('#sharedWithUser').prop('disabled', false).show();
         $('#userQuickButtons').show();
@@ -144,6 +265,11 @@ $(document).ready(function () {
         $('#sellerIds').val([]);
         $('#selectedCount').text('0');
         $('#previewTableBody').empty();
+        
+        // Clear search
+        $('#sellerSearch').val('');
+        $('#sellerIds option').show();
+        updateSearchResultsCount();
     });
 
     // Form submit handler
@@ -236,7 +362,7 @@ $(document).ready(function () {
             dataType: 'json',
             traditional: true,
             success: function (response) {
-                console.log('Success response:', response); // Debug log
+                console.log('Success response:', response);
                 if (response.status === 'success') {
                     let message = response.message;
                     if (response.total_shares) {
@@ -244,13 +370,22 @@ $(document).ready(function () {
                     }
                     showToast('success', 'Success!', message);
 
-                    // Reset form
+                    // Reset form to New Seller (default)
                     $('#shareSellerForm')[0].reset();
                     $('#sellersPreview').hide();
                     $('#newSellerPreview').hide();
-                    $('#existingSellerSection').show();
-                    $('#newSellerSection').hide();
-                    $('input[name="shareOption"][value="existing"]').prop('checked', true);
+                    
+                    // Set New Seller as default
+                    $('#existingSellerSection').hide();
+                    $('#newSellerSection').show();
+                    $('input[name="shareOption"][value="new"]').prop('checked', true);
+                    
+                    // Set required attributes for new seller fields
+                    $('#newSellerId').prop('required', true);
+                    $('#newCustomerName').prop('required', true);
+                    $('#newPhoneNumber').prop('required', true);
+                    $('#newCustomerResponse').prop('required', true);
+                    
                     $('#shareToAll').prop('checked', false);
                     $('#sharedWithUser').prop('disabled', false).show();
                     $('#userQuickButtons').show();
@@ -259,6 +394,11 @@ $(document).ready(function () {
                     $('#sellerIds').val([]);
                     $('#selectedCount').text('0');
                     $('#previewTableBody').empty();
+                    
+                    // Clear search
+                    $('#sellerSearch').val('');
+                    $('#sellerIds option').show();
+                    updateSearchResultsCount();
 
                     // Reload recent shares
                     loadRecentShares();
@@ -267,7 +407,7 @@ $(document).ready(function () {
                 }
             },
             error: function (xhr, status, error) {
-                console.log('Error response:', xhr.responseText); // Debug log
+                console.log('Error response:', xhr.responseText);
                 console.log('Status:', status);
                 console.log('Error:', error);
 
