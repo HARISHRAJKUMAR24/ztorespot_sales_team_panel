@@ -208,4 +208,27 @@ try {
         'message' => 'Error: ' . $e->getMessage()
     ]);
 }
-?>
+
+
+// After successful insertion, check if it's a plan upgrade
+if ($result && ($customer_response == 'Plan Upgraded' || $customer_response == 'Plan Interested')) {
+
+    // Get the inserted seller data
+    $sellerData = [
+        'user_uid' => $user_uid,
+        'work_details_update' => $business_name,
+        'plans_interested' => $plans_interested,
+        'plan_duration' => $plan_duration,
+        'phone_number' => $phone_number,
+        'entry_date' => date('Y-m-d')
+    ];
+
+    // Call the function to update target settings
+    $targetResult = updateTargetOnUpgrade($sellerData);
+
+    if ($targetResult['success']) {
+        error_log("Target {$targetResult['action']} successfully: " . $targetResult['target_id']);
+    } else {
+        error_log("Failed to update target: " . $targetResult['message']);
+    }
+}

@@ -23,7 +23,7 @@ function isLoggedIn()
     if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
         return true;
     }
-    
+
     // Check remember token cookie
     if (isset($_COOKIE['remember_token'])) {
         $user = getUserByRememberToken($_COOKIE['remember_token']);
@@ -38,7 +38,7 @@ function isLoggedIn()
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -50,11 +50,11 @@ function createRememberToken($pdo, $user_id)
     try {
         // Generate secure token
         $token = bin2hex(random_bytes(32));
-        
+
         // Update user's remember_token in users table
         $updateStmt = $pdo->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
         $result = $updateStmt->execute([$token, $user_id]);
-        
+
         if ($result && $updateStmt->rowCount() > 0) {
             return $token;
         }
@@ -75,15 +75,15 @@ function getUserByRememberToken($token)
         if (!$pdo) {
             return false;
         }
-        
+
         $stmt = $pdo->prepare("SELECT * FROM users WHERE remember_token = ? LIMIT 1");
         $stmt->execute([$token]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($user) {
             unset($user['password']);
         }
-        
+
         return $user;
     } catch (Exception $e) {
         error_log("Error getting user by token: " . $e->getMessage());
@@ -101,12 +101,12 @@ function clearRememberToken($user_id)
         if (!$pdo) {
             return false;
         }
-        
+
         $stmt = $pdo->prepare("UPDATE users SET remember_token = NULL WHERE id = ?");
         $result = $stmt->execute([$user_id]);
-        
+
         setcookie("remember_token", "", time() - 3600, "/");
-        
+
         return $result;
     } catch (Exception $e) {
         error_log("Error clearing remember token: " . $e->getMessage());
@@ -117,7 +117,8 @@ function clearRememberToken($user_id)
 /**
  * Register a new user
  */
-function registerUser($pdo, $name, $phone, $email, $password) {
+function registerUser($pdo, $name, $phone, $email, $password)
+{
     try {
         // Check if phone already exists
         $checkStmt = $pdo->prepare("SELECT id FROM users WHERE phone = ?");
@@ -155,13 +156,13 @@ function registerUser($pdo, $name, $phone, $email, $password) {
 
         // Begin transaction
         $pdo->beginTransaction();
-        
+
         // Insert user
         $stmt = $pdo->prepare("
             INSERT INTO users (user_uid, name, phone, email, password, created_at)
             VALUES (?, ?, ?, ?, ?, NOW())
         ");
-        
+
         $result = $stmt->execute([
             $user_uid,
             $name,
@@ -169,14 +170,14 @@ function registerUser($pdo, $name, $phone, $email, $password) {
             !empty($email) ? $email : null,
             $hash
         ]);
-        
+
         if (!$result) {
             throw new Exception("Failed to insert user");
         }
-        
+
         $userId = $pdo->lastInsertId();
         $pdo->commit();
-        
+
         return [
             'success' => true,
             'message' => 'Account created successfully! Redirecting to login...',
@@ -184,7 +185,6 @@ function registerUser($pdo, $name, $phone, $email, $password) {
             'user_uid' => $user_uid,
             'phone' => $phone
         ];
-        
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
@@ -200,16 +200,17 @@ function registerUser($pdo, $name, $phone, $email, $password) {
 /**
  * Generate unique user UID
  */
-function generateUniqueUserUid($pdo) {
+function generateUniqueUserUid($pdo)
+{
     $maxAttempts = 10;
     $attempts = 0;
 
     while ($attempts < $maxAttempts) {
         $user_uid = "ZTS" . rand(10000, 99999);
-        
+
         $checkUidStmt = $pdo->prepare("SELECT id FROM users WHERE user_uid = ?");
         $checkUidStmt->execute([$user_uid]);
-        
+
         if (!$checkUidStmt->fetch()) {
             return $user_uid;
         }
@@ -230,54 +231,55 @@ function generateUniqueUserUid($pdo) {
  * @param array $file $_FILES['profile_image'] array
  * @return array ['success' => bool, 'message' => string, 'path' => string]
  */
-function handleProfileImageUpload($user_uid, $file) {
+function handleProfileImageUpload($user_uid, $file)
+{
     try {
         // Validate file
         if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
             return ['success' => false, 'message' => 'No file uploaded'];
         }
-        
+
         // Validate file type
         $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
         if (!in_array($file['type'], $allowed_types)) {
             return ['success' => false, 'message' => 'Only JPG, PNG & GIF files are allowed'];
         }
-        
+
         // Validate file size (max 2MB)
         if ($file['size'] > 2 * 1024 * 1024) {
             return ['success' => false, 'message' => 'File size must be less than 2MB'];
         }
-        
+
         // Create directory structure: uploads/user_uid/year/month/
         $year = date('Y');
         $month = date('m');
         $date = date('d');
         $upload_dir = __DIR__ . "/../uploads/{$user_uid}/{$date}/{$month}/{$year}/";
-        
+
         // Create directories recursively if they don't exist
         if (!file_exists($upload_dir)) {
             if (!mkdir($upload_dir, 0777, true)) {
                 return ['success' => false, 'message' => 'Failed to create directory structure'];
             }
         }
-        
+
         // Check if directory is writable
         if (!is_writable($upload_dir)) {
             return ['success' => false, 'message' => 'Upload directory is not writable'];
         }
-        
+
         // Generate unique filename
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename = 'profile_' . time() . '.' . $extension;
         $filepath = $upload_dir . $filename;
-        
+
         // Relative path for database (from root)
         $relative_path = "uploads/{$user_uid}/{$date}/{$month}/{$year}/{$filename}";
-        
+
         // Move uploaded file
         if (move_uploaded_file($file['tmp_name'], $filepath)) {
             return [
-                'success' => true, 
+                'success' => true,
                 'message' => 'Image uploaded successfully',
                 'path' => $relative_path,
                 'full_path' => $filepath
@@ -286,7 +288,6 @@ function handleProfileImageUpload($user_uid, $file) {
             $error = error_get_last();
             return ['success' => false, 'message' => 'Failed to upload file: ' . ($error['message'] ?? 'Unknown error')];
         }
-        
     } catch (Exception $e) {
         error_log("Profile image upload error: " . $e->getMessage());
         return ['success' => false, 'message' => 'Upload failed: ' . $e->getMessage()];
@@ -299,46 +300,46 @@ function handleProfileImageUpload($user_uid, $file) {
  * @param string $image_path Relative path to image (from database)
  * @return bool Success or failure
  */
-function deleteProfileImage($image_path) {
+function deleteProfileImage($image_path)
+{
     try {
         if (empty($image_path)) {
             return false;
         }
-        
+
         $full_path = __DIR__ . '/../' . $image_path;
-        
+
         // Delete the image file
         if (file_exists($full_path)) {
             if (!unlink($full_path)) {
                 error_log("Failed to delete image: " . $full_path);
                 return false;
             }
-            
+
             // Clean up empty directories
             $month_dir = dirname($full_path);      // .../month/
             $year_dir = dirname($month_dir);       // .../year/
             $user_dir = dirname($year_dir);        // .../user_uid/
-            
+
             // Remove month directory if empty
             if (is_dir($month_dir) && count(scandir($month_dir)) == 2) { // 2 = . and ..
                 rmdir($month_dir);
-                
+
                 // Remove year directory if empty
                 if (is_dir($year_dir) && count(scandir($year_dir)) == 2) {
                     rmdir($year_dir);
-                    
+
                     // Remove user directory if empty
                     if (is_dir($user_dir) && count(scandir($user_dir)) == 2) {
                         rmdir($user_dir);
                     }
                 }
             }
-            
+
             return true;
         }
-        
+
         return false;
-        
     } catch (Exception $e) {
         error_log("Profile image deletion error: " . $e->getMessage());
         return false;
@@ -354,35 +355,35 @@ function deleteProfileImage($image_path) {
  * @param string $new_image_path New image relative path
  * @return bool Success or failure
  */
-function updateUserProfileImage($pdo, $user_uid, $new_image_path) {
+function updateUserProfileImage($pdo, $user_uid, $new_image_path)
+{
     try {
         // Get old image path using user_uid
         $stmt = $pdo->prepare("SELECT profile_image FROM users WHERE user_uid = ?");
         $stmt->execute([$user_uid]);
         $old_image = $stmt->fetchColumn();
-        
+
         // Start transaction
         $pdo->beginTransaction();
-        
+
         // Update database with new image using user_uid
         $update = $pdo->prepare("UPDATE users SET profile_image = ? WHERE user_uid = ?");
         $result = $update->execute([$new_image_path, $user_uid]);
-        
+
         if ($result) {
             // Commit transaction first
             $pdo->commit();
-            
+
             // Delete old image after successful database update
             if ($old_image) {
                 deleteProfileImage($old_image);
             }
-            
+
             return true;
         } else {
             $pdo->rollBack();
             return false;
         }
-        
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
@@ -398,21 +399,22 @@ function updateUserProfileImage($pdo, $user_uid, $new_image_path) {
  * @param string $user_uid User UID (like ZTS16482)
  * @return array|false User data or false if not found
  */
-function getUserByUid($user_uid) {
+function getUserByUid($user_uid)
+{
     try {
         $pdo = db();
         if (!$pdo) {
             return false;
         }
-        
+
         $stmt = $pdo->prepare("SELECT * FROM users WHERE user_uid = ?");
         $stmt->execute([$user_uid]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($user) {
             unset($user['password']);
         }
-        
+
         return $user;
     } catch (Exception $e) {
         error_log("Error getting user by UID: " . $e->getMessage());
@@ -433,7 +435,8 @@ function getUserByUid($user_uid) {
  * @param string $plan The plan name (Welcome, Starter, Intermediate, Professional)
  * @return array Returns array with renewal_date, days_remaining, status, and alert_days
  */
-function calculateRenewalDate($start_date, $duration, $plan = '') {
+function calculateRenewalDate($start_date, $duration, $plan = '')
+{
     if (empty($start_date) || empty($duration)) {
         return [
             'renewal_date' => null,
@@ -444,18 +447,18 @@ function calculateRenewalDate($start_date, $duration, $plan = '') {
             'should_show' => false
         ];
     }
-    
+
     try {
         $start = new DateTime($start_date);
         $today = new DateTime();
         $today->setTime(0, 0, 0);
-        
+
         // Parse duration
         $duration = strtolower(trim($duration));
         $interval = null;
         $months = 0;
         $years = 0;
-        
+
         // Handle different duration formats
         if (strpos($duration, 'month') !== false) {
             $months = (int) filter_var($duration, FILTER_SANITIZE_NUMBER_INT);
@@ -474,24 +477,24 @@ function calculateRenewalDate($start_date, $duration, $plan = '') {
             $months = 1;
             $interval = new DateInterval("P1M");
         }
-        
+
         // Calculate renewal date
         $renewal = clone $start;
         $renewal->add($interval);
         $renewal->setTime(0, 0, 0);
-        
+
         // Calculate days remaining
         $days_remaining = $today->diff($renewal)->days;
         if ($today > $renewal) {
             $days_remaining = -$days_remaining;
         }
-        
+
         // Determine alert days based on plan and duration
         $alert_days = getAlertDays($plan, $months, $years);
-        
+
         // Determine if should show in renewal list (within alert days or expired)
         $should_show = ($days_remaining <= $alert_days && $days_remaining > 0) || $days_remaining <= 0;
-        
+
         // Determine status
         $status = 'active';
         if ($days_remaining < 0) {
@@ -501,7 +504,7 @@ function calculateRenewalDate($start_date, $duration, $plan = '') {
         } elseif ($days_remaining <= 30) {
             $status = 'near_expiry';
         }
-        
+
         return [
             'renewal_date' => $renewal->format('Y-m-d'),
             'formatted_date' => $renewal->format('d/m/Y'),
@@ -534,9 +537,10 @@ function calculateRenewalDate($start_date, $duration, $plan = '') {
  * @param int $years Number of years
  * @return int Number of days before renewal to show alert
  */
-function getAlertDays($plan, $months, $years) {
+function getAlertDays($plan, $months, $years)
+{
     $plan = strtolower(trim($plan));
-    
+
     // Welcome Plan criteria
     if (strpos($plan, 'welcome') !== false) {
         if ($months <= 1) {
@@ -545,7 +549,7 @@ function getAlertDays($plan, $months, $years) {
             return 20; // 20 days for 1 year or more
         }
     }
-    
+
     // Starter Plan criteria
     elseif (strpos($plan, 'starter') !== false) {
         if ($months <= 3) {
@@ -556,7 +560,7 @@ function getAlertDays($plan, $months, $years) {
             return 30; // 30 days for 2+ years
         }
     }
-    
+
     // Intermediate Plan criteria
     elseif (strpos($plan, 'intermediate') !== false) {
         if ($years >= 1) {
@@ -565,7 +569,7 @@ function getAlertDays($plan, $months, $years) {
             return 30; // 30 days for 2+ years
         }
     }
-    
+
     // Professional Plan criteria
     elseif (strpos($plan, 'professional') !== false) {
         if ($years >= 1) {
@@ -574,7 +578,7 @@ function getAlertDays($plan, $months, $years) {
             return 30; // 30 days for 2+ years
         }
     }
-    
+
     // Default
     return 15;
 }
@@ -584,11 +588,12 @@ function getAlertDays($plan, $months, $years) {
  * @param int $days_remaining
  * @return string HTML badge
  */
-function getRenewalStatusBadge($days_remaining) {
+function getRenewalStatusBadge($days_remaining)
+{
     if ($days_remaining === null) {
         return '<span class="badge bg-secondary">Unknown</span>';
     }
-    
+
     if ($days_remaining < 0) {
         return '<span class="badge bg-danger">Expired</span>';
     } elseif ($days_remaining == 0) {
@@ -609,11 +614,12 @@ function getRenewalStatusBadge($days_remaining) {
  * @param int $days_remaining
  * @return string Countdown text
  */
-function getRenewalCountdownText($days_remaining) {
+function getRenewalCountdownText($days_remaining)
+{
     if ($days_remaining === null) {
         return 'N/A';
     }
-    
+
     if ($days_remaining < 0) {
         $days = abs($days_remaining);
         return "Expired {$days} days ago";
@@ -631,24 +637,25 @@ function getRenewalCountdownText($days_remaining) {
  * @param string $notes
  * @return string|null
  */
-function extractDurationFromNotes($notes) {
+function extractDurationFromNotes($notes)
+{
     if (empty($notes)) return null;
-    
+
     // Try to find "Upgraded Duration: X" pattern
     if (preg_match('/Upgraded Duration: ([^\n\.]+)/', $notes, $matches)) {
         return trim($matches[1]);
     }
-    
+
     // Try to find duration in other formats
     if (preg_match('/(\d+\s*(month|months|year|years|day|days))/i', $notes, $matches)) {
         return $matches[1];
     }
-    
+
     // Try to find standalone duration like "1 Month", "3 Months", etc.
     if (preg_match('/\b(1|3|6|12)\s*(Month|Months|Year|Years)\b/i', $notes, $matches)) {
         return $matches[0];
     }
-    
+
     return null;
 }
 
@@ -657,23 +664,24 @@ function extractDurationFromNotes($notes) {
  * @param array $seller Seller data from database
  * @return array Renewal information
  */
-function calculateSellerRenewal($seller) {
+function calculateSellerRenewal($seller)
+{
     $start_date = null;
     $duration = null;
     $plan = $seller['plans_interested'] ?? '';
-    
+
     // Get start date from entry_date or created_at
     if (!empty($seller['entry_date'])) {
         $start_date = $seller['entry_date'];
     } elseif (!empty($seller['created_at'])) {
         $start_date = date('Y-m-d', strtotime($seller['created_at']));
     }
-    
+
     // Get duration from remembering_notes
     if (!empty($seller['remembering_notes'])) {
         $duration = extractDurationFromNotes($seller['remembering_notes']);
     }
-    
+
     // If no duration found, try to get from plan name or set default
     if (empty($duration)) {
         // Check if plan name contains duration info
@@ -686,7 +694,7 @@ function calculateSellerRenewal($seller) {
             $duration = '1 Month'; // Default
         }
     }
-    
+
     return calculateRenewalDate($start_date, $duration, $plan);
 }
 
@@ -696,7 +704,8 @@ function calculateSellerRenewal($seller) {
  * @param string $user_uid User UID
  * @return array Plan counts
  */
-function getPlanCounts($pdo, $user_uid) {
+function getPlanCounts($pdo, $user_uid)
+{
     $plans = [
         'welcome' => 0,
         'starter' => 0,
@@ -704,7 +713,7 @@ function getPlanCounts($pdo, $user_uid) {
         'professional' => 0,
         'total' => 0
     ];
-    
+
     try {
         // Get all sellers with plans
         $sql = "SELECT plans_interested FROM sales_person_sellers 
@@ -713,7 +722,7 @@ function getPlanCounts($pdo, $user_uid) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$user_uid]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         foreach ($rows as $row) {
             $plan = strtolower($row['plans_interested'] ?? '');
             if (strpos($plan, 'welcome') !== false) {
@@ -730,7 +739,7 @@ function getPlanCounts($pdo, $user_uid) {
     } catch (Exception $e) {
         error_log("Error getting plan counts: " . $e->getMessage());
     }
-    
+
     return $plans;
 }
 
@@ -739,9 +748,10 @@ function getPlanCounts($pdo, $user_uid) {
  * @param string $plan Plan name
  * @return string HTML badge
  */
-function getPlanBadge($plan) {
+function getPlanBadge($plan)
+{
     $plan_lower = strtolower($plan ?? '');
-    
+
     if (strpos($plan_lower, 'welcome') !== false) {
         return '<span class="badge bg-success">Welcome Plan</span>';
     } elseif (strpos($plan_lower, 'starter') !== false) {
@@ -754,3 +764,252 @@ function getPlanBadge($plan) {
         return '<span class="badge bg-secondary">' . htmlspecialchars($plan) . '</span>';
     }
 }
+
+
+
+
+// Add this to your existing functions.php file
+
+/**
+ * Get current logged in user data
+ * @return array|false User data or false if not logged in
+ */
+function getCurrentUser()
+{
+    if (!isLoggedIn()) {
+        return false;
+    }
+
+    try {
+        $pdo = db();
+        if (!$pdo) {
+            return false;
+        }
+
+        // Check if we have user_uid in session
+        if (isset($_SESSION['user_uid'])) {
+            $stmt = $pdo->prepare("SELECT id, user_uid, name, phone, email, profile_image, created_at FROM users WHERE user_uid = ?");
+            $stmt->execute([$_SESSION['user_uid']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user) {
+                return $user;
+            }
+        }
+
+        // Fallback to user_id if available
+        if (isset($_SESSION['user_id'])) {
+            $stmt = $pdo->prepare("SELECT id, user_uid, name, phone, email, profile_image, created_at FROM users WHERE id = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user) {
+                // Update session with user_uid if missing
+                if (!isset($_SESSION['user_uid'])) {
+                    $_SESSION['user_uid'] = $user['user_uid'];
+                }
+                return $user;
+            }
+        }
+
+        return false;
+    } catch (Exception $e) {
+        error_log("Error getting current user: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get user target progress for dashboard
+ * @param string $user_uid User UID
+ * @return array|false Target data or false if not found
+ */
+function getUserTargetProgress($user_uid)
+{
+    try {
+        $pdo = db();
+        if (!$pdo) {
+            return false;
+        }
+
+        $current_date = date('Y-m-d');
+
+        $sql = "SELECT ts.*, 
+                CASE 
+                    WHEN ts.achievement_percentage >= 100 THEN 'achieved'
+                    WHEN ts.end_date < CURDATE() THEN 'overdue'
+                    ELSE 'active'
+                END as progress_status
+                FROM target_settings ts 
+                WHERE ts.user_uid = ? 
+                AND ts.target_type = 'individual'
+                AND ts.status = 'active'
+                AND ts.start_date <= ? 
+                AND ts.end_date >= ?
+                ORDER BY ts.created_at DESC 
+                LIMIT 1";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$user_uid, $current_date, $current_date]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result ?: false;
+    } catch (Exception $e) {
+        error_log("Error getting user target progress: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get team target progress for dashboard
+ * @return array|false Team target data or false if not found
+ */
+function getTeamTargetProgress()
+{
+    try {
+        $pdo = db();
+        if (!$pdo) {
+            return false;
+        }
+
+        $current_date = date('Y-m-d');
+
+        $sql = "SELECT ts.* 
+                FROM target_settings ts 
+                WHERE ts.target_type = 'team'
+                AND ts.status = 'active'
+                AND ts.start_date <= ? 
+                AND ts.end_date >= ?
+                ORDER BY ts.created_at DESC 
+                LIMIT 1";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$current_date, $current_date]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result ?: false;
+    } catch (Exception $e) {
+        error_log("Error getting team target progress: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get user's recent target history (last 6 targets)
+ * @param string $user_uid User UID
+ * @return array Recent targets
+ */
+function getUserRecentTargets($user_uid)
+{
+    try {
+        $pdo = db();
+        if (!$pdo) {
+            return [];
+        }
+
+        $sql = "SELECT ts.*, 
+                DATE_FORMAT(ts.start_date, '%b %Y') as period,
+                CASE 
+                    WHEN ts.achievement_percentage >= 100 THEN 'achieved'
+                    WHEN ts.end_date < CURDATE() AND ts.achievement_percentage < 100 THEN 'missed'
+                    ELSE 'in_progress'
+                END as status_label
+                FROM target_settings ts 
+                WHERE ts.user_uid = ? 
+                AND ts.target_type = 'individual'
+                AND ts.status != 'cancelled'
+                ORDER BY ts.created_at DESC 
+                LIMIT 6";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$user_uid]);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $results ?: [];
+    } catch (Exception $e) {
+        error_log("Error getting user recent targets: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Get dashboard statistics
+ * @return array Dashboard stats
+ */
+function getDashboardStats()
+{
+    try {
+        $pdo = db();
+        if (!$pdo) {
+            return [
+                'active_individual' => 0,
+                'active_team' => 0,
+                'avg_achievement' => 0,
+                'monthly_targets' => 0
+            ];
+        }
+
+        $current_date = date('Y-m-d');
+        $month_start = date('Y-m-01');
+        $month_end = date('Y-m-t');
+
+        // Active individual targets count
+        $ind_stmt = $pdo->prepare("SELECT COUNT(*) as count FROM target_settings 
+            WHERE target_type = 'individual' AND status = 'active' 
+            AND start_date <= ? AND end_date >= ?");
+        $ind_stmt->execute([$current_date, $current_date]);
+        $active_individual = $ind_stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+
+        // Active team targets count
+        $team_stmt = $pdo->prepare("SELECT COUNT(*) as count FROM target_settings 
+            WHERE target_type = 'team' AND status = 'active' 
+            AND start_date <= ? AND end_date >= ?");
+        $team_stmt->execute([$current_date, $current_date]);
+        $active_team = $team_stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+
+        // Overall achievement rate
+        $achievement_stmt = $pdo->prepare("SELECT 
+            COALESCE(AVG(achievement_percentage), 0) as avg_achievement
+            FROM target_settings 
+            WHERE status = 'active' AND start_date <= ? AND end_date >= ?");
+        $achievement_stmt->execute([$current_date, $current_date]);
+        $avg_achievement = round($achievement_stmt->fetch(PDO::FETCH_ASSOC)['avg_achievement'] ?? 0, 1);
+
+        // Total targets this month
+        $month_stmt = $pdo->prepare("SELECT COUNT(*) as count FROM target_settings 
+            WHERE ((start_date BETWEEN ? AND ?) 
+            OR (end_date BETWEEN ? AND ?))");
+        $month_stmt->execute([$month_start, $month_end, $month_start, $month_end]);
+        $monthly_targets = $month_stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+
+        return [
+            'active_individual' => $active_individual,
+            'active_team' => $active_team,
+            'avg_achievement' => $avg_achievement,
+            'monthly_targets' => $monthly_targets
+        ];
+    } catch (Exception $e) {
+        error_log("Error getting dashboard stats: " . $e->getMessage());
+        return [
+            'active_individual' => 0,
+            'active_team' => 0,
+            'avg_achievement' => 0,
+            'monthly_targets' => 0
+        ];
+    }
+}
+
+/**
+ * Update user session data after login
+ * @param array $user User data from database
+ */
+function setUserSession($user)
+{
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['user_uid'] = $user['user_uid'];
+    $_SESSION['user_name'] = $user['name'];
+    $_SESSION['user_phone'] = $user['phone'];
+    $_SESSION['user_email'] = $user['email'] ?? '';
+    $_SESSION['logged_in'] = true;
+}
+

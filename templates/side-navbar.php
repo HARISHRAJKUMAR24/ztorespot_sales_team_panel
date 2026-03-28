@@ -145,7 +145,7 @@
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="#">
+                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>sellers/organic-seller.php">
                     <svg class="bi" aria-hidden="true" width="14" height="14">
                       <use xlink:href="#organic-sellers"></use>
                     </svg>
@@ -195,7 +195,7 @@
       </h6>
       <ul class="nav flex-column mb-auto">
         <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="#">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>target/target.php">
             <svg class="bi" aria-hidden="true">
               <use xlink:href="#target"></use>
             </svg>
@@ -208,22 +208,6 @@
               <use xlink:href="#graph-up"></use>
             </svg>
             Sales Team Reports
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="#">
-            <svg class="bi" aria-hidden="true">
-              <use xlink:href="#file-earmark-text"></use>
-            </svg>
-            Social engagement
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="#">
-            <svg class="bi" aria-hidden="true">
-              <use xlink:href="#file-earmark-text"></use>
-            </svg>
-            Year-end sale
           </a>
         </li>
       </ul>
