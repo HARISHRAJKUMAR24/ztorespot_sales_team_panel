@@ -18,6 +18,8 @@
     const BASE_URL = "<?= BASE_URL ?>";
   </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <!-- In your head-tag.php file -->
+  <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/scroll-fix.css">
   <style>
     .bd-placeholder-img {
       font-size: 1.125rem;
@@ -104,56 +106,56 @@
 
     /* Accordion customization */
     .accordion-item {
-        background-color: transparent;
+      background-color: transparent;
     }
-    
+
     .accordion-button {
-        box-shadow: none;
-        color: inherit;
+      box-shadow: none;
+      color: inherit;
     }
-    
+
     .accordion-button:not(.collapsed) {
-        background-color: rgba(13, 110, 253, 0.05);
-        color: #0d6efd;
+      background-color: rgba(13, 110, 253, 0.05);
+      color: #0d6efd;
     }
-    
+
     .accordion-button:focus {
-        box-shadow: none;
-        border-color: transparent;
+      box-shadow: none;
+      border-color: transparent;
     }
-    
+
     .accordion-button::after {
-        background-size: 1rem;
-        width: 1rem;
-        height: 1rem;
-        margin-left: auto;
+      background-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+      margin-left: auto;
     }
-    
+
     /* Style for nested nav items */
     .nav-link.ps-4 {
-        padding-left: 2.5rem !important;
-        font-size: 0.9rem;
+      padding-left: 2.5rem !important;
+      font-size: 0.9rem;
     }
-    
+
     .nav-link.ps-4:hover {
-        background-color: rgba(13, 110, 253, 0.05);
+      background-color: rgba(13, 110, 253, 0.05);
     }
-    
+
     /* Active state for nested items */
     .nav-link.ps-4.active {
-        color: #0d6efd;
-        background-color: rgba(13, 110, 253, 0.1);
+      color: #0d6efd;
+      background-color: rgba(13, 110, 253, 0.1);
     }
-    
+
     /* Smaller icons for nested items */
     .nav-link.ps-4 svg {
-        width: 14px;
-        height: 14px;
+      width: 14px;
+      height: 14px;
     }
-    
+
     /* Hover effect for accordion button */
     .accordion-button:hover {
-        background-color: rgba(13, 110, 253, 0.05);
+      background-color: rgba(13, 110, 253, 0.05);
     }
   </style>
 </head>

@@ -1,0 +1,105 @@
+/* scroll-fix.css - Include this in all pages */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden !important;
+}
+
+body {
+    overflow: hidden !important;
+}
+
+.container-fluid {
+    height: 100vh !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+}
+
+.container-fluid>.row {
+    height: 100% !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Sidebar styling */
+.sidebar {
+    height: 100vh !important;
+    overflow: hidden !important;
+    background-color: #f8f9fa;
+}
+
+.sidebar .offcanvas-body {
+    height: calc(100vh - 70px) !important;
+    overflow-y: auto !important;
+    scrollbar-width: none !important;
+    /* Firefox */
+    -ms-overflow-style: none !important;
+    /* IE/Edge */
+}
+
+.sidebar .offcanvas-body::-webkit-scrollbar {
+    display: none !important;
+    /* Chrome/Safari/Opera */
+}
+
+/* Main content - scrollable area */
+main,
+.col-md-9,
+.col-lg-10,
+.dashboard-main {
+    height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Custom scrollbar for main content */
+main::-webkit-scrollbar,
+.col-md-9::-webkit-scrollbar,
+.col-lg-10::-webkit-scrollbar,
+.dashboard-main::-webkit-scrollbar {
+    width: 8px;
+}
+
+main::-webkit-scrollbar-track,
+.col-md-9::-webkit-scrollbar-track,
+.col-lg-10::-webkit-scrollbar-track,
+.dashboard-main::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+main::-webkit-scrollbar-thumb,
+.col-md-9::-webkit-scrollbar-thumb,
+.col-lg-10::-webkit-scrollbar-thumb,
+.dashboard-main::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+main::-webkit-scrollbar-thumb:hover,
+.col-md-9::-webkit-scrollbar-thumb:hover,
+.col-lg-10::-webkit-scrollbar-thumb:hover,
+.dashboard-main::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Mobile breakpoint */
+@media (max-width: 767.98px) {
+    .sidebar .offcanvas-body {
+        height: auto !important;
+        max-height: calc(100vh - 70px) !important;
+    }
+
+    main,
+    .col-md-9,
+    .col-lg-10,
+    .dashboard-main {
+        height: calc(100vh - 56px) !important;
+    }
+}
