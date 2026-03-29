@@ -999,17 +999,5 @@ function getDashboardStats()
     }
 }
 
-/**
- * Update user session data after login
- * @param array $user User data from database
- */
-function setUserSession($user)
-{
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_uid'] = $user['user_uid'];
-    $_SESSION['user_name'] = $user['name'];
-    $_SESSION['user_phone'] = $user['phone'];
-    $_SESSION['user_email'] = $user['email'] ?? '';
-    $_SESSION['logged_in'] = true;
-}
+
 
