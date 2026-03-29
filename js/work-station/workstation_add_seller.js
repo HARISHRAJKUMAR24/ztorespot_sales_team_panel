@@ -1,5 +1,43 @@
 $(document).ready(function () {
 
+    // Store subscription plans data
+    let subscriptionPlans = [];
+    let currentPlanDurations = [];
+
+    // Load subscription plans from database
+    function loadSubscriptionPlans() {
+        $.ajax({
+            url: BASE_URL + 'ajax/work-station/get_subscription_plans.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                if (response.status === 'success') {
+                    subscriptionPlans = response.data;
+                    console.log('Loaded subscription plans:', subscriptionPlans);
+                }
+            },
+            error: function () {
+                console.error('Failed to load subscription plans');
+                showToast('danger', 'Error!', 'Failed to load subscription plans');
+            }
+        });
+    }
+
+    // Load plans on page load
+    loadSubscriptionPlans();
+
+    // Get durations for a specific plan
+    function getPlanDurations(planName) {
+        const durations = subscriptionPlans
+            .filter(plan => plan.plan_name === planName)
+            .map(plan => ({
+                duration: plan.duration,
+                amount: parseFloat(plan.total_amount),
+                plan_id: plan.id
+            }));
+        return durations;
+    }
+
     // Customer Response Change Handler
     $('#customerResponse').on('change', function () {
         const response = $(this).val();
@@ -34,8 +72,8 @@ $(document).ready(function () {
 
         container.html(html);
 
-        // Initialize the "Other" option handlers for newly added fields
-        initializeOtherOptionHandlers();
+        // Initialize handlers
+        initializePlanHandlers();
 
         // Initialize datepicker if schedule fields are shown
         if (response === 'Schedule') {
@@ -43,55 +81,259 @@ $(document).ready(function () {
         }
     });
 
+    // Initialize plan selection handlers
+    function initializePlanHandlers() {
+        // For Plan Interested
+        $(document).on('change', '#selectedPlan', function () {
+            const planName = $(this).val();
+            const durationSelect = $('#selectedDuration');
+            
+            if (planName && planName !== 'other') {
+                const durations = getPlanDurations(planName);
+                currentPlanDurations = durations;
+                
+                // Populate duration dropdown
+                let durationHtml = '<option value="" selected disabled>Select duration</option>';
+                durations.forEach(dur => {
+                    durationHtml += `<option value="${dur.duration}" data-amount="${dur.amount}" data-plan-id="${dur.plan_id}">${dur.duration} - ₹${dur.amount.toFixed(2)}</option>`;
+                });
+                durationHtml += '<option value="other">Other (Custom Duration)</option>';
+                durationSelect.html(durationHtml).prop('disabled', false);
+                
+                // Reset amount field
+                $('#planAmount').val('');
+                $('#planAmountDisplay').text('₹0.00');
+                $('#selectedPlanId').val('');
+            } else if (planName === 'other') {
+                // Custom plan
+                durationSelect.html('<option value="" selected disabled>Select duration</option><option value="other">Custom Duration</option>').prop('disabled', false);
+                $('#customPlanContainer').show();
+                $('#planAmount').val('').prop('readonly', false);
+                $('#planAmountDisplay').text('₹0.00');
+            } else {
+                durationSelect.html('<option value="" selected disabled>First select a plan</option>').prop('disabled', true);
+            }
+        });
+
+        $(document).on('change', '#selectedDuration', function () {
+            const selectedOption = $(this).find('option:selected');
+            const duration = $(this).val();
+            
+            if (duration && duration !== 'other') {
+                const amount = parseFloat(selectedOption.data('amount'));
+                const planId = parseInt(selectedOption.data('plan-id'));
+                $('#planAmount').val(amount.toFixed(2));
+                $('#planAmountDisplay').text('₹' + amount.toFixed(2));
+                $('#selectedPlanId').val(planId);
+                $('#selectedDurationValue').val(duration);
+                $('#isCustomDuration').val(0);
+            } else if (duration === 'other') {
+                $('#planAmount').val('').prop('readonly', false);
+                $('#planAmountDisplay').text('₹0.00');
+                $('#customDurationContainerPlan').show();
+                $('#selectedPlanId').val(0);
+                $('#isCustomDuration').val(1);
+            } else {
+                $('#planAmount').val('');
+                $('#planAmountDisplay').text('₹0.00');
+                $('#selectedPlanId').val('');
+            }
+        });
+
+        // For Plan Upgraded
+        $(document).on('change', '#upgradedPlan', function () {
+            const planName = $(this).val();
+            const durationSelect = $('#upgradedDuration');
+            
+            if (planName && planName !== 'other') {
+                const durations = getPlanDurations(planName);
+                currentPlanDurations = durations;
+                
+                // Populate duration dropdown
+                let durationHtml = '<option value="" selected disabled>Select duration</option>';
+                durations.forEach(dur => {
+                    durationHtml += `<option value="${dur.duration}" data-amount="${dur.amount}" data-plan-id="${dur.plan_id}">${dur.duration} - ₹${dur.amount.toFixed(2)}</option>`;
+                });
+                durationHtml += '<option value="other">Other (Custom Duration)</option>';
+                durationSelect.html(durationHtml).prop('disabled', false);
+                
+                // Reset amount field
+                $('#upgradedPlanAmount').val('');
+                $('#upgradedPlanAmountDisplay').text('₹0.00');
+                $('#upgradedPlanId').val('');
+            } else if (planName === 'other') {
+                durationSelect.html('<option value="" selected disabled>Select duration</option><option value="other">Custom Duration</option>').prop('disabled', false);
+                $('#customUpgradedPlanContainer').show();
+                $('#upgradedPlanAmount').val('').prop('readonly', false);
+                $('#upgradedPlanAmountDisplay').text('₹0.00');
+            } else {
+                durationSelect.html('<option value="" selected disabled>First select a plan</option>').prop('disabled', true);
+            }
+        });
+
+        $(document).on('change', '#upgradedDuration', function () {
+            const selectedOption = $(this).find('option:selected');
+            const duration = $(this).val();
+            
+            if (duration && duration !== 'other') {
+                const amount = parseFloat(selectedOption.data('amount'));
+                const planId = parseInt(selectedOption.data('plan-id'));
+                $('#upgradedPlanAmount').val(amount.toFixed(2));
+                $('#upgradedPlanAmountDisplay').text('₹' + amount.toFixed(2));
+                $('#upgradedPlanId').val(planId);
+                $('#upgradedDurationValue').val(duration);
+                $('#isCustomDurationUpgraded').val(0);
+            } else if (duration === 'other') {
+                $('#upgradedPlanAmount').val('').prop('readonly', false);
+                $('#upgradedPlanAmountDisplay').text('₹0.00');
+                $('#customDurationContainer').show();
+                $('#upgradedPlanId').val(0);
+                $('#isCustomDurationUpgraded').val(1);
+            } else {
+                $('#upgradedPlanAmount').val('');
+                $('#upgradedPlanAmountDisplay').text('₹0.00');
+                $('#upgradedPlanId').val('');
+            }
+        });
+
+        // Manual amount entry handlers
+        $(document).on('input', '#planAmount', function () {
+            const amount = $(this).val();
+            if (amount) {
+                $('#planAmountDisplay').text('₹' + parseFloat(amount).toFixed(2));
+            } else {
+                $('#planAmountDisplay').text('₹0.00');
+            }
+        });
+
+        $(document).on('input', '#upgradedPlanAmount', function () {
+            const amount = $(this).val();
+            if (amount) {
+                $('#upgradedPlanAmountDisplay').text('₹' + parseFloat(amount).toFixed(2));
+            } else {
+                $('#upgradedPlanAmountDisplay').text('₹0.00');
+            }
+        });
+
+        // Custom duration handlers
+        $(document).on('input', '#customDurationPlan', function () {
+            $('#selectedDurationValue').val($(this).val());
+        });
+
+        $(document).on('input', '#customDuration', function () {
+            $('#upgradedDurationValue').val($(this).val());
+        });
+
+        $(document).on('input', '#customPlan', function () {
+            $('#selectedPlanName').val($(this).val());
+        });
+
+        $(document).on('input', '#customUpgradedPlan', function () {
+            $('#upgradedPlanName').val($(this).val());
+        });
+    }
+
     // Generate Plan Interested Fields
     function generatePlanInterestedFields() {
+        // Get unique plan names from subscription plans
+        const uniquePlans = [];
+        const planMap = new Map();
+        
+        subscriptionPlans.forEach(plan => {
+            if (!planMap.has(plan.plan_name)) {
+                planMap.set(plan.plan_name, plan);
+                uniquePlans.push(plan);
+            }
+        });
+        
+        const planOptions = uniquePlans.map(plan => `<option value="${plan.plan_name}">${plan.plan_name}</option>`).join('');
+        
         return `
             <div class="dynamic-field">
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-12 col-md-6 mb-3">
                         <label class="form-label fw-semibold">
                             <i class="bi bi-star-fill text-warning me-1"></i>
                             Select Plan <span class="text-danger">*</span>
                         </label>
-                        <div class="plan-select-wrapper">
-                            <select class="form-select" id="selectedPlan" required>
-                                <option value="" selected disabled>Choose a plan</option>
-                                <option value="Welcome Plan">Welcome Plan</option>
-                                <option value="Starter Plan">Starter Plan</option>
-                                <option value="Professional Plan">Professional Plan</option>
-                                <option value="Intermediate Plan">Intermediate Plan</option>
-                                <option value="other">Other (Custom Plan)</option>
-                            </select>
-                            <div id="customPlanContainer" style="display: none;" class="mt-2 custom-field">
-                                <label class="form-label">Enter Custom Plan Name:</label>
-                                <input type="text" class="form-control" id="customPlan" 
-                                    placeholder="e.g., Premium Plan, Gold Plan etc.">
-                            </div>
-                            <input type="hidden" id="finalSelectedPlan">
+                        <select class="form-select" id="selectedPlan" required>
+                            <option value="" selected disabled>Choose a plan</option>
+                            ${planOptions}
+                            <option value="other">Other (Custom Plan)</option>
+                        </select>
+                        <div id="customPlanContainer" style="display: none;" class="mt-2 custom-field">
+                            <label class="form-label">Enter Custom Plan Name:</label>
+                            <input type="text" class="form-control" id="customPlan" 
+                                placeholder="e.g., Premium Plan, Gold Plan etc.">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-calendar-check-fill text-info me-1"></i>
+                            Duration <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="selectedDuration" disabled required>
+                            <option value="" selected>First select a plan</option>
+                        </select>
+                        <div id="customDurationContainerPlan" style="display: none;" class="mt-2 custom-field">
+                            <label class="form-label">Enter Custom Duration:</label>
+                            <input type="text" class="form-control" id="customDurationPlan" 
+                                placeholder="e.g., 45 days, 18 months, etc.">
                         </div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-currency-rupee text-success me-1"></i>
+                            Plan Amount <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">₹</span>
+                            <input type="number" class="form-control" id="planAmount" 
+                                placeholder="Enter plan amount" step="0.01" required>
+                            <span class="input-group-text bg-light" id="planAmountDisplay">₹0.00</span>
+                        </div>
+                        <div class="form-text text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Amount will be auto-filled for standard plans
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="selectedPlanId" value="0">
+                <input type="hidden" id="selectedPlanName" value="">
+                <input type="hidden" id="selectedDurationValue" value="">
+                <input type="hidden" id="isCustomDuration" value="0">
             </div>
         `;
     }
 
     // Generate Plan Upgraded Fields
     function generatePlanUpgradedFields() {
+        // Get unique plan names from subscription plans
+        const uniquePlans = [];
+        const planMap = new Map();
+        
+        subscriptionPlans.forEach(plan => {
+            if (!planMap.has(plan.plan_name)) {
+                planMap.set(plan.plan_name, plan);
+                uniquePlans.push(plan);
+            }
+        });
+        
+        const planOptions = uniquePlans.map(plan => `<option value="${plan.plan_name}">${plan.plan_name}</option>`).join('');
+        
         return `
-        <div class="dynamic-field">
-            <div class="row">
-                <div class="col-12 col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-semibold">
-                        <i class="bi bi-arrow-up-circle-fill text-success me-1"></i>
-                        Upgraded Plan <span class="text-danger">*</span>
-                    </label>
-                    <div class="upgraded-plan-wrapper">
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12 col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-arrow-up-circle-fill text-success me-1"></i>
+                            Upgraded Plan <span class="text-danger">*</span>
+                        </label>
                         <select class="form-select" id="upgradedPlan" required>
                             <option value="" selected disabled>Choose upgraded plan</option>
-                            <option value="Welcome Plan">Welcome Plan</option>
-                            <option value="Starter Plan">Starter Plan</option>
-                            <option value="Professional Plan">Professional Plan</option>
-                            <option value="Intermediate Plan">Intermediate Plan</option>
+                            ${planOptions}
                             <option value="other">Other (Custom Plan)</option>
                         </select>
                         <div id="customUpgradedPlanContainer" style="display: none;" class="mt-2 custom-field">
@@ -99,57 +341,67 @@ $(document).ready(function () {
                             <input type="text" class="form-control" id="customUpgradedPlan" 
                                 placeholder="e.g., Premium Plan, Gold Plan etc.">
                         </div>
-                        <input type="hidden" id="finalUpgradedPlan">
                     </div>
-                </div>
-                <div class="col-12 col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-semibold">
-                        <i class="bi bi-calendar-check-fill text-info me-1"></i>
-                        Duration <span class="text-danger">*</span>
-                    </label>
-                    <div class="duration-wrapper">
-                        <select class="form-select" id="upgradedDuration" required>
-                            <option value="" selected disabled>Select duration</option>
-                            <option value="1 Month">1 Month</option>
-                            <option value="3 Months">3 Months</option>
-                            <option value="6 Months">6 Months</option>
-                            <option value="1 Year">1 Year</option>
-                            <option value="2 Years">2 Years</option>
-                            <option value="other">Other (Custom Duration)</option>
+                    <div class="col-12 col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-calendar-check-fill text-info me-1"></i>
+                            Duration <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="upgradedDuration" disabled required>
+                            <option value="" selected>First select a plan</option>
                         </select>
                         <div id="customDurationContainer" style="display: none;" class="mt-2 custom-field">
                             <label class="form-label">Enter Custom Duration:</label>
                             <input type="text" class="form-control" id="customDuration" 
                                 placeholder="e.g., 45 days, 18 months, etc.">
                         </div>
-                        <input type="hidden" id="finalUpgradedDuration">
                     </div>
                 </div>
-            </div>
-            <!-- New row for Products Uploaded -->
-            <div class="row mt-3">
-                <div class="col-12">
-                    <label class="form-label fw-semibold">
-                        <i class="bi bi-cloud-upload text-primary me-1"></i>
-                        Number of Products Uploaded
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-files"></i>
-                        </span>
-                        <input type="number" class="form-control border-start-0" 
-                            id="productsUploaded" 
-                            placeholder="Enter number of products (0-999)"
-                            min="0" max="999" value="0">
-                    </div>
-                    <div class="form-text text-muted small">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Enter 0 if no products uploaded yet
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-currency-rupee text-success me-1"></i>
+                            Plan Amount <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">₹</span>
+                            <input type="number" class="form-control" id="upgradedPlanAmount" 
+                                placeholder="Enter plan amount" step="0.01" required>
+                            <span class="input-group-text bg-light" id="upgradedPlanAmountDisplay">₹0.00</span>
+                        </div>
+                        <div class="form-text text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Amount will be auto-filled for standard plans
+                        </div>
                     </div>
                 </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-cloud-upload text-primary me-1"></i>
+                            Number of Products Uploaded
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-files"></i>
+                            </span>
+                            <input type="number" class="form-control border-start-0" 
+                                id="productsUploaded" 
+                                placeholder="Enter number of products (0-999)"
+                                min="0" max="999" value="0">
+                        </div>
+                        <div class="form-text text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Enter 0 if no products uploaded yet
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="upgradedPlanId" value="0">
+                <input type="hidden" id="upgradedPlanName" value="">
+                <input type="hidden" id="upgradedDurationValue" value="">
+                <input type="hidden" id="isCustomDurationUpgraded" value="0">
             </div>
-        </div>
-    `;
+        `;
     }
 
     // Generate Later Fields
@@ -232,21 +484,17 @@ $(document).ready(function () {
                 orientation: 'bottom'
             });
 
-            // Handle date selection
             $('#scheduleDate').on('change', function () {
                 const selectedDate = $(this).val();
                 if (selectedDate) {
-                    // Format: Schedule at dd/mm/yyyy
                     $('#finalScheduleDate').val('Schedule at ' + selectedDate);
                 }
             });
 
-            // Handle calendar icon click
             $('#calendarIcon').click(function () {
                 $('#scheduleDate').datepicker('show');
             });
 
-            // Handle clear date
             $('#clearDate').click(function () {
                 $('#scheduleDate').val('');
                 $('#finalScheduleDate').val('');
@@ -254,80 +502,12 @@ $(document).ready(function () {
         }
     }
 
-    // Initialize "Other" option handlers for all dynamic selects
-    function initializeOtherOptionHandlers() {
-        // Plan Interested - Custom Plan
-        $('#selectedPlan').on('change', function () {
-            if ($(this).val() === 'other') {
-                $('#customPlanContainer').show();
-                $('#customPlan').prop('required', true);
-            } else {
-                $('#customPlanContainer').hide();
-                $('#customPlan').prop('required', false);
-                $('#finalSelectedPlan').val($(this).val());
-            }
-        });
-
-        // Plan Upgraded - Custom Plan
-        $('#upgradedPlan').on('change', function () {
-            if ($(this).val() === 'other') {
-                $('#customUpgradedPlanContainer').show();
-                $('#customUpgradedPlan').prop('required', true);
-            } else {
-                $('#customUpgradedPlanContainer').hide();
-                $('#customUpgradedPlan').prop('required', false);
-                $('#finalUpgradedPlan').val($(this).val());
-            }
-        });
-
-        // Plan Upgraded - Custom Duration
-        $('#upgradedDuration').on('change', function () {
-            if ($(this).val() === 'other') {
-                $('#customDurationContainer').show();
-                $('#customDuration').prop('required', true);
-            } else {
-                $('#customDurationContainer').hide();
-                $('#customDuration').prop('required', false);
-                $('#finalUpgradedDuration').val($(this).val());
-            }
-        });
-
-        // Later - Custom Call Back Time
-        $('#callBackTime').on('change', function () {
-            if ($(this).val() === 'other') {
-                $('#customCallBackContainer').show();
-                $('#customCallBackTime').prop('required', true);
-            } else {
-                $('#customCallBackContainer').hide();
-                $('#customCallBackTime').prop('required', false);
-                $('#finalCallBackTime').val($(this).val());
-            }
-        });
-
-        // Update final values when custom fields are filled
-        $('#customPlan').on('input', function () {
-            $('#finalSelectedPlan').val($(this).val());
-        });
-
-        $('#customUpgradedPlan').on('input', function () {
-            $('#finalUpgradedPlan').val($(this).val());
-        });
-
-        $('#customDuration').on('input', function () {
-            $('#finalUpgradedDuration').val($(this).val());
-        });
-
-        $('#customCallBackTime').on('input', function () {
-            $('#finalCallBackTime').val($(this).val());
-        });
-    }
-
     // Call Duration Handler
     $('#callDurationSelect').on('change', function () {
         if ($(this).val() === 'other') {
             $('#customCallDurationContainer').show();
             $('#customCallDuration').prop('required', true);
-            $('#callDuration').val(''); // Clear hidden field until custom value is entered
+            $('#callDuration').val('');
         } else {
             $('#customCallDurationContainer').hide();
             $('#customCallDuration').prop('required', false);
@@ -356,8 +536,6 @@ $(document).ready(function () {
         const businessName = $('#businessName').val().trim();
         const phoneNumber = $('#phoneNumber').val().trim();
         const customerResponse = $('#customerResponse').val();
-        
-        // Get seller_id value directly from input field at submission time
         const sellerID = $('#sellerID').val().trim() || '';
 
         if (!businessName) {
@@ -378,38 +556,108 @@ $(document).ready(function () {
             return;
         }
 
-        // Validate phone number format
         if (!/^\d{10}$/.test(phoneNumber)) {
             showToast('warning', 'Warning!', 'Please enter a valid 10-digit phone number');
             $('#phoneNumber').focus();
             return;
         }
 
-        // Process dynamic field values before submission
-        processDynamicFieldValues();
-
-        // Validate dynamic fields based on response
-        if (!validateDynamicFields()) {
-            return;
-        }
-
-        // Collect form data
-        const formData = {
+        // Prepare form data based on response
+        let formData = {
             business_name: businessName,
             seller_type: $('#sellerType').val() || '',
             phone_number: phoneNumber,
             seller_id: sellerID,
             customer_response: customerResponse,
-            selected_plan: getFinalPlanValue(),
-            upgraded_plan: getFinalUpgradedPlanValue(),
-            upgraded_duration: getFinalDurationValue(),
             products_uploaded: $('#productsUploaded').length ? $('#productsUploaded').val() || '0' : '0',
-            call_back_time: getFinalCallBackValue(),
             customer_queries: $('#customerQueries').val().trim() || '',
             customer_status: $('#customerStatus').val() || '',
             call_duration: $('#callDuration').val() || '',
             additional_notes: $('#additionalNotes').val().trim() || ''
         };
+
+        // Add plan data based on response
+        if (customerResponse === 'Plan Interested') {
+            const planId = $('#selectedPlanId').val();
+            const planName = $('#selectedPlanName').val() || $('#selectedPlan').val();
+            const planDuration = $('#selectedDurationValue').val() || $('#selectedDuration').val();
+            const planAmount = $('#planAmount').val();
+            const isCustomDuration = $('#isCustomDuration').val();
+
+            if (!planName || planName === '') {
+                showToast('warning', 'Warning!', 'Please select a plan');
+                return;
+            }
+
+            if (!planDuration || planDuration === '') {
+                showToast('warning', 'Warning!', 'Please select a duration');
+                return;
+            }
+
+            if (!planAmount || parseFloat(planAmount) <= 0) {
+                showToast('warning', 'Warning!', 'Please enter a valid plan amount');
+                return;
+            }
+
+            formData.plan_id = planId;
+            formData.plan_name = planName;
+            formData.plan_duration = planDuration;
+            formData.plan_amount = parseFloat(planAmount);
+            formData.is_custom_duration = isCustomDuration;
+            
+            console.log('Plan Interested Data:', formData);
+        }
+
+        if (customerResponse === 'Plan Upgraded') {
+            const planId = $('#upgradedPlanId').val();
+            const planName = $('#upgradedPlanName').val() || $('#upgradedPlan').val();
+            const planDuration = $('#upgradedDurationValue').val() || $('#upgradedDuration').val();
+            const planAmount = $('#upgradedPlanAmount').val();
+            const isCustomDuration = $('#isCustomDurationUpgraded').val();
+
+            if (!planName || planName === '') {
+                showToast('warning', 'Warning!', 'Please select a plan');
+                return;
+            }
+
+            if (!planDuration || planDuration === '') {
+                showToast('warning', 'Warning!', 'Please select a duration');
+                return;
+            }
+
+            if (!planAmount || parseFloat(planAmount) <= 0) {
+                showToast('warning', 'Warning!', 'Please enter a valid plan amount');
+                return;
+            }
+
+            formData.plan_id = planId;
+            formData.plan_name = planName;
+            formData.plan_duration = planDuration;
+            formData.plan_amount = parseFloat(planAmount);
+            formData.is_custom_duration = isCustomDuration;
+            
+            console.log('Plan Upgraded Data:', formData);
+        }
+
+        if (customerResponse === 'Later') {
+            const callBackTime = $('#finalCallBackTime').val() || $('#callBackTime').val();
+            if (!callBackTime) {
+                showToast('warning', 'Warning!', 'Please select or enter call back time');
+                return;
+            }
+            formData.call_back_time = callBackTime;
+        }
+
+        if (customerResponse === 'Schedule') {
+            const scheduleDate = $('#finalScheduleDate').val();
+            if (!scheduleDate) {
+                showToast('warning', 'Warning!', 'Please select a schedule date');
+                return;
+            }
+            formData.call_back_time = scheduleDate;
+        }
+
+        console.log('Final Form Data:', formData);
 
         // Show loading state
         const $submitBtn = $(this).find('button[type="submit"]');
@@ -428,11 +676,6 @@ $(document).ready(function () {
                     $('#sellerForm')[0].reset();
                     $('#dynamicFieldsContainer').empty();
                     $('#customCallDurationContainer').hide();
-
-                    // Optional: Redirect after 2 seconds
-                    setTimeout(function () {
-                        // window.location.href = BASE_URL + 'sellers/workstation_sellers_list.php';
-                    }, 2000);
                 } else {
                     showToast('danger', 'Error!', response.message);
                 }
@@ -447,7 +690,6 @@ $(document).ready(function () {
                 } catch (e) {
                     errorMessage = 'Server error: ' + xhr.responseText;
                 }
-
                 showToast('danger', 'Error!', errorMessage);
             },
             complete: function () {
@@ -455,127 +697,6 @@ $(document).ready(function () {
             }
         });
     });
-
-    // Process dynamic field values
-    function processDynamicFieldValues() {
-        // Plan Interested
-        if ($('#selectedPlan').length) {
-            if ($('#selectedPlan').val() === 'other') {
-                $('#finalSelectedPlan').val($('#customPlan').val());
-            } else {
-                $('#finalSelectedPlan').val($('#selectedPlan').val());
-            }
-        }
-
-        // Plan Upgraded - Plan
-        if ($('#upgradedPlan').length) {
-            if ($('#upgradedPlan').val() === 'other') {
-                $('#finalUpgradedPlan').val($('#customUpgradedPlan').val());
-            } else {
-                $('#finalUpgradedPlan').val($('#upgradedPlan').val());
-            }
-        }
-
-        // Plan Upgraded - Duration
-        if ($('#upgradedDuration').length) {
-            if ($('#upgradedDuration').val() === 'other') {
-                $('#finalUpgradedDuration').val($('#customDuration').val());
-            } else {
-                $('#finalUpgradedDuration').val($('#upgradedDuration').val());
-            }
-        }
-
-        // Later - Call Back Time
-        if ($('#callBackTime').length) {
-            if ($('#callBackTime').val() === 'other') {
-                $('#finalCallBackTime').val($('#customCallBackTime').val());
-            } else {
-                $('#finalCallBackTime').val($('#callBackTime').val());
-            }
-        }
-
-        // Schedule Date
-        if ($('#scheduleDate').length) {
-            const scheduleDate = $('#scheduleDate').val();
-            if (scheduleDate) {
-                $('#finalScheduleDate').val('Schedule at ' + scheduleDate);
-            }
-        }
-    }
-
-    // Get final plan value
-    function getFinalPlanValue() {
-        if ($('#selectedPlan').length) {
-            return $('#finalSelectedPlan').val() || '';
-        }
-        return '';
-    }
-
-    // Get final upgraded plan value
-    function getFinalUpgradedPlanValue() {
-        if ($('#upgradedPlan').length) {
-            return $('#finalUpgradedPlan').val() || '';
-        }
-        return '';
-    }
-
-    // Get final duration value
-    function getFinalDurationValue() {
-        if ($('#upgradedDuration').length) {
-            return $('#finalUpgradedDuration').val() || '';
-        }
-        return '';
-    }
-
-    // Get final call back value
-    function getFinalCallBackValue() {
-        if ($('#callBackTime').length) {
-            return $('#finalCallBackTime').val() || '';
-        }
-        if ($('#finalScheduleDate').length) {
-            return $('#finalScheduleDate').val() || '';
-        }
-        return '';
-    }
-
-    // Validate dynamic fields
-    function validateDynamicFields() {
-        const response = $('#customerResponse').val();
-
-        if (response === 'Plan Interested') {
-            const plan = getFinalPlanValue();
-            if (!plan) {
-                showToast('warning', 'Warning!', 'Please select or enter a plan');
-                return false;
-            }
-        }
-
-        if (response === 'Plan Upgraded') {
-            const upgradedPlan = getFinalUpgradedPlanValue();
-            const duration = getFinalDurationValue();
-
-            if (!upgradedPlan) {
-                showToast('warning', 'Warning!', 'Please select or enter the upgraded plan');
-                return false;
-            }
-
-            if (!duration) {
-                showToast('warning', 'Warning!', 'Please select or enter the duration');
-                return false;
-            }
-        }
-
-        if (response === 'Later' || response === 'Schedule') {
-            const callBack = getFinalCallBackValue();
-            if (!callBack) {
-                const fieldName = response === 'Schedule' ? 'schedule date' : 'call back time';
-                showToast('warning', 'Warning!', `Please select or enter ${fieldName}`);
-                return false;
-            }
-        }
-
-        return true;
-    }
 
     // Phone number validation
     $('#phoneNumber').on('input', function () {
