@@ -49,9 +49,6 @@ $plan_counts = getPlanCounts($pdo, $user_uid);
                         <p class="text-muted mb-0">Track seller plan renewals and expiry dates</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="call_status_dashboard.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
-                        </a>
                     </div>
                 </div>
 

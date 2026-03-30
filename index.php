@@ -111,6 +111,7 @@ $total_count = $stmt->fetchColumn();
 
 <?php template('head-tag'); ?>
 
+
 <body class="bg-light">
 
 <?php template('svg-icons'); ?>
@@ -290,7 +291,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="cnp_sellers.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
+                                    <a href="<?= BASE_URL ?>work-station/reminders/cnp_sellers.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -313,7 +314,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="later_sellers.php" class="btn btn-outline-info btn-sm rounded-pill px-3">View</a>
+                                    <a href="<?= BASE_URL ?>work-station/reminders/later_sellers.php" class="btn btn-outline-info btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -336,7 +337,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="schedule_sellers.php" class="btn btn-outline-success btn-sm rounded-pill px-3">View</a>
+                                    <a href="<?= BASE_URL ?>work-station/reminders/schedule_sellers.php" class="btn btn-outline-success btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -359,7 +360,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="switchoff_sellers.php" class="btn btn-outline-secondary btn-sm rounded-pill px-3">View</a>
+                                    <a href="<?= BASE_URL ?>work-station/reminders/switchoff_sellers.php" class="btn btn-outline-secondary btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -382,7 +383,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="out_of_services_sellers.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
+                                    <a href="<?= BASE_URL ?>work-station/reminders/out_of_services_sellers.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -405,7 +406,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=Whatsapp%20Details%20sent" class="btn btn-outline-success btn-sm rounded-pill px-3">View</a>
+                                    <a href="<?= BASE_URL ?>work-station/reminders/filtered_list.php?status=Whatsapp%20Details%20sent" class="btn btn-outline-success btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -428,7 +429,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="testing_sellers.php" class="btn btn-outline-info btn-sm rounded-pill px-3">View</a>
+                                    <a href="<?= BASE_URL ?>work-station/reminders/testing_sellers.php" class="btn btn-outline-info btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -451,7 +452,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="not_interested_sellers.php" class="btn btn-outline-warning btn-sm rounded-pill px-3">View</a>
+                                    <a href="<?= BASE_URL ?>work-station/reminders/not_interested_sellers.php" class="btn btn-outline-warning btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -474,7 +475,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="no_business_sellers.php" class="btn btn-outline-dark btn-sm rounded-pill px-3">View</a>
+                                    <a href="<?= BASE_URL ?>work-station/reminders/no_business_sellers.php" class="btn btn-outline-dark btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -487,7 +488,7 @@ $total_count = $stmt->fetchColumn();
 </div>
 
 <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
-<script src="<?= BASE_URL ?>dashboard.js"></script>
+
 <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 
 <style>

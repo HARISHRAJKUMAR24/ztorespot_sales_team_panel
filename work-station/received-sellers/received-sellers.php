@@ -48,12 +48,10 @@ $profile_image = !empty($user['profile_image'])
                         Received Sellers
                     </h1>
                     <div class="d-flex gap-2">
-                        <a href="share-seller.php" class="btn btn-primary">
+                        <a href="<?= BASE_URL ?>work-station/share-sellers/share-seller.php" class="btn btn-primary">
                             <i class="bi bi-share me-1"></i>Share Sellers
                         </a>
-                        <a href="workstation_sellers_list.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back
-                        </a>
+
                     </div>
                 </div>
 

@@ -161,11 +161,8 @@ if (isset($_POST['action'])) {
                         <p class="text-muted mb-0">Manage your sheets follow up sellers</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="sheets_add_seller.php" class="btn btn-primary">
+                        <a href="<?= BASE_URL ?>work-station/workstation_add_seller.php" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-1"></i>Add New Seller
-                        </a>
-                        <a href="sheets_dashboard.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back
                         </a>
                     </div>
                 </div>

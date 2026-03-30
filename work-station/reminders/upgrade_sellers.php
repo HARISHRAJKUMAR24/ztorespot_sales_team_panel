@@ -45,11 +45,7 @@ $pdo = db();
                         </div>
                         <p class="text-muted mb-0">Sellers who have upgraded their plans</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="call_status_dashboard.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
-                        </a>
-                    </div>
+
                 </div>
 
                 <!-- Stats Cards -->

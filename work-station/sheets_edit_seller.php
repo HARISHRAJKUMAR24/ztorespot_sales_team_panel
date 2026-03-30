@@ -102,11 +102,6 @@ $current_indian_time = date('d M Y, h:i A');
                             Indian Time: <?= $current_indian_time ?>
                         </small>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="sheets_followup_list.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Follow Up
-                        </a>
-                    </div>
                 </div>
 
                 <!-- Form Card -->

@@ -136,32 +136,17 @@ $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
 
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-3 px-md-4 py-4">
-                <!-- Header with Breadcrumb -->
-                <nav aria-label="breadcrumb" class="mb-4">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>work-station/dashboard.php" class="text-success">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>work-station/sheets_followup_list.php" class="text-success">Follow Up</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">All Sellers (Including CNP)</li>
-                    </ol>
-                </nav>
 
                 <!-- Header -->
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap flex-md-nowrap pt-3 pb-2 mb-4 border-bottom gap-2">
                     <div>
                         <h1 class="h2 mb-1">
                             <i class="bi bi-grid-3x3-gap-fill text-success me-2"></i>
-                            All Sellers <span class="badge bg-success bg-opacity-10 text-success fs-6 ms-2">Including CNP</span>
+                            All Sellers
                         </h1>
-                        <p class="text-muted mb-0">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Total: <strong><?= number_format($total_records) ?></strong> sellers | 
-                            <i class="bi bi-telephone-x text-danger ms-2 me-1"></i>CNP: <strong><?= number_format($stats['cnp'] ?? 0) ?></strong>
-                        </p>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-outline-success" onclick="exportToExcel()" id="exportBtn">
-                            <i class="bi bi-file-earmark-excel me-1"></i>Export
-                        </button>
+
                         <button class="btn btn-success" onclick="window.location.reload()">
                             <i class="bi bi-arrow-repeat me-1"></i>Refresh
                         </button>

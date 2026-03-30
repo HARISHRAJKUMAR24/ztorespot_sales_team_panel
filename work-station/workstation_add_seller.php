@@ -45,11 +45,7 @@ $profile_image = !empty($user['profile_image'])
                         <i class="bi bi-person-workspace text-primary me-2"></i>
                         Add New Seller - Workstation
                     </h1>
-                    <div class="d-flex gap-2">
-                        <a href="workstation_sellers_list.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back to List
-                        </a>
-                    </div>
+
                 </div>
 
                 <!-- Form Card -->

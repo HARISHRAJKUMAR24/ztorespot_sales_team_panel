@@ -152,14 +152,6 @@
                     Organic Sellers
                   </a>
                 </li>
-                <li class="nav-item">
-                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>sellers/upgrade_sellers.php">
-                    <svg class="bi" aria-hidden="true" width="14" height="14">
-                      <use xlink:href="#upgrade-sellers"></use>
-                    </svg>
-                    Upgrade Sellers
-                  </a>
-                </li>
               </ul>
             </div>
           </div>
@@ -212,35 +204,11 @@
         </li>
       </ul>
 
-      <hr class="my-1" />
+      <!-- <hr class="my-1" />
       <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
         <span>Bluk Upload</span>
       </h6>
       <ul class="nav flex-column mb-auto">
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>bulk-upload/whatsapp-bulk-upload.php">
-            <svg class="bi" aria-hidden="true">
-              <use xlink:href="#target"></use>
-            </svg>
-            Whatsapp Bulk Upload
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>bulk-upload/register-sellers-bulk-upload.php">
-            <svg class="bi" aria-hidden="true">
-              <use xlink:href="#register-customer"></use>
-            </svg>
-            Register Seller Bulk Upload
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>bulk-upload/upgrade-sellers-bulk-upload.php">
-            <svg class="bi" aria-hidden="true">
-              <use xlink:href="#upgrade-sellers"></use>
-            </svg>
-            Upgrade Sellers Bulk Upload
-          </a>
-        </li>
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>bulk-upload/sales_person_sellers_bulk_upload.php">
             <svg class="bi" aria-hidden="true">
@@ -249,7 +217,7 @@
             Sales Sellers Bulk Upload
           </a>
         </li>
-      </ul>
+      </ul> -->
 
       <hr class="my-3" />
       <ul class="nav flex-column mb-auto">

@@ -17,9 +17,19 @@
   <script>
     const BASE_URL = "<?= BASE_URL ?>";
   </script>
+
+  <script src="<?= BASE_URL ?>js/user-tracker.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <!-- In your sales team panel's head tag -->
+  <?php if (isset($_SESSION['user_id'])): ?>
+    <meta name="user-id" content="<?= $_SESSION['user_id'] ?>">
+    <meta name="user-uid" content="<?= $_SESSION['user_uid'] ?>">
+    <meta name="user-name" content="<?= $_SESSION['user_name'] ?>">
+  <?php endif; ?>
+
   <!-- In your head-tag.php file -->
-  <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/scroll-fix.css">
+  <link rel=" stylesheet" href="<?= BASE_URL ?>assets/css/scroll-fix.css">
   <style>
     .bd-placeholder-img {
       font-size: 1.125rem;

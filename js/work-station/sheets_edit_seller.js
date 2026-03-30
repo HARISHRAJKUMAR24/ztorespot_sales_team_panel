@@ -978,7 +978,7 @@ $(document).ready(function () {
                 if (response.status === 'success') {
                     showToast('success', 'Success!', 'Seller updated successfully');
                     setTimeout(function () {
-                        window.location.href = 'sheets_followup_list.php';
+                       // window.location.href = 'sheets_followup_list.php';
                     }, 2500);
                 } else {
                     showToast('danger', 'Error!', response.message || 'Unknown error occurred');

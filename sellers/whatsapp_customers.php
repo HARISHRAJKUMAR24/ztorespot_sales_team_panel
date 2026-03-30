@@ -40,11 +40,6 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 <!-- Header with responsive buttons -->
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap flex-md-nowrap pt-3 pb-2 mb-4 border-bottom gap-2">
                     <h1 class="h2 mb-2 mb-sm-0">WhatsApp Customers</h1>
-                    <div class="d-flex gap-2 w-100 w-sm-auto">
-                        <button class="btn btn-primary flex-fill flex-sm-grow-0" id="exportBtn">
-                            <i class="bi bi-download me-1"></i><span class="d-none d-sm-inline">Export</span><span class="d-sm-none">Export</span>
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Stats Cards -->

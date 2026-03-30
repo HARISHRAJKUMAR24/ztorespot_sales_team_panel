@@ -180,9 +180,7 @@ $currentTeamTarget = getCurrentActiveTeamTarget();
                     <h1 class="h2 mb-1">🎯 My Targets</h1>
                     <p class="text-muted">View and manage all your individual and team targets</p>
                 </div>
-                <a href="<?= BASE_URL ?>target-settings.php" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i>Create New Target
-                </a>
+
             </div>
 
             <!-- Current Active Target Section -->
@@ -377,9 +375,6 @@ $currentTeamTarget = getCurrentActiveTeamTarget();
                         <div class="text-center py-4">
                             <i class="bi bi-archive fs-1 text-muted"></i>
                             <p class="text-muted mt-2 mb-0">No individual targets found</p>
-                            <a href="<?= BASE_URL ?>target-settings.php" class="btn btn-sm btn-outline-primary mt-3">
-                                <i class="bi bi-plus-circle"></i> Create Your First Target
-                            </a>
                         </div>
                     <?php endif; ?>
                 </div>

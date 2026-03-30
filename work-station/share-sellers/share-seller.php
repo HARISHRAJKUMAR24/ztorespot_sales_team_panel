@@ -71,9 +71,6 @@ $profile_image = !empty($user['profile_image'])
                         <a href="shared-sellers-list.php" class="btn btn-outline-secondary">
                             <i class="bi bi-list me-1"></i>View Shared Sellers
                         </a>
-                        <a href="workstation_sellers_list.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back to List
-                        </a>
                     </div>
                 </div>
 

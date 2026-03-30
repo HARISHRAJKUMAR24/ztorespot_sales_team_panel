@@ -1,5 +1,6 @@
 <?php
-require_once dirname(__DIR__) . "/config/config.php";
+require_once "../config/config.php";
+require_once "../lib/functions.php";
 ?>
 
 <!DOCTYPE html>
@@ -29,7 +30,7 @@ require_once dirname(__DIR__) . "/config/config.php";
                 <div class="card shadow">
                     <div class="card-body">
                         <h4 class="text-center mb-4">Create Account</h4>
-                        
+
                         <form id="registerForm">
                             <div class="mb-3">
                                 <label>Full Name <span class="text-danger">*</span></label>
@@ -39,7 +40,7 @@ require_once dirname(__DIR__) . "/config/config.php";
                             <div class="mb-3">
                                 <label>Phone Number <span class="text-danger">*</span></label>
                                 <input type="tel" name="phone" class="form-control" placeholder="Enter 10-15 digit phone number" required>
-                              
+
                             </div>
 
                             <div class="mb-3">

@@ -71,9 +71,7 @@ $total_count = $stmt->fetchColumn();
                         <span class="badge bg-primary rounded-pill px-3 py-2">
                             Total: <?= $total_count ?>
                         </span>
-                        <a href="workstation_dashboard.php" class="btn btn-outline-secondary btn-sm rounded-pill px-3 ms-2">
-                            <i class="bi bi-arrow-left me-1"></i>Back
-                        </a>
+                        
                     </div>
                 </div>
 
