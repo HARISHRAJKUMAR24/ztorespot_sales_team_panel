@@ -147,11 +147,6 @@ if (isset($_POST['action'])) {
                         </div>
                         <p class="text-muted mb-0">Sellers who asked to call back later</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="sheets_followup_list.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Follow Up
-                        </a>
-                    </div>
                 </div>
 
                 <!-- Stats Cards -->

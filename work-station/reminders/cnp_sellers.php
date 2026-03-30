@@ -86,11 +86,7 @@ $sellers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             Total: <?= $total_records ?> sellers
                         </p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="sheets_followup_list.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Follow Up
-                        </a>
-                    </div>
+
                 </div>
 
                 <!-- Search and Filter Bar -->
