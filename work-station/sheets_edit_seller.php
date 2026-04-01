@@ -48,6 +48,22 @@ if (!empty($seller['update_history'])) {
     }
 }
 
+// Decode customer_doubts JSON
+$customer_doubts = [];
+if (!empty($seller['remembering_notes'])) {
+    // Try to extract doubts from JSON in notes
+    if (preg_match('/"customer_doubts":\s*({[^}]+})/', $seller['remembering_notes'], $matches)) {
+        try {
+            $customer_doubts = json_decode($matches[1], true);
+            if (!is_array($customer_doubts)) {
+                $customer_doubts = [];
+            }
+        } catch (Exception $e) {
+            $customer_doubts = [];
+        }
+    }
+}
+
 // Map database fields to form fields
 $form_data = [
     'business_name' => $seller['work_details_update'] ?? '',
@@ -101,12 +117,12 @@ $current_indian_time = date('d M Y, h:i A');
                     <div>
                         <h1 class="h2 mb-2 mb-sm-0">
                             <i class="bi bi-pencil-square text-success me-2"></i>
-                            Edit Seller - Follow Up
+                            Edit Seller
                         </h1>
-                        <small class="text-muted">
+                        <p class="text-muted mb-0">
                             <i class="bi bi-clock me-1"></i>
-                            Indian Time: <?= $current_indian_time ?>
-                        </small>
+                            Last updated: <?= $current_indian_time ?>
+                        </p>
                     </div>
                 </div>
 
@@ -116,35 +132,35 @@ $current_indian_time = date('d M Y, h:i A');
                         <div class="card shadow-sm border-0">
                             <div class="card-header bg-white py-3">
                                 <h5 class="card-title mb-0">
-                                    <i class="bi bi-person-plus-fill text-success me-2"></i>
+                                    <i class="bi bi-person-gear text-success me-2"></i>
                                     Edit Seller Information
                                 </h5>
                             </div>
-                            <div class="card-body p-3 p-md-4">
+                            <div class="card-body p-4">
                                 <form id="sellerForm" data-seller-id="<?= $seller_id ?>">
                                     <input type="hidden" id="sellerId" value="<?= $seller_id ?>">
                                     <input type="hidden" id="sellerData" value='<?= htmlspecialchars($seller_json, ENT_QUOTES, 'UTF-8') ?>'>
 
-                                    <!-- Row 1: Business Name -->
-                                    <div class="row mb-3">
+                                    <!-- Row 1: Business Name (Full Width) -->
+                                    <div class="row mb-4">
                                         <div class="col-12">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-shop text-success me-1"></i>
-                                                Name / Store Name / Business Name <span class="text-danger">*</span>
+                                                Business / Store Name <span class="text-danger">*</span>
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-light border-end-0">
                                                     <i class="bi bi-building"></i>
                                                 </span>
                                                 <input type="text" class="form-control border-start-0"
-                                                    placeholder="Enter seller name, store name or business name"
+                                                    placeholder="Enter business name, store name or company name"
                                                     id="businessName" value="<?= htmlspecialchars($form_data['business_name']) ?>" required>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Row 2: Seller Type and Phone Number -->
-                                    <div class="row mb-3">
+                                    <!-- Row 2: Seller Type and Seller ID (2x2 Grid) -->
+                                    <div class="row mb-4">
                                         <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-tag text-success me-1"></i>
@@ -158,13 +174,36 @@ $current_indian_time = date('d M Y, h:i A');
                                                     <option value="" selected disabled>Select seller type</option>
                                                     <option value="Register Seller" <?= $form_data['seller_type'] == 'Register Seller' ? 'selected' : '' ?>>Register Seller</option>
                                                     <option value="Follow up Sellers" <?= $form_data['seller_type'] == 'Follow up Sellers' ? 'selected' : '' ?>>Follow up Sellers</option>
-                                                    <option value="Aisensy" <?= $form_data['seller_type'] == 'Aisensy' ? 'selected' : '' ?>>Aisensy</option>
+                                                    <option value="Own Chat" <?= $form_data['seller_type'] == 'Own Chat' ? 'selected' : '' ?>>Own Chat</option>
                                                     <option value="Organic" <?= $form_data['seller_type'] == 'Organic' ? 'selected' : '' ?>>Organic</option>
                                                     <option value="Direct" <?= $form_data['seller_type'] == 'Direct' ? 'selected' : '' ?>>Direct</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div class="col-12 col-md-6">
+                                            <label class="form-label fw-semibold">
+                                                <i class="bi bi-upc-scan text-success me-1"></i>
+                                                Seller ID
+                                                <span class="badge bg-light text-muted ms-1">Optional</span>
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="bi bi-upc-scan"></i>
+                                                </span>
+                                                <input type="text" class="form-control border-start-0"
+                                                    placeholder="Enter seller ID (optional)"
+                                                    id="sellerID" value="<?= htmlspecialchars($seller['seller_id'] ?? '') ?>">
+                                            </div>
+                                            <div class="form-text text-muted small">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                You can enter any seller ID or leave it empty
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 3: Phone Number and Customer Response (2x2 Grid) -->
+                                    <div class="row mb-4">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-telephone text-success me-1"></i>
                                                 Phone Number <span class="text-danger">*</span>
@@ -178,36 +217,7 @@ $current_indian_time = date('d M Y, h:i A');
                                                     id="phoneNumber" maxlength="10" value="<?= htmlspecialchars($form_data['phone_number']) ?>" required>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <!-- Row 2.5: Seller ID (Optional) -->
-                                    <div class="row mb-3">
-                                        <div class="col-12">
-                                            <label class="form-label fw-semibold">
-                                                <i class="bi bi-upc-scan text-success me-1"></i>
-                                                Seller ID (Optional)
-                                            </label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-light border-end-0">
-                                                    <i class="bi bi-upc-scan"></i>
-                                                </span>
-                                                <input type="text" class="form-control border-start-0"
-                                                    placeholder="Enter seller ID (optional)"
-                                                    id="sellerID" value="<?= htmlspecialchars($seller['seller_id'] ?? '') ?>">
-                                                <span class="input-group-text bg-light border-start-0">
-                                                    <i class="bi bi-question-circle text-muted" title="This field is optional"></i>
-                                                </span>
-                                            </div>
-                                            <div class="form-text text-muted small">
-                                                <i class="bi bi-info-circle me-1"></i>
-                                                You can enter any seller ID or leave it empty
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Row 3: Customer Response -->
-                                    <div class="row mb-3">
-                                        <div class="col-12">
+                                        <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-chat-dots text-success me-1"></i>
                                                 Customer Response <span class="text-danger">*</span>
@@ -232,30 +242,28 @@ $current_indian_time = date('d M Y, h:i A');
                                                     <option value="Renewals" <?= $form_data['customer_response'] == 'Renewals' ? 'selected' : '' ?>>Renewals</option>
                                                     <option value="Schedule" <?= ($form_data['customer_response'] == 'Schedule' || $form_data['customer_response'] == 'Shedule') ? 'selected' : '' ?>>Schedule (Select Date)</option>
                                                     <option value="Refund" <?= $form_data['customer_response'] == 'Refund' ? 'selected' : '' ?>>Refund</option>
+                                                    <option value="other">Other (Custom Response)</option>
                                                 </select>
+                                            </div>
+                                            <!-- Custom Response Text Field (hidden by default) -->
+                                            <div id="customResponseContainer" style="display: none;" class="mt-2">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-light">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </span>
+                                                    <input type="text" class="form-control" id="customResponse"
+                                                        placeholder="Enter your custom response...">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Dynamic Fields Container -->
-                                    <div id="dynamicFieldsContainer" class="mb-3"></div>
+                                    <!-- Dynamic Fields Container (Plan Details, Call Back, etc.) -->
+                                    <div id="dynamicFieldsContainer" class="mb-4"></div>
 
-                                    <!-- Row 4: Remembering Notes and Latest Update -->
-                                    <div class="row mb-3">
-                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                            <label class="form-label fw-semibold">
-                                                <i class="bi bi-journal-bookmark-fill text-success me-1"></i>
-                                                Remembering Notes
-                                            </label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-light border-end-0" style="align-items: flex-start; padding-top: 0.75rem;">
-                                                    <i class="bi bi-bookmark"></i>
-                                                </span>
-                                                <textarea class="form-control border-start-0"
-                                                    placeholder="Enter remembering notes..."
-                                                    id="rememberingNotes" rows="2"><?= htmlspecialchars($form_data['remembering_notes']) ?></textarea>
-                                            </div>
-                                        </div>
+                                    <!-- Row 4: Remembering Notes and Latest Update (2x2 Grid) -->
+                                    <div class="row mb-4">
+
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-arrow-up-circle text-success me-1"></i>
@@ -267,14 +275,14 @@ $current_indian_time = date('d M Y, h:i A');
                                                 </span>
                                                 <textarea class="form-control border-start-0"
                                                     placeholder="Enter latest update..."
-                                                    id="latestUpdate" rows="2"><?= htmlspecialchars($form_data['latest_update']) ?></textarea>
+                                                    id="latestUpdate" rows="3"><?= htmlspecialchars($form_data['latest_update']) ?></textarea>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Row 5: Customer Queries -->
-                                    <div class="row mb-3">
-                                        <div class="col-12">
+                                    <!-- Row 5: Customer Queries and Call Timing (2x2 Grid) -->
+                                    <div class="row mb-4">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-question-circle text-success me-1"></i>
                                                 Customer Queries
@@ -285,29 +293,7 @@ $current_indian_time = date('d M Y, h:i A');
                                                 </span>
                                                 <textarea class="form-control border-start-0"
                                                     placeholder="Enter customer questions or queries..."
-                                                    id="customerQueries" rows="2"><?= htmlspecialchars($form_data['customer_queries']) ?></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Row 6: Current Status and Call Timing -->
-                                    <div class="row mb-3">
-                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                            <label class="form-label fw-semibold">
-                                                <i class="bi bi-flag text-success me-1"></i>
-                                                Current Status
-                                            </label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-light border-end-0">
-                                                    <i class="bi bi-check2-circle"></i>
-                                                </span>
-                                                <select class="form-select border-start-0" id="currentStatus">
-                                                    <option value="" selected disabled>Select current status</option>
-                                                    <option value="Not yet" <?= $form_data['current_status'] == 'Not yet' ? 'selected' : '' ?>>Not yet</option>
-                                                    <option value="Upgraded" <?= $form_data['current_status'] == 'Upgraded' ? 'selected' : '' ?>>Upgraded</option>
-                                                    <option value="In Progress" <?= $form_data['current_status'] == 'In Progress' ? 'selected' : '' ?>>In Progress</option>
-                                                    <option value="Deleted" <?= $form_data['current_status'] == 'Deleted' ? 'selected' : '' ?>>Deleted</option>
-                                                </select>
+                                                    id="customerQueries" rows="3"><?= htmlspecialchars($form_data['customer_queries']) ?></textarea>
                                             </div>
                                         </div>
                                         <div class="col-12 col-md-6">
@@ -345,8 +331,26 @@ $current_indian_time = date('d M Y, h:i A');
                                         </div>
                                     </div>
 
-                                    <!-- Row 7: Entry Date -->
+                                    <!-- Row 6: Current Status and Entry Date (2x2 Grid) -->
                                     <div class="row mb-4">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                            <label class="form-label fw-semibold">
+                                                <i class="bi bi-flag text-success me-1"></i>
+                                                Current Status
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="bi bi-check2-circle"></i>
+                                                </span>
+                                                <select class="form-select border-start-0" id="currentStatus">
+                                                    <option value="" selected disabled>Select current status</option>
+                                                    <option value="Not yet" <?= $form_data['current_status'] == 'Not yet' ? 'selected' : '' ?>>Not yet</option>
+                                                    <option value="Upgraded" <?= $form_data['current_status'] == 'Upgraded' ? 'selected' : '' ?>>Upgraded</option>
+                                                    <option value="In Progress" <?= $form_data['current_status'] == 'In Progress' ? 'selected' : '' ?>>In Progress</option>
+                                                    <option value="Deleted" <?= $form_data['current_status'] == 'Deleted' ? 'selected' : '' ?>>Deleted</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-calendar-date text-success me-1"></i>
@@ -363,7 +367,7 @@ $current_indian_time = date('d M Y, h:i A');
                                     </div>
 
                                     <!-- Form Actions -->
-                                    <div class="d-flex flex-column flex-sm-row justify-content-center gap-2 gap-sm-3 pt-3 border-top">
+                                    <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 pt-3 border-top">
                                         <a href="sheets_followup_list.php" class="btn btn-outline-secondary px-5 py-2">
                                             <i class="bi bi-x-circle me-2"></i>
                                             Cancel
@@ -379,7 +383,7 @@ $current_indian_time = date('d M Y, h:i A');
                     </div>
                 </div>
 
-                <!-- Very Simple Update History -->
+                <!-- Update History Section -->
                 <?php if (!empty($update_history)): ?>
                     <div class="row mt-4">
                         <div class="col-12">
@@ -420,7 +424,7 @@ $current_indian_time = date('d M Y, h:i A');
                                                         <?php endforeach; ?>
                                                     </ul>
                                                 <?php else: ?>
-                                                    <p class="text-muted mb-0">No changes</p>
+                                                    <p class="text-muted mb-0">No changes recorded</p>
                                                 <?php endif; ?>
                                             </div>
                                         <?php endforeach; ?>
@@ -441,60 +445,162 @@ $current_indian_time = date('d M Y, h:i A');
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
 
     <style>
+        :root {
+            --success-color: #10b981;
+            --success-hover: #059669;
+            --primary-color: #4f46e5;
+            --warning-color: #f59e0b;
+        }
+
+        body {
+            background: #f3f4f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
         .form-label {
-            font-size: 0.9rem;
-            margin-bottom: 0.35rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
         }
 
         .input-group-text {
-            background-color: #f8f9fa;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
         }
 
-        .dynamic-field {
-            background-color: #f8f9fa;
-            border-left: 4px solid #198754;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 0.5rem;
+        .form-control, .form-select {
+            border: 1px solid #e5e7eb;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
         }
 
-        .custom-field {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 0.5rem;
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
-        .date-field {
-            margin-top: 10px;
-            padding: 15px;
-            background-color: #fff;
-            border: 1px solid #198754;
-            border-radius: 0.5rem;
-        }
-
-        .input-group.date .input-group-text {
-            cursor: pointer;
-        }
-
-        @media (min-width: 992px) {
-            .card-body {
-                padding: 2rem !important;
-            }
+        .card {
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .card:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+            box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.05) !important;
         }
 
-        .plan-amount-preview {
-            font-size: 0.9rem;
-            color: #0d6efd;
+        .card-header {
+            border-bottom: 1px solid #eef2ff;
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            padding: 0.625rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            background: linear-gradient(135deg, var(--success-hover), #047857);
+        }
+
+        .btn-outline-secondary {
+            border: 1px solid #e5e7eb;
+            color: #4b5563;
             font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+        }
+
+        .dynamic-field {
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+            border-left: 4px solid var(--warning-color);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .custom-field {
+            margin-top: 0.75rem;
+            padding: 0.875rem;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .badge-optional {
+            background-color: #f3f4f6;
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+        }
+
+        .text-muted {
+            color: #6b7280 !important;
+        }
+
+        .form-text {
+            font-size: 0.7rem;
+            margin-top: 0.375rem;
+        }
+
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            transition: background 0.2s;
+        }
+
+        .list-group-item:hover {
+            background-color: #f9fafb;
+        }
+
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1.25rem !important;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        /* Toast styling */
+        .toast {
+            border-radius: 0.75rem;
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
         }
     </style>
 
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
@@ -502,12 +608,11 @@ $current_indian_time = date('d M Y, h:i A');
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
     <script src="<?= BASE_URL ?>js/work-station/sheets_edit_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
-    
+
     <!-- Pass subscription plans to JavaScript -->
     <script>
         const subscriptionPlans = <?= json_encode($subscription_plans) ?>;
         console.log('Subscription Plans loaded:', subscriptionPlans);
     </script>
 </body>
-
 </html>

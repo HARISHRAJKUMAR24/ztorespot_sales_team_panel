@@ -43,11 +43,14 @@ try {
     $customer_status = trim($_POST['customer_status'] ?? '');
     $call_duration = trim($_POST['call_duration'] ?? '');
     $additional_notes = trim($_POST['additional_notes'] ?? '');
+    $customer_doubts = trim($_POST['customer_doubts'] ?? '');
+    $refund_info = trim($_POST['refund_info'] ?? '');
 
     // Log received data for debugging
     error_log("=== Received POST data ===");
     error_log(print_r($_POST, true));
     error_log("Plan ID: $plan_id, Plan Name: $plan_name, Duration: $plan_duration, Amount: $plan_amount, Is Custom: $is_custom_duration");
+    error_log("Customer Doubts: $customer_doubts");
 
     // Validate required fields
     if (empty($business_name)) {
@@ -95,6 +98,10 @@ try {
     $plans_interested = 'None';
     if (!empty($plan_name)) {
         $plans_interested = $plan_name;
+    } elseif ($customer_response == 'Refund' && !empty($refund_info)) {
+        if (preg_match('/Plan: ([^,]+)/', $refund_info, $matches)) {
+            $plans_interested = trim($matches[1]);
+        }
     }
 
     // If plan_id is provided, get the amount from database
@@ -113,9 +120,9 @@ try {
         }
     }
 
-    // Build plan_data JSON for tracking
+    // Build plan_data JSON for tracking with doubts
     $plan_data = null;
-    if (!empty($plan_name)) {
+    if (!empty($plan_name) && ($customer_response == 'Plan Interested' || $customer_response == 'Plan Upgraded')) {
         $plan_data_array = [
             'plan_id' => $plan_id,
             'plan_name' => $plan_name,
@@ -125,11 +132,17 @@ try {
             'is_custom_duration' => $is_custom_duration,
             'added_date' => date('Y-m-d H:i:s')
         ];
+        
+        // Add doubts to plan_data if present
+        if (!empty($customer_doubts)) {
+            $plan_data_array['customer_doubts'] = $customer_doubts;
+        }
+        
         $plan_data = json_encode($plan_data_array);
         error_log("Plan data JSON: " . $plan_data);
     }
 
-    // Build remembering_notes
+    // Build remembering_notes with doubts in JSON format
     $remembering_notes = [];
     if (!empty($call_duration)) {
         $remembering_notes[] = "Call Duration: " . $call_duration;
@@ -140,16 +153,38 @@ try {
     if ($final_plan_amount > 0) {
         $remembering_notes[] = "Plan Amount: ₹" . number_format($final_plan_amount, 2);
     }
-    $remembering_notes_str = implode(". ", $remembering_notes);
+    
+    // Add doubts as JSON if present
+    if (!empty($customer_doubts) && ($customer_response == 'Plan Interested' || $customer_response == 'Plan Upgraded')) {
+        $doubts_json = json_encode([
+            'customer_doubts' => $customer_doubts,
+            'added_on' => date('d M Y, h:i A'),
+            'user' => $user_uid
+        ], JSON_UNESCAPED_UNICODE);
+        $remembering_notes[] = $doubts_json;
+    }
+    
+    // Add refund info if present
+    if (!empty($refund_info) && $customer_response == 'Refund') {
+        $remembering_notes[] = $refund_info;
+    }
+    
+    $remembering_notes_str = implode("\n\n", array_filter($remembering_notes));
 
     // Build latest_update
     $latest_update = '';
     switch ($customer_response) {
         case 'Plan Upgraded':
             $latest_update = "Customer upgraded to " . $plan_name . " for " . $plan_duration . " (₹" . number_format($final_plan_amount, 2) . ")";
+            if (!empty($customer_doubts)) {
+                $latest_update .= "\n📝 Doubts: " . $customer_doubts;
+            }
             break;
         case 'Plan Interested':
             $latest_update = "Customer interested in " . $plan_name . " (₹" . number_format($final_plan_amount, 2) . ")";
+            if (!empty($customer_doubts)) {
+                $latest_update .= "\n📝 Doubts: " . $customer_doubts;
+            }
             break;
         case 'Later':
         case 'Call Back AT':
@@ -157,6 +192,9 @@ try {
             break;
         case 'Schedule':
             $latest_update = "Scheduled for: " . $call_back_time;
+            break;
+        case 'Refund':
+            $latest_update = $refund_info;
             break;
         default:
             $latest_update = $customer_response;
@@ -172,6 +210,7 @@ try {
                 seller_id,
                 plans_interested, 
                 plan_duration,
+                plan_amount,
                 plan_data,
                 products_uploaded,
                 customer_response, 
@@ -184,7 +223,7 @@ try {
                 entry_date, 
                 created_at
             ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), NOW()
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), NOW()
             )";
 
     $stmt = $pdo->prepare($sql);
@@ -198,6 +237,7 @@ try {
         $seller_id,
         $plans_interested,
         $plan_duration,
+        $final_plan_amount,
         $plan_data,
         $products_uploaded,
         $customer_response,
@@ -223,13 +263,15 @@ try {
     error_log("Seller inserted with ID: $inserted_id");
 
     // ============================================
-    // IMPORTANT: Update target progress ONLY for PLAN UPGRADED
+    // UPDATE TARGET SETTINGS - ONLY FOR PLAN UPGRADED
     // Plan Interested does NOT update target settings
     // ============================================
+    $target_updated = false;
     if ($final_plan_amount > 0 && $customer_response == 'Plan Upgraded') {
         error_log("=== UPDATING TARGET SETTINGS ===");
         error_log("Plan Upgraded detected - Amount: $final_plan_amount");
-        updateTargetProgress($pdo, $user_uid, $final_plan_amount, $inserted_id, $plan_data, $plan_name, $plan_duration);
+        $target_updated = updateTargetProgress($pdo, $user_uid, $final_plan_amount, $inserted_id, $plan_data, $plan_name, $plan_duration, $customer_doubts);
+        error_log("Target update result: " . ($target_updated ? "Success" : "Failed"));
     } else {
         error_log("=== SKIPPING TARGET UPDATE ===");
         error_log("Response: $customer_response, Amount: $final_plan_amount");
@@ -244,7 +286,8 @@ try {
         'message' => 'Seller added successfully',
         'id' => $inserted_id,
         'plan_amount' => $final_plan_amount,
-        'target_updated' => ($customer_response == 'Plan Upgraded')
+        'target_updated' => $target_updated,
+        'doubts_saved' => !empty($customer_doubts)
     ]);
     
 } catch (PDOException $e) {
@@ -266,11 +309,12 @@ try {
 /**
  * Update target progress for the user (ONLY called for Plan Upgraded)
  */
-function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, $plan_name, $plan_duration) {
+function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, $plan_name, $plan_duration, $customer_doubts) {
     try {
         error_log("=== UPDATING TARGET PROGRESS ===");
         error_log("User: $user_uid, Amount: $amount, Seller ID: $seller_id");
         error_log("Plan: $plan_name, Duration: $plan_duration");
+        error_log("Doubts: " . $customer_doubts);
         
         // Get current active target for the user
         $target_sql = "SELECT id, target_amount, achieved_amount, achievement_percentage, plan_data 
@@ -314,6 +358,7 @@ function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, 
                 'duration' => $plan_duration,
                 'amount' => $amount,
                 'added_date' => date('Y-m-d H:i:s'),
+                'customer_doubts' => $customer_doubts,
                 'plan_data' => $plan_info
             ];
             $existing_plan_data[] = $new_plan_entry;
@@ -332,15 +377,19 @@ function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, 
                 error_log("✅ Target updated successfully!");
                 error_log("New Achieved: $new_achieved");
                 error_log("Achievement Percentage: $new_percentage%");
+                return true;
             } else {
                 error_log("❌ Failed to update target");
+                return false;
             }
         } else {
             error_log("⚠️ No active target found for user: $user_uid");
             error_log("Target will not be updated - no active target exists");
+            return false;
         }
     } catch (Exception $e) {
         error_log("❌ Error updating target progress: " . $e->getMessage());
+        return false;
     }
 }
 ?>

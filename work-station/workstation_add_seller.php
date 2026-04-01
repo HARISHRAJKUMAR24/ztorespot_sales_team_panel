@@ -15,6 +15,11 @@ $stmt = $pdo->prepare("SELECT * FROM users WHERE user_uid = ?");
 $stmt->execute([$user_uid]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Get subscription plans for dropdown
+$plans_stmt = $pdo->prepare("SELECT id, plan_name, duration, total_amount FROM subscription_plans WHERE status = 1 ORDER BY plan_name, total_amount");
+$plans_stmt->execute();
+$subscription_plans = $plans_stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Set profile image path
 $profile_image = !empty($user['profile_image'])
     ? BASE_URL . $user['profile_image']
@@ -41,11 +46,13 @@ $profile_image = !empty($user['profile_image'])
             <main class="col-md-9 ms-sm-auto col-lg-10 px-3 px-md-4 py-4">
                 <!-- Header -->
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap flex-md-nowrap pt-3 pb-2 mb-4 border-bottom gap-2">
-                    <h1 class="h2 mb-2 mb-sm-0">
-                        <i class="bi bi-person-workspace text-primary me-2"></i>
-                        Add New Seller - Workstation
-                    </h1>
-
+                    <div>
+                        <h1 class="h2 mb-2 mb-sm-0">
+                            <i class="bi bi-person-workspace text-primary me-2"></i>
+                            Add New Seller
+                        </h1>
+                        <p class="text-muted mb-0">Enter seller details to add to your workstation</p>
+                    </div>
                 </div>
 
                 <!-- Form Card -->
@@ -55,31 +62,31 @@ $profile_image = !empty($user['profile_image'])
                             <div class="card-header bg-white py-3">
                                 <h5 class="card-title mb-0">
                                     <i class="bi bi-person-plus-fill text-primary me-2"></i>
-                                    Seller Information
+                                    Seller Information Form
                                 </h5>
                             </div>
-                            <div class="card-body p-3 p-md-4">
+                            <div class="card-body p-4">
                                 <form id="sellerForm">
-                                    <!-- Row 1: Business Name -->
-                                    <div class="row mb-3">
+                                    <!-- Row 1: Business Name (Full Width) -->
+                                    <div class="row mb-4">
                                         <div class="col-12">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-shop text-primary me-1"></i>
-                                                Name / Store Name / Business Name <span class="text-danger">*</span>
+                                                Business / Store Name <span class="text-danger">*</span>
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text bg-light border-end-0">
                                                     <i class="bi bi-building"></i>
                                                 </span>
                                                 <input type="text" class="form-control border-start-0"
-                                                    placeholder="Enter seller name, store name or business name"
+                                                    placeholder="Enter business name, store name or company name"
                                                     id="businessName" required>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Row 2: Seller Type and Phone Number -->
-                                    <div class="row mb-3">
+                                    <!-- Row 2: Seller Type and Seller ID (2x2 Grid) -->
+                                    <div class="row mb-4">
                                         <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-tag text-primary me-1"></i>
@@ -95,10 +102,34 @@ $profile_image = !empty($user['profile_image'])
                                                     <option value="Follow up Sellers">Follow up Sellers</option>
                                                     <option value="Aisensy">Aisensy</option>
                                                     <option value="Organic Seller">Organic Seller</option>
+                                                    <option value="Direct Seller">Direct Seller</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div class="col-12 col-md-6">
+                                            <label class="form-label fw-semibold">
+                                                <i class="bi bi-upc-scan text-primary me-1"></i>
+                                                Seller ID
+                                                <span class="badge bg-light text-muted ms-1">Optional</span>
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="bi bi-upc-scan"></i>
+                                                </span>
+                                                <input type="text" class="form-control border-start-0"
+                                                    placeholder="Enter seller ID (optional)"
+                                                    id="sellerID">
+                                            </div>
+                                            <div class="form-text text-muted small">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                You can enter any seller ID or leave it empty
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 3: Phone Number and Customer Response (2x2 Grid) -->
+                                    <div class="row mb-4">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-telephone text-primary me-1"></i>
                                                 Phone Number <span class="text-danger">*</span>
@@ -112,36 +143,7 @@ $profile_image = !empty($user['profile_image'])
                                                     id="phoneNumber" maxlength="10" required>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <!-- Row 2.5: Seller ID (Optional) -->
-                                    <div class="row mb-3">
-                                        <div class="col-12">
-                                            <label class="form-label fw-semibold">
-                                                <i class="bi bi-upc-scan text-primary me-1"></i>
-                                                Seller ID (Optional)
-                                            </label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-light border-end-0">
-                                                    <i class="bi bi-upc-scan"></i>
-                                                </span>
-                                                <input type="text" class="form-control border-start-0"
-                                                    placeholder="Enter seller ID (optional)"
-                                                    id="sellerID">
-                                                <span class="input-group-text bg-light border-start-0">
-                                                    <i class="bi bi-question-circle text-muted" title="This field is optional"></i>
-                                                </span>
-                                            </div>
-                                            <div class="form-text text-muted small">
-                                                <i class="bi bi-info-circle me-1"></i>
-                                                You can enter any seller ID or leave it empty
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Row 3: Customer Response -->
-                                    <div class="row mb-3">
-                                        <div class="col-12">
+                                        <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-chat-dots text-primary me-1"></i>
                                                 Customer Response <span class="text-danger">*</span>
@@ -150,7 +152,6 @@ $profile_image = !empty($user['profile_image'])
                                                 <span class="input-group-text bg-light border-end-0">
                                                     <i class="bi bi-megaphone"></i>
                                                 </span>
-
                                                 <select class="form-select border-start-0" id="customerResponse" required>
                                                     <option value="" selected disabled>Select response type</option>
                                                     <option value="Plan Upgraded">Plan Upgraded</option>
@@ -161,21 +162,34 @@ $profile_image = !empty($user['profile_image'])
                                                     <option value="Switch Off">Switch Off</option>
                                                     <option value="No Business">No Business</option>
                                                     <option value="Whatsapp Details sent">Whatsapp Details sent</option>
+                                                    <option value="Call Back AT">Call Back AT</option>
                                                     <option value="Out of Service">Out of Service</option>
                                                     <option value="Testing">Testing</option>
                                                     <option value="Renewals">Renewals</option>
                                                     <option value="Schedule">Schedule (Select Date)</option>
+                                                    <option value="Refund">Refund</option>
+                                                    <option value="other">Other (Custom Response)</option>
                                                 </select>
+                                            </div>
+                                            <!-- Custom Response Text Field (hidden by default) -->
+                                            <div id="customResponseContainer" style="display: none;" class="mt-2">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-light">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </span>
+                                                    <input type="text" class="form-control" id="customResponse"
+                                                        placeholder="Enter your custom response...">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Dynamic Fields Container -->
-                                    <div id="dynamicFieldsContainer" class="mb-3"></div>
+                                    <!-- Dynamic Fields Container (Plan Details, Call Back, etc.) -->
+                                    <div id="dynamicFieldsContainer" class="mb-4"></div>
 
-                                    <!-- Row 4: Customer Queries -->
-                                    <div class="row mb-3">
-                                        <div class="col-12">
+                                    <!-- Row 4: Customer Queries and Call Duration (2x2 Grid) -->
+                                    <div class="row mb-4">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-question-circle text-primary me-1"></i>
                                                 Customer Queries
@@ -187,26 +201,6 @@ $profile_image = !empty($user['profile_image'])
                                                 <textarea class="form-control border-start-0"
                                                     placeholder="Enter customer questions or queries..."
                                                     id="customerQueries" rows="3"></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Row 5: Customer Status and Call Duration -->
-                                    <div class="row mb-4">
-                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                            <label class="form-label fw-semibold">
-                                                <i class="bi bi-flag text-primary me-1"></i>
-                                                Customer Status
-                                            </label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-light border-end-0">
-                                                    <i class="bi bi-check2-circle"></i>
-                                                </span>
-                                                <select class="form-select border-start-0" id="customerStatus">
-                                                    <option value="" selected disabled>Select current status</option>
-                                                    <option value="Not yet">Not yet</option>
-                                                    <option value="Upgraded">Upgraded</option>
-                                                </select>
                                             </div>
                                         </div>
                                         <div class="col-12 col-md-6">
@@ -249,7 +243,7 @@ $profile_image = !empty($user['profile_image'])
                                         </div>
                                     </div>
 
-                                    <!-- Row 6: Additional Notes -->
+                                    <!-- Row 5: Additional Notes (Full Width) -->
                                     <div class="row mb-4">
                                         <div class="col-12">
                                             <label class="form-label fw-semibold">
@@ -262,16 +256,16 @@ $profile_image = !empty($user['profile_image'])
                                                 </span>
                                                 <textarea class="form-control border-start-0"
                                                     placeholder="Any additional notes or remarks..."
-                                                    id="additionalNotes" rows="2"></textarea>
+                                                    id="additionalNotes" rows="3"></textarea>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Form Actions -->
-                                    <div class="d-flex flex-column flex-sm-row justify-content-center gap-2 gap-sm-3 pt-3 border-top">
+                                    <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 pt-3 border-top">
                                         <button type="reset" class="btn btn-outline-secondary px-5 py-2">
                                             <i class="bi bi-arrow-counterclockwise me-2"></i>
-                                            Reset
+                                            Reset Form
                                         </button>
                                         <button type="submit" class="btn btn-primary px-5 py-2">
                                             <i class="bi bi-save me-2"></i>
@@ -294,109 +288,160 @@ $profile_image = !empty($user['profile_image'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
 
     <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        body {
+            background: #f3f4f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
         .form-label {
-            font-size: 0.9rem;
-            margin-bottom: 0.35rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
         }
 
         .input-group-text {
-            background-color: #f8f9fa;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
         }
 
-        .input-group .form-control:focus,
-        .input-group .form-select:focus {
-            border-color: #86b7fe;
-            box-shadow: none;
+        .form-control, .form-select {
+            border: 1px solid #e5e7eb;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .card {
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .card-header {
+            border-bottom: 1px solid #eef2ff;
+            background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #7c3aed);
+            border: none;
+            padding: 0.625rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            background: linear-gradient(135deg, var(--primary-hover), #6d28d9);
+        }
+
+        .btn-outline-secondary {
+            border: 1px solid #e5e7eb;
+            color: #4b5563;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
         }
 
         .dynamic-field {
-            background-color: #f8f9fa;
-            border-left: 4px solid #0d6efd;
-            padding: 1rem;
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+            border-left: 4px solid var(--warning-color);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
             margin-bottom: 1rem;
-            border-radius: 0.5rem;
+            animation: fadeIn 0.3s ease;
         }
 
         .custom-field {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #fff;
-            border: 1px solid #dee2e6;
+            margin-top: 0.75rem;
+            padding: 0.875rem;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: 0.5rem;
         }
 
-        .date-field {
-            margin-top: 10px;
-            padding: 15px;
-            background-color: #fff;
-            border: 1px solid #0d6efd;
-            border-radius: 0.5rem;
-        }
-
-        .input-group.date .input-group-text {
-            cursor: pointer;
-        }
-
-        @media (min-width: 992px) {
-            .container-fluid {
-                max-width: 100%;
-                padding-left: 1.5rem;
-                padding-right: 1.5rem;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
             }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
+        .badge-optional {
+            background-color: #f3f4f6;
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+        }
+
+        .text-muted {
+            color: #6b7280 !important;
+        }
+
+        .form-text {
+            font-size: 0.7rem;
+            margin-top: 0.375rem;
+        }
+
+        @media (max-width: 768px) {
             .card-body {
-                padding: 2rem !important;
+                padding: 1.25rem !important;
             }
-
-            .form-label {
-                font-size: 1rem;
-            }
-
-            .btn {
-                padding: 0.6rem 2rem !important;
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .card-body {
-                padding: 1rem;
-            }
-
+            
             .btn {
                 padding: 0.5rem 1rem;
             }
         }
 
-        .card {
-            transition: all 0.2s ease-in-out;
+        /* Plan amount display */
+        .plan-amount-preview {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--primary-color);
         }
 
-        .card:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+        /* Callback options */
+        .callback-wrapper, .callback-at-wrapper, .schedule-wrapper {
+            width: 100%;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
-        }
-
-        .dynamic-field label {
-            font-weight: 600;
-            color: #0d6efd;
-        }
-
-        .custom-field label {
-            color: #198754;
-        }
-
-        .badge-other {
-            background-color: #ffc107;
-            color: #000;
-            font-size: 0.7rem;
-            margin-left: 5px;
-            padding: 2px 6px;
-            border-radius: 4px;
+        /* Toast styling */
+        .toast {
+            border-radius: 0.75rem;
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
         }
     </style>
 
@@ -407,6 +452,11 @@ $profile_image = !empty($user['profile_image'])
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
     <script src="<?= BASE_URL ?>js/work-station/workstation_add_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
-</body>
 
+    <!-- Pass subscription plans to JavaScript -->
+    <script>
+        const subscriptionPlans = <?= json_encode($subscription_plans) ?>;
+        console.log('Subscription Plans loaded:', subscriptionPlans);
+    </script>
+</body>
 </html>

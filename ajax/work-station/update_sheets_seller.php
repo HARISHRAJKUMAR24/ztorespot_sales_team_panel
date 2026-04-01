@@ -47,6 +47,7 @@ try {
     $latest_update = trim($_POST['latest_update'] ?? '');
     $current_status = trim($_POST['current_status'] ?? '');
     $customer_queries = trim($_POST['customer_queries'] ?? '');
+    $customer_doubts_json = trim($_POST['customer_doubts_json'] ?? '');
     $call_timing = trim($_POST['call_timing'] ?? '');
     $entry_date = trim($_POST['entry_date'] ?? '');
 
@@ -135,6 +136,7 @@ try {
     $clean_notes = preg_replace('/Plan Duration: [^\n]*(\n|$)/', '', $clean_notes);
     $clean_notes = preg_replace('/Plan Amount: ₹[^\n]*(\n|$)/', '', $clean_notes);
     $clean_notes = preg_replace('/Refund - Plan:.*?(\n|$)/', '', $clean_notes);
+    $clean_notes = preg_replace('/{"customer_doubts":.*?}/s', '', $clean_notes);
     $clean_notes = preg_replace('/\n\s*\n/', "\n", $clean_notes);
     $clean_notes = trim($clean_notes);
 
@@ -149,7 +151,16 @@ try {
         }
     }
 
-    // Create plan_data JSON
+    // Add doubts JSON to notes
+    if (!empty($customer_doubts_json) && ($customer_response == 'Plan Interested' || $customer_response == 'Plan Upgraded')) {
+        if (!empty($final_remembering_notes)) {
+            $final_remembering_notes = $final_remembering_notes . "\n\n" . $customer_doubts_json;
+        } else {
+            $final_remembering_notes = $customer_doubts_json;
+        }
+    }
+
+    // Create plan_data JSON with doubts
     $plan_data = null;
     if (!empty($plan_name) && ($customer_response == 'Plan Interested' || $customer_response == 'Plan Upgraded')) {
         $plan_data_array = [
@@ -160,6 +171,15 @@ try {
             'seller_id' => $seller_id ?: null,
             'added_date' => date('Y-m-d H:i:s')
         ];
+        
+        // Add doubts if present
+        if (!empty($customer_doubts_json)) {
+            $doubts_data = json_decode($customer_doubts_json, true);
+            if ($doubts_data) {
+                $plan_data_array['customer_doubts'] = $doubts_data;
+            }
+        }
+        
         $plan_data = json_encode($plan_data_array);
     }
 
@@ -185,6 +205,24 @@ try {
         'current_status' => ['label' => 'Current Status', 'old' => $existing['current_status'], 'new' => $current_status],
         'call_timing' => ['label' => 'Call Timing', 'old' => $existing['call_timing'], 'new' => $final_call_timing]
     ];
+    
+    // Add doubts to history if changed
+    if (!empty($customer_doubts_json)) {
+        $old_doubts = '';
+        if (preg_match('/"customer_doubts":\s*"([^"]*)"/', $existing['remembering_notes'], $matches)) {
+            $old_doubts = $matches[1];
+        }
+        $doubts_data = json_decode($customer_doubts_json, true);
+        $new_doubts = $doubts_data['customer_doubts'] ?? '';
+        
+        if ($old_doubts !== $new_doubts) {
+            $fields_to_track['customer_doubts'] = [
+                'label' => 'Customer Doubts',
+                'old' => $old_doubts ?: '-',
+                'new' => $new_doubts ?: '-'
+            ];
+        }
+    }
 
     foreach ($fields_to_track as $field => $data) {
         $old_val = trim((string)($data['old'] ?? ''));
