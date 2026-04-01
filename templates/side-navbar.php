@@ -159,6 +159,15 @@
                     Organic Sellers
                   </a>
                 </li>
+
+                <li class="nav-item">
+                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>reports/plan-reports.php">
+                    <svg class="bi" aria-hidden="true" width="14" height="14">
+                      <use xlink:href="#plan-reports"></use>
+                    </svg>
+                    Plan Reports
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
