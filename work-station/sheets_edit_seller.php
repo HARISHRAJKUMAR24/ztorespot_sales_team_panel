@@ -34,6 +34,11 @@ if (!$seller) {
     exit;
 }
 
+// Get subscription plans for dropdown
+$plans_stmt = $pdo->prepare("SELECT id, plan_name, duration, total_amount FROM subscription_plans WHERE status = 1 ORDER BY plan_name, total_amount");
+$plans_stmt->execute();
+$subscription_plans = $plans_stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Decode update history
 $update_history = [];
 if (!empty($seller['update_history'])) {
@@ -49,9 +54,10 @@ $form_data = [
     'seller_type' => $seller['source_type'] ?? '',
     'registration_status' => $seller['registration_status'] ?? '',
     'phone_number' => $seller['phone_number'] ?? '',
-    'seller_id' => $seller['seller_id'] ?? '', // Add this line
+    'seller_id' => $seller['seller_id'] ?? '',
     'plans_interested' => $seller['plans_interested'] ?? '',
     'plan_duration' => $seller['plan_duration'] ?? '',
+    'plan_data' => $seller['plan_data'] ?? '',
     'products_uploaded' => $seller['products_uploaded'] ?? 0,
     'customer_response' => $seller['customer_response'] ?? '',
     'remembering_notes' => $seller['remembering_notes'] ?? '',
@@ -173,6 +179,7 @@ $current_indian_time = date('d M Y, h:i A');
                                             </div>
                                         </div>
                                     </div>
+
                                     <!-- Row 2.5: Seller ID (Optional) -->
                                     <div class="row mb-3">
                                         <div class="col-12">
@@ -197,6 +204,7 @@ $current_indian_time = date('d M Y, h:i A');
                                             </div>
                                         </div>
                                     </div>
+
                                     <!-- Row 3: Customer Response -->
                                     <div class="row mb-3">
                                         <div class="col-12">
@@ -470,89 +478,6 @@ $current_indian_time = date('d M Y, h:i A');
             cursor: pointer;
         }
 
-        /* Timeline Styles */
-        .timeline {
-            position: relative;
-            padding: 1rem;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 2.2rem;
-            top: 1.5rem;
-            bottom: 1.5rem;
-            width: 2px;
-            background: #e9ecef;
-        }
-
-        .timeline-item {
-            position: relative;
-            padding-left: 3.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .timeline-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .timeline-badge {
-            position: absolute;
-            left: 1.5rem;
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 50%;
-            background: white;
-            border: 2px solid #198754;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #198754;
-            font-size: 0.8rem;
-            z-index: 1;
-        }
-
-        .timeline-item.latest .timeline-badge {
-            background: #198754;
-            color: white;
-            border-color: #198754;
-        }
-
-        .timeline-content {
-            background: #f8f9fa;
-            border-radius: 0.5rem;
-            padding: 1rem;
-        }
-
-        .timeline-header {
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #dee2e6;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .timeline-date {
-            font-size: 0.9rem;
-            color: #6c757d;
-            font-weight: 500;
-        }
-
-        .timeline-changes table {
-            margin-bottom: 0;
-            font-size: 0.9rem;
-        }
-
-        .timeline-changes td {
-            padding: 0.5rem 0.25rem;
-            vertical-align: middle;
-        }
-
-        .badge.bg-success-subtle {
-            background-color: #d1e7dd !important;
-        }
-
         @media (min-width: 992px) {
             .card-body {
                 padding: 2rem !important;
@@ -561,6 +486,12 @@ $current_indian_time = date('d M Y, h:i A');
 
         .card:hover {
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .plan-amount-preview {
+            font-size: 0.9rem;
+            color: #0d6efd;
+            font-weight: 500;
         }
     </style>
 
@@ -571,6 +502,12 @@ $current_indian_time = date('d M Y, h:i A');
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
     <script src="<?= BASE_URL ?>js/work-station/sheets_edit_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
+    
+    <!-- Pass subscription plans to JavaScript -->
+    <script>
+        const subscriptionPlans = <?= json_encode($subscription_plans) ?>;
+        console.log('Subscription Plans loaded:', subscriptionPlans);
+    </script>
 </body>
 
 </html>

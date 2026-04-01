@@ -19,7 +19,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Get all sellers for multi-select dropdown
 $sellers_stmt = $pdo->prepare("
-    SELECT id, work_details_update as business_name, phone_number, customer_response 
+    SELECT id, work_details_update as business_name, phone_number, customer_response, seller_id
     FROM sales_person_sellers 
     WHERE user_uid = ? 
     ORDER BY created_at DESC
@@ -27,20 +27,15 @@ $sellers_stmt = $pdo->prepare("
 $sellers_stmt->execute([$user_uid]);
 $sellers = $sellers_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get ALL users for sharing dropdown (including dummy users)
+// Get ALL users for sharing dropdown
 $users_stmt = $pdo->prepare("
-    SELECT user_uid, name, phone, email 
+    SELECT id, user_uid, name, phone, email 
     FROM users 
     WHERE user_uid != ? 
     ORDER BY name
 ");
 $users_stmt->execute([$user_uid]);
 $users = $users_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Set profile image path
-$profile_image = !empty($user['profile_image'])
-    ? BASE_URL . $user['profile_image']
-    : 'https://via.placeholder.com/150';
 ?>
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
@@ -48,33 +43,21 @@ $profile_image = !empty($user['profile_image'])
 <?php template('head-tag'); ?>
 
 <body class="bg-light">
-    <!-- SVG Icons -->
     <?php template('svg-icons'); ?>
-
-    <!-- Navigation -->
     <?php template('top-navbar'); ?>
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
             <?php template('side-navbar'); ?>
 
-            <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-3 px-md-4 py-4">
-                <!-- Header -->
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap flex-md-nowrap pt-3 pb-2 mb-4 border-bottom gap-2">
                     <h1 class="h2 mb-2 mb-sm-0">
                         <i class="bi bi-share-fill text-primary me-2"></i>
                         Share Seller Information
                     </h1>
-                    <div class="d-flex gap-2">
-                        <a href="shared-sellers-list.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-list me-1"></i>View Shared Sellers
-                        </a>
-                    </div>
                 </div>
 
-                <!-- Share Form Card -->
                 <div class="row">
                     <div class="col-12 col-lg-8 mx-auto">
                         <div class="card shadow-sm border-0">
@@ -104,7 +87,7 @@ $profile_image = !empty($user['profile_image'])
                                         </div>
                                     </div>
 
-                                    <!-- Existing Seller Selection (Multi-select) - Hidden by default -->
+                                    <!-- Existing Seller Section -->
                                     <div id="existingSellerSection" style="display: none;">
                                         <div class="row mb-4">
                                             <div class="col-12">
@@ -112,61 +95,42 @@ $profile_image = !empty($user['profile_image'])
                                                     <i class="bi bi-person-badge text-primary me-1"></i>
                                                     Select Sellers to Share <span class="text-danger">*</span>
                                                 </label>
-                                                
-                                                <!-- Search Box for Sellers -->
+
                                                 <div class="mb-3">
                                                     <div class="input-group">
                                                         <span class="input-group-text bg-light">
                                                             <i class="bi bi-search"></i>
                                                         </span>
-                                                        <input type="text" class="form-control" id="sellerSearch" 
-                                                               placeholder="Search sellers by ID, name or phone...">
-                                                        <button class="btn btn-outline-secondary" type="button" id="clearSellerSearch">
-                                                            <i class="bi bi-x"></i> Clear
-                                                        </button>
+                                                        <input type="text" class="form-control" id="sellerSearch"
+                                                            placeholder="Search sellers by ID, name or phone...">
                                                     </div>
-                                                    <small class="text-muted" id="searchResultsCount"></small>
-                                                </div>
-                                                
-                                                <div class="mb-2">
-                                                    <small class="text-muted">
-                                                        <i class="bi bi-info-circle me-1"></i>
-                                                        Hold Ctrl (Cmd on Mac) to select multiple sellers
-                                                    </small>
-                                                </div>
-                                                
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-light border-end-0">
-                                                        <i class="bi bi-shop"></i>
-                                                    </span>
-                                                    <select class="form-select border-start-0" id="sellerIds" name="seller_ids[]" multiple size="8">
-                                                        <option value="" disabled>Choose sellers to share</option>
-                                                        <?php foreach ($sellers as $seller): ?>
-                                                            <option value="<?= htmlspecialchars($seller['id']) ?>"
-                                                                    data-business="<?= htmlspecialchars($seller['business_name']) ?>"
-                                                                    data-phone="<?= htmlspecialchars($seller['phone_number']) ?>"
-                                                                    data-response="<?= htmlspecialchars($seller['customer_response']) ?>">
-                                                                ID: <?= htmlspecialchars($seller['id']) ?> - 
-                                                                <?= htmlspecialchars($seller['business_name']) ?> - 
-                                                                <?= htmlspecialchars($seller['phone_number']) ?>
-                                                            </option>
-                                                        <?php endforeach; ?>
-                                                    </select>
                                                 </div>
 
-                                                <!-- Quick Select Buttons -->
+                                                <div class="mb-2">
+                                                    <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple sellers</small>
+                                                </div>
+
+                                                <select class="form-select" id="sellerIds" name="seller_ids[]" multiple size="8">
+                                                    <option value="" disabled>Choose sellers to share</option>
+                                                    <?php foreach ($sellers as $seller): ?>
+                                                        <option value="<?= $seller['id'] ?>"
+                                                            data-business="<?= htmlspecialchars($seller['business_name']) ?>"
+                                                            data-phone="<?= htmlspecialchars($seller['phone_number']) ?>"
+                                                            data-response="<?= htmlspecialchars($seller['customer_response']) ?>"
+                                                            data-seller-id="<?= htmlspecialchars($seller['seller_id']) ?>">
+                                                            ID: <?= $seller['id'] ?> -
+                                                            <?= htmlspecialchars($seller['business_name']) ?> -
+                                                            <?= htmlspecialchars($seller['phone_number']) ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+
                                                 <div class="mt-2 d-flex gap-2 flex-wrap">
                                                     <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllSellers">
                                                         <i class="bi bi-check-all"></i> Select All
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllSellers">
                                                         <i class="bi bi-x"></i> Deselect All
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-info" id="showSelectedOnly">
-                                                        <i class="bi bi-eye"></i> Show Selected Only
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="showAllSellers">
-                                                        <i class="bi bi-list"></i> Show All
                                                     </button>
                                                 </div>
 
@@ -179,29 +143,16 @@ $profile_image = !empty($user['profile_image'])
                                             </div>
                                         </div>
 
-                                        <!-- Selected Sellers Preview -->
                                         <div id="sellersPreview" class="row mb-4" style="display: none;">
                                             <div class="col-12">
                                                 <div class="card bg-light border">
                                                     <div class="card-body py-3">
                                                         <h6 class="card-subtitle mb-2 text-muted">
-                                                            <i class="bi bi-info-circle me-1"></i>
                                                             Selected Sellers (<span id="selectedCount">0</span>)
                                                         </h6>
                                                         <div class="table-responsive">
                                                             <table class="table table-sm table-borderless mb-0">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>ID</th>
-                                                                        <th>Business Name</th>
-                                                                        <th>Phone</th>
-                                                                        <th>Response</th>
-                                                                        <th>Action</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody id="previewTableBody">
-                                                                    <!-- Dynamically filled -->
-                                                                </tbody>
+                                                                <tbody id="previewTableBody"></tbody>
                                                             </table>
                                                         </div>
                                                     </div>
@@ -210,7 +161,7 @@ $profile_image = !empty($user['profile_image'])
                                         </div>
                                     </div>
 
-                                    <!-- New Seller Section (Visible by default) -->
+                                    <!-- New Seller Section -->
                                     <div id="newSellerSection">
                                         <div class="row mb-3">
                                             <div class="col-md-6">
@@ -218,17 +169,16 @@ $profile_image = !empty($user['profile_image'])
                                                     <i class="bi bi-hash text-primary me-1"></i>
                                                     Seller ID <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="number" class="form-control" id="newSellerId"
-                                                    placeholder="Enter seller ID" min="1" required>
-                                                <small class="text-muted">Enter a unique numeric ID for the seller</small>
+                                                <input type="text" class="form-control" id="newSellerId"
+                                                    placeholder="Enter seller ID" required>
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label fw-semibold">
                                                     <i class="bi bi-person-circle text-primary me-1"></i>
-                                                    Customer / Business Name <span class="text-danger">*</span>
+                                                    Business Name <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="text" class="form-control" id="newCustomerName"
-                                                    placeholder="Enter customer or business name" required>
+                                                <input type="text" class="form-control" id="newBusinessName"
+                                                    placeholder="Enter business name" required>
                                             </div>
                                         </div>
                                         <div class="row mb-3">
@@ -262,40 +212,9 @@ $profile_image = !empty($user['profile_image'])
                                                 </select>
                                             </div>
                                         </div>
-                                        <!-- New Seller Preview -->
-                                        <div id="newSellerPreview" class="row mb-3" style="display: none;">
-                                            <div class="col-12">
-                                                <div class="card bg-info bg-opacity-10 border-info">
-                                                    <div class="card-body py-2">
-                                                        <h6 class="card-subtitle mb-2 text-info">
-                                                            <i class="bi bi-eye me-1"></i>
-                                                            New Seller Preview
-                                                        </h6>
-                                                        <div class="row">
-                                                            <div class="col-md-3">
-                                                                <small class="text-muted d-block">Seller ID:</small>
-                                                                <strong id="previewNewSellerId">-</strong>
-                                                            </div>
-                                                            <div class="col-md-3">
-                                                                <small class="text-muted d-block">Business Name:</small>
-                                                                <strong id="previewNewBusinessName">-</strong>
-                                                            </div>
-                                                            <div class="col-md-3">
-                                                                <small class="text-muted d-block">Phone Number:</small>
-                                                                <strong id="previewNewPhoneNumber">-</strong>
-                                                            </div>
-                                                            <div class="col-md-3">
-                                                                <small class="text-muted d-block">Response:</small>
-                                                                <strong id="previewNewResponse">-</strong>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
 
-                                    <!-- Row 2: Select Users to Share With (Multi-select) -->
+                                    <!-- Share With Users Section -->
                                     <div class="row mb-4">
                                         <div class="col-12">
                                             <label class="form-label fw-semibold">
@@ -303,42 +222,29 @@ $profile_image = !empty($user['profile_image'])
                                                 Share With Users <span class="text-danger">*</span>
                                             </label>
 
-                                            <!-- Send to All Option -->
                                             <div class="form-check mb-3">
                                                 <input class="form-check-input" type="checkbox" id="shareToAll">
                                                 <label class="form-check-label" for="shareToAll">
                                                     <i class="bi bi-send-check-fill text-success me-1"></i>
                                                     <strong>Send to All Users</strong>
-                                                    <small class="text-muted d-block">Share this seller with all registered users</small>
                                                 </label>
                                             </div>
 
-                                            <!-- Individual User Selection -->
                                             <div id="userSelectionSection">
                                                 <div class="mb-2">
-                                                    <small class="text-muted">
-                                                        <i class="bi bi-info-circle me-1"></i>
-                                                        Hold Ctrl (Cmd on Mac) to select multiple users
-                                                    </small>
+                                                    <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple users</small>
                                                 </div>
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-light border-end-0">
-                                                        <i class="bi bi-person-plus"></i>
-                                                    </span>
-                                                    <select class="form-select border-start-0" id="sharedWithUser" name="shared_with_users[]" multiple size="5">
-                                                        <option value="" disabled>Select users to share with</option>
-                                                        <?php foreach ($users as $shareUser): ?>
-                                                            <option value="<?= htmlspecialchars($shareUser['user_uid']) ?>">
-                                                                <?= htmlspecialchars($shareUser['name']) ?>
-                                                                (<?= htmlspecialchars($shareUser['phone']) ?>)
-                                                            </option>
-                                                        <?php endforeach; ?>
-                                                    </select>
-                                                </div>
+                                                <select class="form-select" id="sharedWithUser" name="shared_with_users[]" multiple size="5">
+                                                    <option value="" disabled>Select users to share with</option>
+                                                    <?php foreach ($users as $shareUser): ?>
+                                                        <option value="<?= $shareUser['user_uid'] ?>" data-name="<?= htmlspecialchars($shareUser['name']) ?>">
+                                                            <?= htmlspecialchars($shareUser['name']) ?> (<?= $shareUser['user_uid'] ?>)
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
                                             </div>
 
-                                            <!-- Quick Select Buttons for Users -->
-                                            <div class="mt-2 d-flex gap-2 flex-wrap" id="userQuickButtons">
+                                            <div class="mt-2 d-flex gap-2 flex-wrap">
                                                 <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllUsers">
                                                     <i class="bi bi-check-all"></i> Select All Users
                                                 </button>
@@ -346,16 +252,10 @@ $profile_image = !empty($user['profile_image'])
                                                     <i class="bi bi-x"></i> Deselect All
                                                 </button>
                                             </div>
-
-                                            <!-- Note when "Send to All" is selected -->
-                                            <div class="alert alert-info mt-2 mb-0 py-2 select-all-note" style="display: none;">
-                                                <i class="bi bi-send-check me-2"></i>
-                                                You have selected "Send to All". This will share with all registered users.
-                                            </div>
                                         </div>
                                     </div>
 
-                                    <!-- Additional Notes -->
+                                    <!-- Notes -->
                                     <div class="row mb-4">
                                         <div class="col-12">
                                             <label class="form-label fw-semibold">
@@ -370,54 +270,13 @@ $profile_image = !empty($user['profile_image'])
                                     <!-- Form Actions -->
                                     <div class="d-flex flex-column flex-sm-row justify-content-center gap-2 gap-sm-3 pt-3 border-top">
                                         <button type="reset" class="btn btn-outline-secondary px-5 py-2">
-                                            <i class="bi bi-arrow-counterclockwise me-2"></i>
-                                            Reset
+                                            <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
                                         </button>
                                         <button type="submit" class="btn btn-primary px-5 py-2">
-                                            <i class="bi bi-send me-2"></i>
-                                            Share Seller(s)
+                                            <i class="bi bi-send me-2"></i>Share Seller(s)
                                         </button>
                                     </div>
                                 </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Shares Card -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="card shadow-sm border-0">
-                            <div class="card-header bg-white py-3">
-                                <h5 class="card-title mb-0">
-                                    <i class="bi bi-clock-history text-primary me-2"></i>
-                                    Recent Shares
-                                </h5>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Seller ID</th>
-                                                <th>Seller</th>
-                                                <th>Shared With</th>
-                                                <th>Response</th>
-                                                <th>Status</th>
-                                                <th>Shared At</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="recentSharesTable">
-                                            <tr>
-                                                <td colspan="7" class="text-center py-4 text-muted">
-                                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                                                    Loading recent shares...
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -426,125 +285,378 @@ $profile_image = !empty($user['profile_image'])
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed top-0 end-0 p-3"></div>
-
-    <!-- Share Details Modal -->
-    <div class="modal fade" id="shareDetailsModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-info-circle text-primary me-2"></i>
-                        Share Details
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="shareDetailsContent">
-                    Loading...
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        .form-label {
-            font-size: 0.9rem;
-            margin-bottom: 0.35rem;
-        }
-
-        .input-group-text {
-            background-color: #f8f9fa;
-        }
-
-        .badge-pending {
-            background-color: #ffc107;
-            color: #000;
-        }
-
-        .badge-accepted {
-            background-color: #198754;
-            color: #fff;
-        }
-
-        .badge-rejected {
-            background-color: #dc3545;
-            color: #fff;
-        }
-
-        /* Multi-select styling */
-        #sellerIds[multiple],
-        #sharedWithUser[multiple] {
-            min-height: 150px;
-            padding: 8px;
-        }
-
-        #sellerIds[multiple] option,
-        #sharedWithUser[multiple] option {
-            padding: 8px 12px;
-            border-bottom: 1px solid #eee;
-        }
-
-        #sellerIds[multiple] option:checked,
-        #sharedWithUser[multiple] option:checked {
-            background: #0d6efd linear-gradient(0deg, #0d6efd 0%, #0d6efd 100%);
-            color: white;
-        }
-
-        /* Preview table styling */
-        #previewTableBody tr td {
-            padding: 4px 8px;
-            font-size: 0.9rem;
-        }
-
-        /* Send to all note animation */
-        .select-all-note {
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Quick select buttons */
-        .btn-sm {
-            font-size: 0.8rem;
-            padding: 0.25rem 0.5rem;
-        }
-
-        /* New seller preview animation */
-        #newSellerPreview {
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
-
-    <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
-    <script src="<?= BASE_URL ?>js/work-station/share-sellers/share-sellers.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Toggle between existing and new seller
+            $('input[name="shareOption"]').on('change', function() {
+                if ($(this).val() === 'existing') {
+                    $('#existingSellerSection').show();
+                    $('#newSellerSection').hide();
+                    $('#newSellerId').prop('required', false);
+                    $('#newBusinessName').prop('required', false);
+                    $('#newPhoneNumber').prop('required', false);
+                    $('#newCustomerResponse').prop('required', false);
+                } else {
+                    $('#existingSellerSection').hide();
+                    $('#newSellerSection').show();
+                    $('#newSellerId').prop('required', true);
+                    $('#newBusinessName').prop('required', true);
+                    $('#newPhoneNumber').prop('required', true);
+                    $('#newCustomerResponse').prop('required', true);
+                    $('#sellersPreview').hide();
+                    $('#sellerIds').val([]);
+                }
+            });
+
+            // Share to All toggle
+            $('#shareToAll').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('#sharedWithUser').prop('disabled', true).hide();
+                    $('#sharedWithUser').val([]);
+                } else {
+                    $('#sharedWithUser').prop('disabled', false).show();
+                }
+            });
+
+            // Seller selection change
+            $('#sellerIds').on('change', function() {
+                const selectedOptions = $(this).find('option:selected');
+                const selectedCount = selectedOptions.length;
+
+                if (selectedCount > 0) {
+                    let previewHtml = '';
+                    selectedOptions.each(function() {
+                        previewHtml += `
+                        <tr>
+                            <td><strong>ID:</strong> ${$(this).val()}</td>
+                            <td><strong>Business:</strong> ${$(this).data('business') || '-'}</td>
+                            <td><strong>Phone:</strong> ${$(this).data('phone') || '-'}</td>
+                            <td><strong>Response:</strong> ${$(this).data('response') || '-'}</td>
+                        </tr>
+                    `;
+                    });
+                    $('#selectedCount').text(selectedCount);
+                    $('#previewTableBody').html(previewHtml);
+                    $('#sellersPreview').show();
+                } else {
+                    $('#sellersPreview').hide();
+                }
+            });
+
+            // Select/Deselect all sellers
+            $('#selectAllSellers').on('click', function() {
+                $('#sellerIds option').prop('selected', true);
+                $('#sellerIds').trigger('change');
+            });
+            $('#deselectAllSellers').on('click', function() {
+                $('#sellerIds option').prop('selected', false);
+                $('#sellerIds').trigger('change');
+            });
+
+            // Select/Deselect all users
+            $('#selectAllUsers').on('click', function() {
+                if (!$('#shareToAll').is(':checked')) {
+                    $('#sharedWithUser option').prop('selected', true);
+                }
+            });
+            $('#deselectAllUsers').on('click', function() {
+                if (!$('#shareToAll').is(':checked')) {
+                    $('#sharedWithUser option').prop('selected', false);
+                }
+            });
+
+            // Phone number validation
+            $('#newPhoneNumber').on('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+            });
+
+            // Form submit
+            $('#shareSellerForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const shareOption = $('input[name="shareOption"]:checked').val();
+                const shareToAll = $('#shareToAll').is(':checked');
+                const sharedWithUsers = shareToAll ? [] : $('#sharedWithUser').val();
+                const notes = $('#shareNotes').val().trim();
+
+                if (!shareToAll && (!sharedWithUsers || sharedWithUsers.length === 0)) {
+                    Swal.fire('Error', 'Please select at least one user to share with', 'error');
+                    return;
+                }
+
+                const formData = {
+                    share_option: shareOption,
+                    notes: notes,
+                    share_to_all: shareToAll,
+                    shared_with_users: sharedWithUsers
+                };
+
+                if (shareOption === 'existing') {
+                    const sellerIds = $('#sellerIds').val();
+                    if (!sellerIds || sellerIds.length === 0) {
+                        Swal.fire('Error', 'Please select at least one seller to share', 'error');
+                        return;
+                    }
+                    formData.seller_ids = sellerIds;
+                } else {
+                    const sellerId = $('#newSellerId').val().trim();
+                    const businessName = $('#newBusinessName').val().trim();
+                    const phoneNumber = $('#newPhoneNumber').val().trim();
+                    const customerResponse = $('#newCustomerResponse').val();
+
+                    if (!sellerId || !businessName || !phoneNumber || !customerResponse) {
+                        Swal.fire('Error', 'Please fill all seller details', 'error');
+                        return;
+                    }
+                    if (!/^\d{10}$/.test(phoneNumber)) {
+                        Swal.fire('Error', 'Please enter a valid 10-digit phone number', 'error');
+                        return;
+                    }
+                    formData.seller_id = sellerId;
+                    formData.business_name = businessName;
+                    formData.phone_number = phoneNumber;
+                    formData.customer_response = customerResponse;
+                }
+
+                const $btn = $(this).find('button[type="submit"]');
+                const originalText = $btn.html();
+                $btn.html('<span class="spinner-border spinner-border-sm me-2"></span>Sharing...').prop('disabled', true);
+
+                $.ajax({
+                    url: BASE_URL + 'ajax/work-station/share-sellers/share-sellers.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    traditional: true,
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            Swal.fire('Success!', response.message, 'success').then(() => {
+                                $('#shareSellerForm')[0].reset();
+                                $('#sellersPreview').hide();
+                                $('#sharedWithUser').val([]);
+                                $('#shareToAll').prop('checked', false);
+                                $('#sharedWithUser').prop('disabled', false).show();
+                                $('input[name="shareOption"][value="new"]').prop('checked', true);
+                                $('#existingSellerSection').hide();
+                                $('#newSellerSection').show();
+                            });
+                        } else {
+                            Swal.fire('Error!', response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        let msg = 'Failed to share seller';
+                        try {
+                            const res = JSON.parse(xhr.responseText);
+                            if (res.message) msg = res.message;
+                        } catch (e) {}
+                        Swal.fire('Error!', msg, 'error');
+                    },
+                    complete: function() {
+                        $btn.html(originalText).prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            // Toggle between existing and new seller
+            $('input[name="shareOption"]').on('change', function() {
+                if ($(this).val() === 'existing') {
+                    $('#existingSellerSection').show();
+                    $('#newSellerSection').hide();
+                    $('#newSellerId').prop('required', false);
+                    $('#newBusinessName').prop('required', false);
+                    $('#newPhoneNumber').prop('required', false);
+                    $('#newCustomerResponse').prop('required', false);
+                } else {
+                    $('#existingSellerSection').hide();
+                    $('#newSellerSection').show();
+                    $('#newSellerId').prop('required', true);
+                    $('#newBusinessName').prop('required', true);
+                    $('#newPhoneNumber').prop('required', true);
+                    $('#newCustomerResponse').prop('required', true);
+                    $('#sellersPreview').hide();
+                    $('#sellerIds').val([]);
+                }
+            });
+
+            // Share to All toggle
+            $('#shareToAll').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('#sharedWithUser').prop('disabled', true);
+                    $('#sharedWithUser').val([]);
+                } else {
+                    $('#sharedWithUser').prop('disabled', false);
+                }
+            });
+
+            // Seller selection change
+            $('#sellerIds').on('change', function() {
+                const selectedOptions = $(this).find('option:selected');
+                const selectedCount = selectedOptions.length;
+
+                if (selectedCount > 0) {
+                    let previewHtml = '';
+                    selectedOptions.each(function() {
+                        previewHtml += `
+                    <tr>
+                        <td><strong>ID:</strong> ${$(this).val()}</td>
+                        <td><strong>Business:</strong> ${$(this).data('business') || '-'}</td>
+                        <td><strong>Phone:</strong> ${$(this).data('phone') || '-'}</td>
+                        <td><strong>Response:</strong> ${$(this).data('response') || '-'}</td>
+                    </tr>
+                `;
+                    });
+                    $('#selectedCount').text(selectedCount);
+                    $('#previewTableBody').html(previewHtml);
+                    $('#sellersPreview').show();
+                } else {
+                    $('#sellersPreview').hide();
+                }
+            });
+
+            // Select/Deselect all sellers
+            $('#selectAllSellers').on('click', function() {
+                $('#sellerIds option').prop('selected', true);
+                $('#sellerIds').trigger('change');
+            });
+            $('#deselectAllSellers').on('click', function() {
+                $('#sellerIds option').prop('selected', false);
+                $('#sellerIds').trigger('change');
+            });
+
+            // Select/Deselect all users
+            $('#selectAllUsers').on('click', function() {
+                if (!$('#shareToAll').is(':checked')) {
+                    $('#sharedWithUser option').prop('selected', true);
+                }
+            });
+            $('#deselectAllUsers').on('click', function() {
+                if (!$('#shareToAll').is(':checked')) {
+                    $('#sharedWithUser option').prop('selected', false);
+                }
+            });
+
+            // Seller search functionality
+            $('#sellerSearch').on('keyup', function() {
+                const searchTerm = $(this).val().toLowerCase();
+                $('#sellerIds option').each(function() {
+                    const text = $(this).text().toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // Phone number validation
+            $('#newPhoneNumber').on('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+            });
+
+            // Form submit
+            $('#shareSellerForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const shareOption = $('input[name="shareOption"]:checked').val();
+                const shareToAll = $('#shareToAll').is(':checked');
+                const sharedWithUsers = $('#sharedWithUser').val();
+                const notes = $('#shareNotes').val().trim();
+
+                if (!shareToAll && (!sharedWithUsers || sharedWithUsers.length === 0)) {
+                    Swal.fire('Error', 'Please select at least one user to share with', 'error');
+                    return;
+                }
+
+                const formData = {
+                    share_option: shareOption,
+                    notes: notes,
+                    share_to_all: shareToAll,
+                    shared_with_users: sharedWithUsers || []
+                };
+
+                if (shareOption === 'existing') {
+                    const sellerIds = $('#sellerIds').val();
+                    if (!sellerIds || sellerIds.length === 0) {
+                        Swal.fire('Error', 'Please select at least one seller to share', 'error');
+                        return;
+                    }
+                    formData.seller_ids = sellerIds;
+                } else {
+                    const sellerId = $('#newSellerId').val().trim();
+                    const businessName = $('#newBusinessName').val().trim();
+                    const phoneNumber = $('#newPhoneNumber').val().trim();
+                    const customerResponse = $('#newCustomerResponse').val();
+
+                    if (!sellerId || !businessName || !phoneNumber || !customerResponse) {
+                        Swal.fire('Error', 'Please fill all seller details', 'error');
+                        return;
+                    }
+                    if (!/^\d{10}$/.test(phoneNumber)) {
+                        Swal.fire('Error', 'Please enter a valid 10-digit phone number', 'error');
+                        return;
+                    }
+                    formData.seller_id = sellerId;
+                    formData.business_name = businessName;
+                    formData.phone_number = phoneNumber;
+                    formData.customer_response = customerResponse;
+                }
+
+                const $btn = $(this).find('button[type="submit"]');
+                const originalText = $btn.html();
+                $btn.html('<span class="spinner-border spinner-border-sm me-2"></span>Sharing...').prop('disabled', true);
+
+                console.log('Sending data:', formData);
+
+                $.ajax({
+                    url: BASE_URL + 'ajax/work-station/share-sellers/share-sellers.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    traditional: true,
+                    success: function(response) {
+                        console.log('Response:', response);
+                        if (response.status === 'success') {
+                            Swal.fire('Success!', response.message, 'success').then(() => {
+                                $('#shareSellerForm')[0].reset();
+                                $('#sellersPreview').hide();
+                                $('#sharedWithUser').val([]);
+                                $('#shareToAll').prop('checked', false);
+                                $('#sharedWithUser').prop('disabled', false);
+                                $('input[name="shareOption"][value="new"]').prop('checked', true);
+                                $('#existingSellerSection').hide();
+                                $('#newSellerSection').show();
+                            });
+                        } else {
+                            Swal.fire('Error!', response.message, 'error');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                        console.error('Response:', xhr.responseText);
+                        let msg = 'Failed to share seller. Please try again.';
+                        try {
+                            const res = JSON.parse(xhr.responseText);
+                            if (res.message) msg = res.message;
+                        } catch (e) {}
+                        Swal.fire('Error!', msg, 'error');
+                    },
+                    complete: function() {
+                        $btn.html(originalText).prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
+
 </html>

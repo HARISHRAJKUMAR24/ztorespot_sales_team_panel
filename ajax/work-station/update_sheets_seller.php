@@ -29,16 +29,17 @@ try {
     $pdo = db();
     $user_uid = $_SESSION['user_uid'];
 
-    // Get and sanitize POST data - ADDED seller_id
+    // Get and sanitize POST data
     $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
     $business_name = trim($_POST['business_name'] ?? '');
     $seller_type = trim($_POST['seller_type'] ?? '');
     $phone_number = trim($_POST['phone_number'] ?? '');
-    $seller_id = trim($_POST['seller_id'] ?? ''); // NEW FIELD
+    $seller_id = trim($_POST['seller_id'] ?? '');
     $customer_response = trim($_POST['customer_response'] ?? '');
-    $selected_plan = trim($_POST['selected_plan'] ?? '');
-    $upgraded_plan = trim($_POST['upgraded_plan'] ?? '');
-    $upgraded_duration = trim($_POST['upgraded_duration'] ?? '');
+    $plan_id = isset($_POST['plan_id']) ? intval($_POST['plan_id']) : 0;
+    $plan_name = trim($_POST['plan_name'] ?? '');
+    $plan_duration = trim($_POST['plan_duration'] ?? '');
+    $plan_amount = isset($_POST['plan_amount']) ? floatval($_POST['plan_amount']) : 0;
     $products_uploaded = isset($_POST['products_uploaded']) ? intval($_POST['products_uploaded']) : 0;
     $refund_info = trim($_POST['refund_info'] ?? '');
     $call_back_time = trim($_POST['call_back_time'] ?? '');
@@ -49,7 +50,7 @@ try {
     $call_timing = trim($_POST['call_timing'] ?? '');
     $entry_date = trim($_POST['entry_date'] ?? '');
 
-    // Default values for fields that might not be sent
+    // Default values
     $registration_status = 'No';
     $plans_interested = 'None';
     $video_canva = '';
@@ -94,6 +95,10 @@ try {
         exit;
     }
 
+    // Store old plan amount for target update
+    $old_plan_amount = floatval($existing['plan_amount'] ?? 0);
+    $old_customer_response = $existing['customer_response'];
+
     // Check if phone number exists for other records
     if ($phone_number !== $existing['phone_number']) {
         $dup_sql = "SELECT id FROM sales_person_sellers WHERE phone_number = ? AND user_uid = ? AND id != ?";
@@ -106,22 +111,15 @@ try {
         }
     }
 
-    // Determine registration status based on available data
-    if (
-        $seller_type == 'Register Seller' ||
-        $customer_response == 'Plan Upgraded' ||
-        $customer_response == 'Plan Interested'
-    ) {
+    // Determine registration status
+    if ($seller_type == 'Register Seller' || $customer_response == 'Plan Upgraded' || $customer_response == 'Plan Interested') {
         $registration_status = 'Yes';
     }
 
-    // Determine plans_interested based on available data
-    if (!empty($selected_plan)) {
-        $plans_interested = $selected_plan;
-    } elseif (!empty($upgraded_plan)) {
-        $plans_interested = $upgraded_plan;
+    // Determine plans_interested
+    if (!empty($plan_name)) {
+        $plans_interested = $plan_name;
     } elseif ($customer_response == 'Refund' && !empty($refund_info)) {
-        // Extract plan from refund info
         if (preg_match('/Plan: ([^,]+)/', $refund_info, $matches)) {
             $plans_interested = trim($matches[1]);
         }
@@ -130,24 +128,19 @@ try {
     // Determine final call timing
     $final_call_timing = !empty($call_timing) ? $call_timing : $call_back_time;
 
-    // IMPORTANT: Clean the remembering notes - remove any auto-generated content
-    // This ensures only manually entered notes are preserved
-
-    // 1. Remove any "Call Duration: ..." lines
-    $clean_notes = preg_replace('/Call Duration: [^\n]*(\n|$)/', '', $remembering_notes);
-    // 2. Remove any "Upgraded Duration: ..." lines
+    // Clean remembering notes
+    $clean_notes = $remembering_notes;
+    $clean_notes = preg_replace('/Call Duration: [^\n]*(\n|$)/', '', $clean_notes);
     $clean_notes = preg_replace('/Upgraded Duration: [^\n]*(\n|$)/', '', $clean_notes);
-    // 3. Remove any duplicate refund info (will be added back properly)
+    $clean_notes = preg_replace('/Plan Duration: [^\n]*(\n|$)/', '', $clean_notes);
+    $clean_notes = preg_replace('/Plan Amount: ₹[^\n]*(\n|$)/', '', $clean_notes);
     $clean_notes = preg_replace('/Refund - Plan:.*?(\n|$)/', '', $clean_notes);
-    // 4. Remove empty lines
     $clean_notes = preg_replace('/\n\s*\n/', "\n", $clean_notes);
-    // 5. Trim
     $clean_notes = trim($clean_notes);
 
-    // Now build the final remembering notes with ONLY the clean user notes
     $final_remembering_notes = $clean_notes;
 
-    // Add refund info if present (as a single line, not duplicated)
+    // Add refund info if present
     if (!empty($refund_info) && $customer_response == 'Refund') {
         if (!empty($final_remembering_notes)) {
             $final_remembering_notes = $refund_info . "\n" . $final_remembering_notes;
@@ -156,10 +149,21 @@ try {
         }
     }
 
-    // DO NOT add Call Duration or Upgraded Duration to remembering notes anymore
-    // These are stored in dedicated columns: call_timing and plan_duration
+    // Create plan_data JSON
+    $plan_data = null;
+    if (!empty($plan_name) && ($customer_response == 'Plan Interested' || $customer_response == 'Plan Upgraded')) {
+        $plan_data_array = [
+            'plan_id' => $plan_id,
+            'plan_name' => $plan_name,
+            'duration' => $plan_duration,
+            'amount' => $plan_amount,
+            'seller_id' => $seller_id ?: null,
+            'added_date' => date('Y-m-d H:i:s')
+        ];
+        $plan_data = json_encode($plan_data_array);
+    }
 
-    // Create update history entry with Indian time
+    // Create update history entry
     $history_entry = [
         'timestamp' => date('Y-m-d H:i:s'),
         'timestamp_formatted' => date('d M Y, h:i A'),
@@ -167,27 +171,25 @@ try {
         'changes' => []
     ];
 
-    // Track changes - ADDED seller_id to tracking
+    // Track changes
     $fields_to_track = [
         'work_details_update' => ['label' => 'Business Name', 'old' => $existing['work_details_update'], 'new' => $business_name],
         'source_type' => ['label' => 'Seller Type', 'old' => $existing['source_type'], 'new' => $seller_type],
         'phone_number' => ['label' => 'Phone Number', 'old' => $existing['phone_number'], 'new' => $phone_number],
-        'seller_id' => ['label' => 'Seller ID', 'old' => $existing['seller_id'] ?? '', 'new' => $seller_id], // NEW FIELD
+        'seller_id' => ['label' => 'Seller ID', 'old' => $existing['seller_id'] ?? '', 'new' => $seller_id],
         'customer_response' => ['label' => 'Customer Response', 'old' => $existing['customer_response'], 'new' => $customer_response],
         'plans_interested' => ['label' => 'Plan', 'old' => $existing['plans_interested'], 'new' => $plans_interested],
-        'plan_duration' => ['label' => 'Duration', 'old' => $existing['plan_duration'], 'new' => $upgraded_duration],
+        'plan_duration' => ['label' => 'Duration', 'old' => $existing['plan_duration'], 'new' => $plan_duration],
+        'plan_amount' => ['label' => 'Plan Amount', 'old' => $existing['plan_amount'] ?? 0, 'new' => $plan_amount],
         'products_uploaded' => ['label' => 'Products Uploaded', 'old' => $existing['products_uploaded'], 'new' => $products_uploaded],
         'current_status' => ['label' => 'Current Status', 'old' => $existing['current_status'], 'new' => $current_status],
         'call_timing' => ['label' => 'Call Timing', 'old' => $existing['call_timing'], 'new' => $final_call_timing]
     ];
 
-    // Process each field for changes
     foreach ($fields_to_track as $field => $data) {
-        // Convert to string for comparison to handle null/empty properly
         $old_val = trim((string)($data['old'] ?? ''));
         $new_val = trim((string)($data['new'] ?? ''));
 
-        // Only track if values are different
         if ($old_val !== $new_val) {
             $history_entry['changes'][$field] = [
                 'field' => $data['label'],
@@ -206,23 +208,24 @@ try {
         }
     }
 
-    // Add new history entry only if there are changes
+    // Add new history entry if there are changes
     if (!empty($history_entry['changes'])) {
-        array_unshift($update_history, $history_entry); // Add to beginning for latest first
+        array_unshift($update_history, $history_entry);
     }
 
-    // Encode history back to JSON
     $update_history_json = !empty($update_history) ? json_encode($update_history, JSON_PRETTY_PRINT) : null;
 
-    // Update the record - ADDED seller_id to SQL query
+    // Update the record
     $sql = "UPDATE sales_person_sellers SET 
                 work_details_update = ?,
                 source_type = ?,
                 registration_status = ?,
                 phone_number = ?,
-                seller_id = ?,  -- NEW FIELD
+                seller_id = ?,
                 plans_interested = ?,
                 plan_duration = ?,
+                plan_amount = ?,
+                plan_data = ?,
                 products_uploaded = ?,
                 customer_response = ?,
                 remembering_notes = ?,
@@ -239,15 +242,16 @@ try {
 
     $stmt = $pdo->prepare($sql);
 
-    // Update params array - ADDED seller_id
     $params = [
         $business_name,
         $seller_type,
         $registration_status,
         $phone_number,
-        $seller_id,  // NEW FIELD
+        $seller_id,
         $plans_interested,
-        $upgraded_duration,
+        $plan_duration,
+        $plan_amount,
+        $plan_data,
         $products_uploaded,
         $customer_response,
         $final_remembering_notes,
@@ -263,7 +267,6 @@ try {
         $user_uid
     ];
 
-    // Log the parameters for debugging
     error_log("Update params for ID $id: " . print_r($params, true));
 
     $result = $stmt->execute($params);
@@ -274,18 +277,44 @@ try {
         throw new Exception('Failed to update: ' . $errorInfo[2]);
     }
 
-    // Check if any rows were affected
     $rowCount = $stmt->rowCount();
+
+    // ============================================
+    // UPDATE TARGET SETTINGS - ONLY FOR PLAN UPGRADED
+    // ============================================
+    $target_updated = false;
+    $target_message = '';
+
+    // Check if this is a Plan Upgraded and amount has changed
+    if ($customer_response == 'Plan Upgraded' && $plan_amount > 0) {
+        // Calculate the difference between new and old amount
+        $amount_difference = $plan_amount - $old_plan_amount;
+        
+        if ($amount_difference != 0) {
+            error_log("Updating target settings - User: $user_uid, Amount Difference: $amount_difference");
+            
+            // Call function to update target progress
+            $target_updated = updateTargetProgressEdit($pdo, $user_uid, $amount_difference, $id, $plan_data, $plan_name, $plan_duration);
+            $target_message = $target_updated ? " Target progress updated." : " Target progress could not be updated.";
+        } else {
+            $target_message = " No change in plan amount, target unchanged.";
+        }
+    } else {
+        error_log("Skipping target update - Response: $customer_response, Amount: $plan_amount");
+        $target_message = " Not a plan upgrade, target unchanged.";
+    }
 
     ob_end_clean();
     echo json_encode([
         'status' => 'success',
-        'message' => $rowCount > 0 ? 'Seller updated successfully' : 'No changes were made to the record',
+        'message' => ($rowCount > 0 ? 'Seller updated successfully' : 'No changes were made') . $target_message,
         'id' => $id,
         'rowCount' => $rowCount,
+        'target_updated' => $target_updated,
         'changes_made' => !empty($history_entry['changes']),
         'indian_time' => date('d M Y, h:i A')
     ]);
+    
 } catch (PDOException $e) {
     error_log("Database Error in update: " . $e->getMessage());
     ob_end_clean();
@@ -300,5 +329,77 @@ try {
         'status' => 'error',
         'message' => 'Error: ' . $e->getMessage()
     ]);
+}
+
+/**
+ * Update target progress for edit (with amount difference)
+ */
+function updateTargetProgressEdit($pdo, $user_uid, $amount_difference, $seller_id, $plan_data, $plan_name, $plan_duration) {
+    try {
+        error_log("=== UPDATING TARGET PROGRESS FROM EDIT ===");
+        error_log("User: $user_uid, Amount Difference: $amount_difference");
+        
+        // Get current active target
+        $target_sql = "SELECT id, target_amount, achieved_amount, achievement_percentage, plan_data 
+                       FROM target_settings 
+                       WHERE user_uid = ? 
+                       AND status = 'active' 
+                       AND start_date <= CURDATE() 
+                       AND end_date >= CURDATE()";
+        $target_stmt = $pdo->prepare($target_sql);
+        $target_stmt->execute([$user_uid]);
+        $target = $target_stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($target) {
+            // Update achieved amount with the difference
+            $new_achieved = $target['achieved_amount'] + $amount_difference;
+            $new_percentage = ($new_achieved / $target['target_amount']) * 100;
+            $new_percentage = round($new_percentage, 2);
+            
+            // Update plan_data JSON
+            $existing_plan_data = [];
+            if (!empty($target['plan_data'])) {
+                $existing_plan_data = json_decode($target['plan_data'], true);
+                if (!is_array($existing_plan_data)) {
+                    $existing_plan_data = [];
+                }
+            }
+            
+            $plan_info = json_decode($plan_data, true);
+            
+            $new_plan_entry = [
+                'seller_id' => $seller_id,
+                'plan_name' => $plan_name,
+                'duration' => $plan_duration,
+                'amount' => $amount_difference,
+                'action' => 'edit_update',
+                'added_date' => date('Y-m-d H:i:s')
+            ];
+            $existing_plan_data[] = $new_plan_entry;
+            $updated_plan_data = json_encode($existing_plan_data, JSON_PRETTY_PRINT);
+            
+            // Update target settings
+            $update_sql = "UPDATE target_settings 
+                           SET achieved_amount = ?, 
+                               achievement_percentage = ?,
+                               plan_data = ?
+                           WHERE id = ?";
+            $update_stmt = $pdo->prepare($update_sql);
+            $update_result = $update_stmt->execute([$new_achieved, $new_percentage, $updated_plan_data, $target['id']]);
+            
+            if ($update_result) {
+                error_log("✅ Target updated successfully!");
+                error_log("New Achieved: $new_achieved, New Percentage: $new_percentage%");
+                return true;
+            }
+        } else {
+            error_log("⚠️ No active target found for user: $user_uid");
+        }
+        return false;
+        
+    } catch (Exception $e) {
+        error_log("❌ Error updating target progress: " . $e->getMessage());
+        return false;
+    }
 }
 ?>

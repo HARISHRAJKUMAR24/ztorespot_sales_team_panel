@@ -222,12 +222,20 @@ try {
     $inserted_id = $pdo->lastInsertId();
     error_log("Seller inserted with ID: $inserted_id");
 
-    // Update target progress if plan amount > 0 and registration status is Yes
-    if ($final_plan_amount > 0 && $registration_status == 'Yes') {
-        error_log("Updating target progress - Amount: $final_plan_amount, Registration Status: $registration_status");
+    // ============================================
+    // IMPORTANT: Update target progress ONLY for PLAN UPGRADED
+    // Plan Interested does NOT update target settings
+    // ============================================
+    if ($final_plan_amount > 0 && $customer_response == 'Plan Upgraded') {
+        error_log("=== UPDATING TARGET SETTINGS ===");
+        error_log("Plan Upgraded detected - Amount: $final_plan_amount");
         updateTargetProgress($pdo, $user_uid, $final_plan_amount, $inserted_id, $plan_data, $plan_name, $plan_duration);
     } else {
-        error_log("Skipping target update - Amount: $final_plan_amount, Registration Status: $registration_status");
+        error_log("=== SKIPPING TARGET UPDATE ===");
+        error_log("Response: $customer_response, Amount: $final_plan_amount");
+        if ($customer_response == 'Plan Interested') {
+            error_log("Plan Interested - NOT updating target settings (only upgrades count)");
+        }
     }
 
     ob_end_clean();
@@ -235,8 +243,10 @@ try {
         'status' => 'success',
         'message' => 'Seller added successfully',
         'id' => $inserted_id,
-        'plan_amount' => $final_plan_amount
+        'plan_amount' => $final_plan_amount,
+        'target_updated' => ($customer_response == 'Plan Upgraded')
     ]);
+    
 } catch (PDOException $e) {
     error_log("Database Error: " . $e->getMessage());
     ob_end_clean();
@@ -254,12 +264,13 @@ try {
 }
 
 /**
- * Update target progress for the user
+ * Update target progress for the user (ONLY called for Plan Upgraded)
  */
 function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, $plan_name, $plan_duration) {
     try {
-        error_log("=== Updating Target Progress ===");
-        error_log("User: $user_uid, Amount: $amount, Seller ID: $seller_id, Plan: $plan_name, Duration: $plan_duration");
+        error_log("=== UPDATING TARGET PROGRESS ===");
+        error_log("User: $user_uid, Amount: $amount, Seller ID: $seller_id");
+        error_log("Plan: $plan_name, Duration: $plan_duration");
         
         // Get current active target for the user
         $target_sql = "SELECT id, target_amount, achieved_amount, achievement_percentage, plan_data 
@@ -273,12 +284,17 @@ function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, 
         $target = $target_stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($target) {
-            error_log("Found active target - ID: {$target['id']}, Target Amount: {$target['target_amount']}, Current Achieved: {$target['achieved_amount']}");
+            error_log("Found active target - ID: {$target['id']}");
+            error_log("Target Amount: {$target['target_amount']}");
+            error_log("Current Achieved: {$target['achieved_amount']}");
             
             // Update achieved amount
             $new_achieved = $target['achieved_amount'] + $amount;
             $new_percentage = ($new_achieved / $target['target_amount']) * 100;
             $new_percentage = round($new_percentage, 2);
+            
+            error_log("New Achieved: $new_achieved");
+            error_log("New Percentage: $new_percentage%");
             
             // Update plan_data JSON
             $existing_plan_data = [];
@@ -313,15 +329,18 @@ function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, 
             $update_result = $update_stmt->execute([$new_achieved, $new_percentage, $updated_plan_data, $target['id']]);
             
             if ($update_result) {
-                error_log("Target updated successfully - New Achieved: $new_achieved, Percentage: $new_percentage%");
+                error_log("✅ Target updated successfully!");
+                error_log("New Achieved: $new_achieved");
+                error_log("Achievement Percentage: $new_percentage%");
             } else {
-                error_log("Failed to update target");
+                error_log("❌ Failed to update target");
             }
         } else {
-            error_log("No active target found for user: $user_uid");
+            error_log("⚠️ No active target found for user: $user_uid");
+            error_log("Target will not be updated - no active target exists");
         }
     } catch (Exception $e) {
-        error_log("Error updating target progress: " . $e->getMessage());
+        error_log("❌ Error updating target progress: " . $e->getMessage());
     }
 }
 ?>

@@ -25,6 +25,7 @@ $(document).ready(function () {
             customerResponse: sellerData.customer_response,
             plansInterested: sellerData.plans_interested,
             planDuration: sellerData.plan_duration || '',
+            planAmount: sellerData.plan_amount || 0,
             callTiming: sellerData.call_timing,
             rememberingNotes: sellerData.remembering_notes,
             latestUpdate: sellerData.latest_update
@@ -84,18 +85,12 @@ $(document).ready(function () {
                 $('#currentStatus').val('Refunded');
                 break;
             default:
-                // For other responses like CNP, Not interested, etc., clear any dynamic fields
-                // Also clear call timing if it shouldn't be there
-                if (!['Later', 'Call Back AT', 'Schedule'].includes(response)) {
-                    $('#callTiming').val('');
-                    $('#callTimingSelect').val('');
-                    $('#customCallTimingContainer').hide();
-                }
                 break;
         }
 
         container.html(html);
         initializeOtherOptionHandlers();
+        initializePlanDropdowns();
 
         // Set existing values
         setTimeout(function () {
@@ -111,118 +106,241 @@ $(document).ready(function () {
         }
     });
 
-    // Generate Plan Interested Fields
+    // Generate Plan Interested Fields with Amount Dropdown
     function generatePlanInterestedFields() {
+        // Build plan options from subscription plans
+        let planOptions = '<option value="" selected disabled>Choose a plan</option>';
+        
+        // Group plans by name
+        const groupedPlans = {};
+        subscriptionPlans.forEach(plan => {
+            if (!groupedPlans[plan.plan_name]) {
+                groupedPlans[plan.plan_name] = [];
+            }
+            groupedPlans[plan.plan_name].push(plan);
+        });
+        
+        // Create optgroups for each plan
+        for (const [planName, durations] of Object.entries(groupedPlans)) {
+            planOptions += `<optgroup label="${planName}">`;
+            durations.forEach(plan => {
+                planOptions += `<option value="${plan.id}" data-duration="${plan.duration}" data-amount="${plan.total_amount}">
+                    ${plan.duration} - ₹${parseFloat(plan.total_amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                </option>`;
+            });
+            planOptions += `</optgroup>`;
+        }
+        
+        planOptions += '<option value="other">Other (Custom Plan)</option>';
+        
         return `
             <div class="dynamic-field">
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-12 col-md-6 mb-3">
                         <label class="form-label fw-semibold">
                             <i class="bi bi-star-fill text-warning me-1"></i>
                             Select Plan <span class="text-danger">*</span>
                         </label>
-                        <div class="plan-select-wrapper">
-                            <select class="form-select" id="selectedPlan" required>
-                                <option value="" selected disabled>Choose a plan</option>
-                                <option value="Welcome">Welcome Plan</option>
-                                <option value="Starter">Starter Plan</option>
-                                <option value="Professional">Professional Plan</option>
-                                <option value="Intermediate">Intermediate Plan</option>
-                                <option value="other">Other (Custom Plan)</option>
-                            </select>
-                            <div id="customPlanContainer" style="display: none;" class="mt-2 custom-field">
-                                <label class="form-label">Enter Custom Plan Name:</label>
-                                <input type="text" class="form-control" id="customPlan" 
-                                    placeholder="e.g., Premium Plan, Gold Plan etc.">
-                            </div>
-                            <input type="hidden" id="finalSelectedPlan">
+                        <select class="form-select" id="selectedPlan" required>
+                            ${planOptions}
+                        </select>
+                        <div id="customPlanContainer" style="display: none;" class="mt-2 custom-field">
+                            <label class="form-label">Enter Custom Plan Name:</label>
+                            <input type="text" class="form-control" id="customPlan" 
+                                placeholder="e.g., Premium Plan, Gold Plan etc.">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-currency-rupee text-success me-1"></i>
+                            Plan Amount <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">₹</span>
+                            <input type="number" class="form-control" id="planAmount" 
+                                placeholder="Plan amount" step="0.01" required>
+                            <span class="input-group-text bg-light" id="planAmountDisplay">₹0.00</span>
+                        </div>
+                        <div class="form-text text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Amount will be auto-filled when you select a plan
                         </div>
                     </div>
                 </div>
+                <input type="hidden" id="selectedPlanId" value="0">
+                <input type="hidden" id="selectedPlanName" value="">
+                <input type="hidden" id="selectedDuration" value="">
             </div>
         `;
     }
 
-    // Generate Plan Upgraded Fields
+    // Generate Plan Upgraded Fields with Amount Dropdown
     function generatePlanUpgradedFields() {
-        // Get existing products_uploaded value from sellerData if available
+        // Build plan options from subscription plans
+        let planOptions = '<option value="" selected disabled>Choose upgraded plan</option>';
+        
+        const groupedPlans = {};
+        subscriptionPlans.forEach(plan => {
+            if (!groupedPlans[plan.plan_name]) {
+                groupedPlans[plan.plan_name] = [];
+            }
+            groupedPlans[plan.plan_name].push(plan);
+        });
+        
+        for (const [planName, durations] of Object.entries(groupedPlans)) {
+            planOptions += `<optgroup label="${planName}">`;
+            durations.forEach(plan => {
+                planOptions += `<option value="${plan.id}" data-duration="${plan.duration}" data-amount="${plan.total_amount}">
+                    ${plan.duration} - ₹${parseFloat(plan.total_amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                </option>`;
+            });
+            planOptions += `</optgroup>`;
+        }
+        
+        planOptions += '<option value="other">Other (Custom Plan)</option>';
+        
         const productsValue = (sellerData && sellerData.products_uploaded !== undefined && sellerData.products_uploaded !== null)
             ? sellerData.products_uploaded
             : 0;
-
+        
         return `
             <div class="dynamic-field">
                 <div class="row">
-                    <div class="col-12 col-md-6 mb-3 mb-md-0">
+                    <div class="col-12 col-md-6 mb-3">
                         <label class="form-label fw-semibold">
                             <i class="bi bi-arrow-up-circle-fill text-success me-1"></i>
                             Upgraded Plan <span class="text-danger">*</span>
                         </label>
-                        <div class="upgraded-plan-wrapper">
-                            <select class="form-select" id="upgradedPlan" required>
-                                <option value="" selected disabled>Choose upgraded plan</option>
-                                <option value="Welcome">Welcome Plan</option>
-                                <option value="Starter">Starter Plan</option>
-                                <option value="Professional">Professional Plan</option>
-                                <option value="Intermediate">Intermediate Plan</option>
-                                <option value="other">Other (Custom Plan)</option>
-                            </select>
-                            <div id="customUpgradedPlanContainer" style="display: none;" class="mt-2 custom-field">
-                                <label class="form-label">Enter Custom Plan Name:</label>
-                                <input type="text" class="form-control" id="customUpgradedPlan" 
-                                    placeholder="e.g., Premium Plan, Gold Plan etc.">
-                            </div>
-                            <input type="hidden" id="finalUpgradedPlan">
+                        <select class="form-select" id="upgradedPlan" required>
+                            ${planOptions}
+                        </select>
+                        <div id="customUpgradedPlanContainer" style="display: none;" class="mt-2 custom-field">
+                            <label class="form-label">Enter Custom Plan Name:</label>
+                            <input type="text" class="form-control" id="customUpgradedPlan" 
+                                placeholder="e.g., Premium Plan, Gold Plan etc.">
                         </div>
                     </div>
+                    <div class="col-12 col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-currency-rupee text-success me-1"></i>
+                            Plan Amount <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">₹</span>
+                            <input type="number" class="form-control" id="upgradedPlanAmount" 
+                                placeholder="Plan amount" step="0.01" required>
+                            <span class="input-group-text bg-light" id="upgradedPlanAmountDisplay">₹0.00</span>
+                        </div>
+                        <div class="form-text text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Amount will be auto-filled when you select a plan
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
                     <div class="col-12 col-md-6">
                         <label class="form-label fw-semibold">
                             <i class="bi bi-calendar-check-fill text-info me-1"></i>
                             Duration <span class="text-danger">*</span>
                         </label>
-                        <div class="duration-wrapper">
-                            <select class="form-select" id="upgradedDuration" required>
-                                <option value="" selected disabled>Select duration</option>
-                                <option value="1 Month">1 Month</option>
-                                <option value="3 Months">3 Months</option>
-                                <option value="6 Months">6 Months</option>
-                                <option value="1 Year">1 Year</option>
-                                <option value="2 Years">2 Years</option>
-                                <option value="other">Other (Custom Duration)</option>
-                            </select>
-                            <div id="customDurationContainer" style="display: none;" class="mt-2 custom-field">
-                                <label class="form-label">Enter Custom Duration:</label>
-                                <input type="text" class="form-control" id="customDuration" 
-                                    placeholder="e.g., 45 days, 18 months, etc.">
-                            </div>
-                            <input type="hidden" id="finalUpgradedDuration">
-                        </div>
+                        <input type="text" class="form-control" id="upgradedDurationDisplay" readonly>
+                        <input type="hidden" id="upgradedDuration" value="">
                     </div>
-                </div>
-                <!-- Products Uploaded Field -->
-                <div class="row mt-3">
-                    <div class="col-12">
+                    <div class="col-12 col-md-6">
                         <label class="form-label fw-semibold">
                             <i class="bi bi-cloud-upload text-primary me-1"></i>
                             Number of Products Uploaded
                         </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0">
-                                <i class="bi bi-files"></i>
-                            </span>
-                            <input type="number" class="form-control border-start-0" 
-                                id="productsUploaded" 
-                                placeholder="Enter number of products (0-999)"
-                                min="0" max="999" value="${productsValue}">
-                        </div>
-                        <div class="form-text text-muted small">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Enter 0 if no products uploaded yet
-                        </div>
+                        <input type="number" class="form-control" id="productsUploaded" 
+                            placeholder="Enter number of products (0-999)"
+                            min="0" max="999" value="${productsValue}">
                     </div>
                 </div>
+                <div id="customDurationContainer" style="display: none;" class="mt-2 custom-field">
+                    <label class="form-label">Enter Custom Duration:</label>
+                    <input type="text" class="form-control" id="customDuration" 
+                        placeholder="e.g., 45 days, 18 months, etc.">
+                </div>
+                <input type="hidden" id="upgradedPlanId" value="0">
+                <input type="hidden" id="upgradedPlanName" value="">
             </div>
         `;
+    }
+
+    // Initialize plan dropdown handlers
+    function initializePlanDropdowns() {
+        // For Plan Interested
+        $('#selectedPlan').off('change').on('change', function () {
+            const selectedValue = $(this).val();
+            if (selectedValue === 'other') {
+                $('#customPlanContainer').show();
+                $('#planAmount').val('').prop('readonly', false);
+                $('#planAmountDisplay').text('₹0.00');
+                $('#selectedPlanId').val('0');
+                $('#selectedPlanName').val('');
+                $('#selectedDuration').val('');
+            } else if (selectedValue && selectedValue !== '') {
+                $('#customPlanContainer').hide();
+                const selectedOption = $(this).find('option:selected');
+                const planId = selectedValue;
+                const planName = selectedOption.parent().attr('label');
+                const duration = selectedOption.data('duration');
+                const amount = selectedOption.data('amount');
+                
+                $('#selectedPlanId').val(planId);
+                $('#selectedPlanName').val(planName);
+                $('#selectedDuration').val(duration);
+                $('#planAmount').val(amount);
+                $('#planAmountDisplay').text('₹' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+            }
+        });
+
+        // For Plan Upgraded
+        $('#upgradedPlan').off('change').on('change', function () {
+            const selectedValue = $(this).val();
+            if (selectedValue === 'other') {
+                $('#customUpgradedPlanContainer').show();
+                $('#customDurationContainer').show();
+                $('#upgradedPlanAmount').val('').prop('readonly', false);
+                $('#upgradedPlanAmountDisplay').text('₹0.00');
+                $('#upgradedDurationDisplay').val('');
+                $('#upgradedDuration').val('');
+                $('#upgradedPlanId').val('0');
+                $('#upgradedPlanName').val('');
+            } else if (selectedValue && selectedValue !== '') {
+                $('#customUpgradedPlanContainer').hide();
+                $('#customDurationContainer').hide();
+                const selectedOption = $(this).find('option:selected');
+                const planId = selectedValue;
+                const planName = selectedOption.parent().attr('label');
+                const duration = selectedOption.data('duration');
+                const amount = selectedOption.data('amount');
+                
+                $('#upgradedPlanId').val(planId);
+                $('#upgradedPlanName').val(planName);
+                $('#upgradedDurationDisplay').val(duration);
+                $('#upgradedDuration').val(duration);
+                $('#upgradedPlanAmount').val(amount);
+                $('#upgradedPlanAmountDisplay').text('₹' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+            }
+        });
+
+        // Custom duration handler
+        $('#customDuration').off('input').on('input', function () {
+            $('#upgradedDuration').val($(this).val());
+            $('#upgradedDurationDisplay').val($(this).val());
+        });
+
+        // Custom plan amount handlers
+        $('#planAmount').off('input').on('input', function () {
+            const amount = $(this).val();
+            $('#planAmountDisplay').text(amount ? '₹' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2}) : '₹0.00');
+        });
+
+        $('#upgradedPlanAmount').off('input').on('input', function () {
+            const amount = $(this).val();
+            $('#upgradedPlanAmountDisplay').text(amount ? '₹' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2}) : '₹0.00');
+        });
     }
 
     // Generate Later Fields
@@ -420,7 +538,6 @@ $(document).ready(function () {
                 const selectedDate = $(this).val();
                 if (selectedDate) {
                     $('#finalScheduleDate').val('Schedule at ' + selectedDate);
-                    // Also set call_timing to this value
                     $('#callTiming').val('Schedule at ' + selectedDate);
                 }
             });
@@ -538,22 +655,32 @@ $(document).ready(function () {
         if (!sellerData) return;
 
         if (currentResponse === 'Plan Interested') {
-            const plansInterested = sellerData.plans_interested || '';
-            if (plansInterested && plansInterested !== '' && plansInterested !== 'None') {
-                const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
-                if (!standardPlans.includes(plansInterested)) {
-                    $('#selectedPlan').val('other').trigger('change');
-                    $('#customPlan').val(plansInterested);
-                    $('#finalSelectedPlan').val(plansInterested);
-                } else {
-                    $('#selectedPlan').val(plansInterested);
-                    $('#finalSelectedPlan').val(plansInterested);
+            const planId = sellerData.plan_id || 0;
+            const planName = sellerData.plans_interested || '';
+            const duration = sellerData.plan_duration || '';
+            const amount = sellerData.plan_amount || 0;
+            
+            if (planId > 0) {
+                $(`#selectedPlan option[value="${planId}"]`).prop('selected', true).trigger('change');
+            } else if (planName && planName !== 'None' && planName !== '') {
+                $('#selectedPlan').val('other').trigger('change');
+                $('#customPlan').val(planName);
+                $('#selectedPlanName').val(planName);
+                if (duration) $('#selectedDuration').val(duration);
+                if (amount > 0) {
+                    $('#planAmount').val(amount);
+                    $('#planAmountDisplay').text('₹' + amount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
                 }
             }
         }
 
         if (currentResponse === 'Plan Upgraded') {
-            // Set products uploaded value if exists
+            const planId = sellerData.plan_id || 0;
+            const planName = sellerData.plans_interested || '';
+            const duration = sellerData.plan_duration || '';
+            const amount = sellerData.plan_amount || 0;
+            
+            // Set products uploaded
             if (sellerData && sellerData.products_uploaded !== undefined && sellerData.products_uploaded !== null && sellerData.products_uploaded > 0) {
                 setTimeout(function () {
                     if ($('#productsUploaded').length) {
@@ -561,25 +688,21 @@ $(document).ready(function () {
                     }
                 }, 150);
             }
-
-            // Set upgraded plan if it exists in plans_interested
-            const upgradedPlan = sellerData.plans_interested || '';
-            if (upgradedPlan && upgradedPlan !== '' && upgradedPlan !== 'None') {
-                const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
-                if (!standardPlans.includes(upgradedPlan)) {
-                    $('#upgradedPlan').val('other').trigger('change');
-                    $('#customUpgradedPlan').val(upgradedPlan);
-                    $('#finalUpgradedPlan').val(upgradedPlan);
-                } else {
-                    $('#upgradedPlan').val(upgradedPlan);
-                    $('#finalUpgradedPlan').val(upgradedPlan);
+            
+            if (planId > 0) {
+                $(`#upgradedPlan option[value="${planId}"]`).prop('selected', true).trigger('change');
+            } else if (planName && planName !== 'None' && planName !== '') {
+                $('#upgradedPlan').val('other').trigger('change');
+                $('#customUpgradedPlan').val(planName);
+                $('#upgradedPlanName').val(planName);
+                if (duration) {
+                    $('#upgradedDuration').val(duration);
+                    $('#upgradedDurationDisplay').val(duration);
                 }
-            }
-
-            // Set duration - from plan_duration column
-            if (sellerData && sellerData.plan_duration && sellerData.plan_duration !== '') {
-                const duration = sellerData.plan_duration;
-                setDurationValue(duration);
+                if (amount > 0) {
+                    $('#upgradedPlanAmount').val(amount);
+                    $('#upgradedPlanAmountDisplay').text('₹' + amount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+                }
             }
         }
 
@@ -610,7 +733,6 @@ $(document).ready(function () {
                     }
                 }
 
-                // Also set the hidden callTiming field
                 $('#callTiming').val(callTiming);
             }
         }
@@ -627,11 +749,9 @@ $(document).ready(function () {
         }
 
         if (currentResponse === 'Refund') {
-            // Parse refund info from remembering_notes
             const refundInfo = sellerData.remembering_notes || '';
             const refundPlan = sellerData.plans_interested || '';
 
-            // Set refund plan
             if (refundPlan && refundPlan !== '' && refundPlan !== 'None') {
                 const standardPlans = ['Welcome', 'Starter', 'Professional', 'Intermediate'];
                 if (!standardPlans.includes(refundPlan)) {
@@ -644,82 +764,31 @@ $(document).ready(function () {
                 }
             }
 
-            // Parse amount, date, reason from notes
             if (refundInfo && refundInfo !== '') {
-                // Extract amount
                 const amountMatch = refundInfo.match(/Amount: ₹?([0-9.]+)/);
                 if (amountMatch && amountMatch[1]) {
                     $('#refundAmount').val(amountMatch[1]);
                 }
 
-                // Extract date
                 const dateMatch = refundInfo.match(/Date: (\d{2}\/\d{2}\/\d{4})/);
                 if (dateMatch && dateMatch[1]) {
                     $('#refundDate').val(dateMatch[1]);
                 }
 
-                // Extract reason
                 const reasonMatch = refundInfo.match(/Reason: ([^.]+)/);
                 if (reasonMatch && reasonMatch[1]) {
                     $('#refundReason').val(reasonMatch[1].trim());
                 }
             }
 
-            // Update refund info
             setTimeout(function () {
                 updateRefundInfo();
             }, 200);
         }
     }
 
-    // Helper function to set duration value
-    function setDurationValue(duration) {
-        const standardDurations = ['1 Month', '3 Months', '6 Months', '1 Year', '2 Years'];
-        if (!standardDurations.includes(duration)) {
-            $('#upgradedDuration').val('other').trigger('change');
-            $('#customDuration').val(duration);
-            $('#finalUpgradedDuration').val(duration);
-        } else {
-            $('#upgradedDuration').val(duration);
-            $('#finalUpgradedDuration').val(duration);
-        }
-    }
-
     // Initialize "Other" option handlers
     function initializeOtherOptionHandlers() {
-        $('#selectedPlan').off('change').on('change', function () {
-            if ($(this).val() === 'other') {
-                $('#customPlanContainer').show();
-                $('#customPlan').prop('required', true);
-            } else {
-                $('#customPlanContainer').hide();
-                $('#customPlan').prop('required', false);
-                $('#finalSelectedPlan').val($(this).val());
-            }
-        });
-
-        $('#upgradedPlan').off('change').on('change', function () {
-            if ($(this).val() === 'other') {
-                $('#customUpgradedPlanContainer').show();
-                $('#customUpgradedPlan').prop('required', true);
-            } else {
-                $('#customUpgradedPlanContainer').hide();
-                $('#customUpgradedPlan').prop('required', false);
-                $('#finalUpgradedPlan').val($(this).val());
-            }
-        });
-
-        $('#upgradedDuration').off('change').on('change', function () {
-            if ($(this).val() === 'other') {
-                $('#customDurationContainer').show();
-                $('#customDuration').prop('required', true);
-            } else {
-                $('#customDurationContainer').hide();
-                $('#customDuration').prop('required', false);
-                $('#finalUpgradedDuration').val($(this).val());
-            }
-        });
-
         $('#callBackTime').off('change').on('change', function () {
             const val = $(this).val();
             if (val === 'other') {
@@ -748,7 +817,6 @@ $(document).ready(function () {
             }
         });
 
-        // Refund - Custom Plan
         $('#refundPlan').off('change').on('change', function () {
             if ($(this).val() === 'other') {
                 $('#customRefundPlanContainer').show();
@@ -774,18 +842,6 @@ $(document).ready(function () {
             updateRefundInfo();
         });
 
-        $('#customPlan').off('input').on('input', function () {
-            $('#finalSelectedPlan').val($(this).val());
-        });
-
-        $('#customUpgradedPlan').off('input').on('input', function () {
-            $('#finalUpgradedPlan').val($(this).val());
-        });
-
-        $('#customDuration').off('input').on('input', function () {
-            $('#finalUpgradedDuration').val($(this).val());
-        });
-
         $('#customCallBackTime').off('input').on('input', function () {
             const val = $(this).val();
             $('#finalCallBackTime').val(val);
@@ -796,6 +852,19 @@ $(document).ready(function () {
             const val = $(this).val();
             $('#finalCallBackAt').val(val);
             $('#callTiming').val(val);
+        });
+        
+        $('#customDuration').off('input').on('input', function () {
+            $('#upgradedDuration').val($(this).val());
+            $('#upgradedDurationDisplay').val($(this).val());
+        });
+        
+        $('#customPlan').off('input').on('input', function () {
+            $('#selectedPlanName').val($(this).val());
+        });
+        
+        $('#customUpgradedPlan').off('input').on('input', function () {
+            $('#upgradedPlanName').val($(this).val());
         });
     }
 
@@ -830,7 +899,6 @@ $(document).ready(function () {
         const phoneNumber = $('#phoneNumber').val();
         const customerResponse = $('#customerResponse').val();
 
-        // Validate required fields
         if (!businessName || businessName.trim() === '') {
             showToast('warning', 'Warning!', 'Business Name is required');
             $('#businessName').focus();
@@ -849,7 +917,6 @@ $(document).ready(function () {
             return;
         }
 
-        // Validate phone number format
         const cleanPhone = phoneNumber.replace(/\D/g, '');
         if (!/^\d{10}$/.test(cleanPhone)) {
             showToast('warning', 'Warning!', 'Please enter a valid 10-digit phone number');
@@ -857,7 +924,7 @@ $(document).ready(function () {
             return;
         }
 
-        // Process dynamic fields
+        // Process dynamic field values
         processDynamicFieldValues();
 
         // Validate dynamic fields
@@ -865,76 +932,55 @@ $(document).ready(function () {
             return;
         }
 
-        // Safely get all form values - check if elements exist first
-        let rememberingNotes = '';
-        if ($('#rememberingNotes').length > 0) {
-            rememberingNotes = $('#rememberingNotes').val() || '';
-            rememberingNotes = rememberingNotes.trim();
+        // Get form values
+        let rememberingNotes = $('#rememberingNotes').val() || '';
+        let callTiming = $('#callTiming').val() || '';
+        let latestUpdate = $('#latestUpdate').val() || customerResponse;
+        let currentStatus = $('#currentStatus').val() || '';
+        let customerQueries = $('#customerQueries').val() || '';
+        let entryDate = $('#entryDate').val() || '';
+        let sellerType = $('#sellerType').val() || '';
+        let sellerID = $('#sellerID').val() || '';
+        let productsUploaded = $('#productsUploaded').length ? $('#productsUploaded').val() || '0' : '0';
+        let refundInfo = $('#finalRefundInfo').length ? $('#finalRefundInfo').val() || '' : '';
+
+        // Get plan data
+        let planId = 0;
+        let planName = '';
+        let planDuration = '';
+        let planAmount = 0;
+
+        if (customerResponse === 'Plan Interested') {
+            planId = $('#selectedPlanId').val() || 0;
+            planName = $('#selectedPlanName').val() || $('#selectedPlan option:selected').parent().attr('label') || '';
+            planDuration = $('#selectedDuration').val() || '';
+            planAmount = parseFloat($('#planAmount').val()) || 0;
         }
 
-        let callTiming = '';
-        if ($('#callTiming').length > 0) {
-            callTiming = $('#callTiming').val() || '';
-            callTiming = callTiming.trim();
+        if (customerResponse === 'Plan Upgraded') {
+            planId = $('#upgradedPlanId').val() || 0;
+            planName = $('#upgradedPlanName').val() || $('#upgradedPlan option:selected').parent().attr('label') || '';
+            planDuration = $('#upgradedDuration').val() || '';
+            planAmount = parseFloat($('#upgradedPlanAmount').val()) || 0;
         }
 
-        let finalUpgradedDuration = '';
-        if ($('#finalUpgradedDuration').length > 0) {
-            finalUpgradedDuration = $('#finalUpgradedDuration').val() || '';
-            finalUpgradedDuration = finalUpgradedDuration.trim();
-        }
+        // Clean remembering notes
+        let cleanNotes = rememberingNotes;
+        cleanNotes = cleanNotes.replace(/Call Duration: [^\n]*(\n|$)/g, '');
+        cleanNotes = cleanNotes.replace(/Upgraded Duration: [^\n]*(\n|$)/g, '');
+        cleanNotes = cleanNotes.replace(/Plan Duration: [^\n]*(\n|$)/g, '');
+        cleanNotes = cleanNotes.replace(/Plan Amount: ₹[^\n]*(\n|$)/g, '');
+        cleanNotes = cleanNotes.replace(/Refund - Plan:.*?(\n|$)/g, '');
+        cleanNotes = cleanNotes.replace(/\n\s*\n/g, '\n');
+        cleanNotes = cleanNotes.trim();
 
-        let latestUpdate = customerResponse;
-        if ($('#latestUpdate').length > 0) {
-            const latestVal = $('#latestUpdate').val();
-            if (latestVal && latestVal.trim() !== '') {
-                latestUpdate = latestVal.trim();
-            }
-        }
+        let finalNotes = cleanNotes;
 
-        let currentStatus = '';
-        if ($('#currentStatus').length > 0) {
-            currentStatus = $('#currentStatus').val() || '';
-        }
-
-        let customerQueries = '';
-        if ($('#customerQueries').length > 0) {
-            customerQueries = $('#customerQueries').val() || '';
-            customerQueries = customerQueries.trim();
-        }
-
-        let entryDate = '';
-        if ($('#entryDate').length > 0) {
-            entryDate = $('#entryDate').val() || '';
-        }
-
-        let sellerType = '';
-        if ($('#sellerType').length > 0) {
-            sellerType = $('#sellerType').val() || '';
-        }
-
-        // Get products_uploaded value if it exists
-        let productsUploaded = '0';
-        if ($('#productsUploaded').length > 0) {
-            productsUploaded = $('#productsUploaded').val() || '0';
-        }
-
-        // Get refund info if it exists
-        let refundInfo = '';
-        if ($('#finalRefundInfo').length > 0) {
-            refundInfo = $('#finalRefundInfo').val() || '';
-        }
-
-        // IMPORTANT: Use only the manually entered remembering notes
-        // Do NOT auto-add any timing or duration information
-        let combinedNotes = rememberingNotes;
-
-        // Only add refund info to notes if present (this is manual data from form)
         if (refundInfo && customerResponse === 'Refund') {
-            if (combinedNotes && combinedNotes !== '') {
-                combinedNotes = refundInfo + '\n' + combinedNotes;
+            if (finalNotes) {
+                finalNotes = refundInfo + '\n' + finalNotes;
             } else {
-                combinedNotes = refundInfo;
+                finalNotes = refundInfo;
             }
         }
 
@@ -944,31 +990,29 @@ $(document).ready(function () {
             business_name: businessName.trim(),
             seller_type: sellerType,
             phone_number: cleanPhone,
-            seller_id: sellerID, // Add this line
-            seller_id: sellerID, // Add this line
+            seller_id: sellerID,
             customer_response: customerResponse,
-            selected_plan: getFinalPlanValue(),
-            upgraded_plan: getFinalUpgradedPlanValue(),
-            upgraded_duration: finalUpgradedDuration,
+            plan_id: planId,
+            plan_name: planName,
+            plan_duration: planDuration,
+            plan_amount: planAmount,
             products_uploaded: productsUploaded,
             refund_info: refundInfo,
             call_back_time: getFinalCallBackValue(),
-            remembering_notes: combinedNotes, // Only manual notes, no auto-generated content
+            remembering_notes: finalNotes,
             latest_update: latestUpdate,
             current_status: currentStatus,
             customer_queries: customerQueries,
-            call_timing: callTiming, // Stored in dedicated column, not in notes
+            call_timing: callTiming,
             entry_date: entryDate
         };
 
         console.log('Submitting form data:', formData);
 
-        // Disable submit button and show loading
         const $submitBtn = $(this).find('button[type="submit"]');
         const originalText = $submitBtn.html();
         $submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Updating...').prop('disabled', true);
 
-        // Send AJAX request
         $.ajax({
             url: BASE_URL + 'ajax/work-station/update_sheets_seller.php',
             type: 'POST',
@@ -976,10 +1020,10 @@ $(document).ready(function () {
             dataType: 'json',
             success: function (response) {
                 if (response.status === 'success') {
-                    showToast('success', 'Success!', 'Seller updated successfully');
+                    showToast('success', 'Success!', response.message);
                     setTimeout(function () {
-                       // window.location.href = 'sheets_followup_list.php';
-                    }, 2500);
+                        window.location.href = 'sheets_followup_list.php';
+                    }, 2000);
                 } else {
                     showToast('danger', 'Error!', response.message || 'Unknown error occurred');
                 }
@@ -995,38 +1039,37 @@ $(document).ready(function () {
         });
     });
 
-    // Helper function to process dynamic field values
     function processDynamicFieldValues() {
+        // Process Plan Interested
         if ($('#selectedPlan').length > 0) {
             if ($('#selectedPlan').val() === 'other') {
                 if ($('#customPlan').length > 0) {
-                    $('#finalSelectedPlan').val($('#customPlan').val());
+                    $('#selectedPlanName').val($('#customPlan').val());
                 }
             } else {
-                $('#finalSelectedPlan').val($('#selectedPlan').val());
+                const selectedOption = $('#selectedPlan').find('option:selected');
+                $('#selectedPlanName').val(selectedOption.parent().attr('label') || '');
+                $('#selectedDuration').val(selectedOption.data('duration') || '');
             }
         }
 
+        // Process Plan Upgraded
         if ($('#upgradedPlan').length > 0) {
             if ($('#upgradedPlan').val() === 'other') {
                 if ($('#customUpgradedPlan').length > 0) {
-                    $('#finalUpgradedPlan').val($('#customUpgradedPlan').val());
+                    $('#upgradedPlanName').val($('#customUpgradedPlan').val());
                 }
-            } else {
-                $('#finalUpgradedPlan').val($('#upgradedPlan').val());
-            }
-        }
-
-        if ($('#upgradedDuration').length > 0) {
-            if ($('#upgradedDuration').val() === 'other') {
                 if ($('#customDuration').length > 0) {
-                    $('#finalUpgradedDuration').val($('#customDuration').val());
+                    $('#upgradedDuration').val($('#customDuration').val());
                 }
             } else {
-                $('#finalUpgradedDuration').val($('#upgradedDuration').val());
+                const selectedOption = $('#upgradedPlan').find('option:selected');
+                $('#upgradedPlanName').val(selectedOption.parent().attr('label') || '');
+                $('#upgradedDuration').val(selectedOption.data('duration') || '');
             }
         }
 
+        // Process Later/Call Back AT
         if ($('#callBackTime').length > 0) {
             if ($('#callBackTime').val() === 'other') {
                 if ($('#customCallBackTime').length > 0) {
@@ -1047,14 +1090,12 @@ $(document).ready(function () {
             }
         }
 
-        if ($('#scheduleDate').length > 0) {
-            const scheduleDate = $('#scheduleDate').val();
-            if (scheduleDate && scheduleDate !== '') {
-                $('#finalScheduleDate').val('Schedule at ' + scheduleDate);
-            }
+        // Process Schedule
+        if ($('#scheduleDate').length > 0 && $('#scheduleDate').val()) {
+            $('#finalScheduleDate').val('Schedule at ' + $('#scheduleDate').val());
         }
 
-        // Refund
+        // Process Refund
         if ($('#refundPlan').length > 0) {
             if ($('#refundPlan').val() === 'other') {
                 if ($('#customRefundPlan').length > 0) {
@@ -1067,71 +1108,55 @@ $(document).ready(function () {
         }
     }
 
-    // Helper functions to get final values
-    function getFinalPlanValue() {
-        if ($('#selectedPlan').length > 0 && $('#finalSelectedPlan').length > 0) {
-            return $('#finalSelectedPlan').val() || '';
-        }
-        if ($('#refundPlan').length > 0 && $('#finalRefundPlan').length > 0) {
-            return $('#finalRefundPlan').val() || '';
-        }
-        return '';
-    }
-
-    function getFinalUpgradedPlanValue() {
-        if ($('#upgradedPlan').length > 0 && $('#finalUpgradedPlan').length > 0) {
-            return $('#finalUpgradedPlan').val() || '';
-        }
-        return '';
-    }
-
-    function getFinalDurationValue() {
-        if ($('#upgradedDuration').length > 0 && $('#finalUpgradedDuration').length > 0) {
-            return $('#finalUpgradedDuration').val() || '';
-        }
-        return '';
-    }
-
     function getFinalCallBackValue() {
-        if ($('#callBackTime').length > 0 && $('#finalCallBackTime').length > 0) {
-            return $('#finalCallBackTime').val() || '';
+        if ($('#finalCallBackTime').length > 0 && $('#finalCallBackTime').val()) {
+            return $('#finalCallBackTime').val();
         }
-        if ($('#callBackAt').length > 0 && $('#finalCallBackAt').length > 0) {
-            return $('#finalCallBackAt').val() || '';
+        if ($('#finalCallBackAt').length > 0 && $('#finalCallBackAt').val()) {
+            return $('#finalCallBackAt').val();
         }
-        if ($('#finalScheduleDate').length > 0) {
-            return $('#finalScheduleDate').val() || '';
+        if ($('#finalScheduleDate').length > 0 && $('#finalScheduleDate').val()) {
+            return $('#finalScheduleDate').val();
         }
         return '';
     }
 
-    // Validate dynamic fields based on response
     function validateDynamicFields() {
         const response = $('#customerResponse').val();
 
         if (response === 'Plan Interested') {
-            const plan = getFinalPlanValue();
-            if (!plan || plan === '') {
+            const planId = $('#selectedPlanId').val();
+            const customPlan = $('#customPlan').val();
+            const planAmount = $('#planAmount').val();
+            
+            if ((!planId || planId == 0) && (!customPlan || customPlan === '')) {
                 showToast('warning', 'Warning!', 'Please select or enter a plan');
+                return false;
+            }
+            if (!planAmount || parseFloat(planAmount) <= 0) {
+                showToast('warning', 'Warning!', 'Please enter a valid plan amount');
                 return false;
             }
         }
 
         if (response === 'Plan Upgraded') {
-            const upgradedPlan = getFinalUpgradedPlanValue();
-            const duration = getFinalDurationValue();
-
-            if (!upgradedPlan || upgradedPlan === '') {
+            const planId = $('#upgradedPlanId').val();
+            const customPlan = $('#customUpgradedPlan').val();
+            const planAmount = $('#upgradedPlanAmount').val();
+            const duration = $('#upgradedDuration').val();
+            
+            if ((!planId || planId == 0) && (!customPlan || customPlan === '')) {
                 showToast('warning', 'Warning!', 'Please select or enter the upgraded plan');
                 return false;
             }
-
-            if (!duration || duration === '') {
-                showToast('warning', 'Warning!', 'Please select or enter the duration');
+            if (!planAmount || parseFloat(planAmount) <= 0) {
+                showToast('warning', 'Warning!', 'Please enter a valid plan amount');
                 return false;
             }
-
-            // Products uploaded is optional, no validation needed
+            if (!duration || duration === '') {
+                showToast('warning', 'Warning!', 'Please enter the duration');
+                return false;
+            }
         }
 
         if (response === 'Later' || response === 'Call Back AT' || response === 'Schedule') {
@@ -1144,14 +1169,13 @@ $(document).ready(function () {
         }
 
         if (response === 'Refund') {
-            const plan = getFinalPlanValue();
+            const plan = $('#finalRefundPlan').val() || $('#refundPlan').val();
             const amount = $('#refundAmount').val();
 
             if (!plan || plan === '') {
                 showToast('warning', 'Warning!', 'Please select or enter the plan to refund');
                 return false;
             }
-
             if (!amount || amount === '' || parseFloat(amount) <= 0) {
                 showToast('warning', 'Warning!', 'Please enter a valid refund amount');
                 return false;
@@ -1161,7 +1185,6 @@ $(document).ready(function () {
         return true;
     }
 
-    // Toast notification function
     function showToast(type, title, message) {
         const id = 'toast-' + Date.now();
         let bgClass = 'bg-info';
@@ -1189,8 +1212,6 @@ $(document).ready(function () {
         if (toastElement) {
             const toast = new bootstrap.Toast(toastElement);
             toast.show();
-
-            // Remove toast after it's hidden
             $(toastElement).on('hidden.bs.toast', function () {
                 $(this).remove();
             });

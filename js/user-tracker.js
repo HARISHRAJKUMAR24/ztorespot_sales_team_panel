@@ -133,7 +133,7 @@ class UserActivityTracker {
 
         // Send to admin panel's AJAX endpoint
         const adminUrl = 'http://localhost/ztorespotcrm_admin/ajax/update-user-activity.php';
-        
+
         fetch(adminUrl, {
             method: 'POST',
             headers: {
@@ -155,7 +155,7 @@ class UserActivityTracker {
         };
 
         const adminUrl = 'http://localhost/ztorespotcrm_admin/ajax/update-user-status.php';
-        
+
         fetch(adminUrl, {
             method: 'POST',
             headers: {
