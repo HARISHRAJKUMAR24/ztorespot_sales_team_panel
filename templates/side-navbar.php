@@ -34,6 +34,25 @@
             Work Station
           </a>
         </li>
+
+        <!-- <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>sellers/registered_sellers.php">
+            <svg class="bi" aria-hidden="true" width="14" height="14">
+              <use xlink:href="#register-customer"></use>
+            </svg>
+            Registered Sellers
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>sellers/whatsapp_customers.php">
+            <svg class="bi" aria-hidden="true" width="14" height="14">
+              <use xlink:href="#whatsapp"></use>
+            </svg>
+            Whatsapp Customers
+          </a>
+        </li> -->
+
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/reminders/reminders.php">
             <svg class="bi" aria-hidden="true">
@@ -50,14 +69,7 @@
             Follw-ups
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/received-sellers/received-sellers.php">
-            <svg class="bi" aria-hidden="true">
-              <use xlink:href="#shared-sellers"></use>
-            </svg>
-            Recived Sellers
-          </a>
-        </li>
+
 
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/reminders/renewal_sellers.php">
@@ -82,7 +94,7 @@
             <svg class="bi" aria-hidden="true">
               <use xlink:href="#refund_sellers"></use>
             </svg>
-           Refund sellers
+            Refund sellers
           </a>
         </li>
       </ul>
@@ -120,28 +132,23 @@
                     Sellers
                   </a>
                 </li>
-                <li class="nav-item">
-                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>sellers/registered_sellers.php">
-                    <svg class="bi" aria-hidden="true" width="14" height="14">
-                      <use xlink:href="#register-customer"></use>
-                    </svg>
-                    Registered Sellers
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>sellers/whatsapp_customers.php">
-                    <svg class="bi" aria-hidden="true" width="14" height="14">
-                      <use xlink:href="#whatsapp"></use>
-                    </svg>
-                    Whatsapp Customers
-                  </a>
-                </li>
+
+
                 <li class="nav-item">
                   <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>work-station/share-sellers/share-seller.php">
                     <svg class="bi" aria-hidden="true" width="14" height="14">
                       <use xlink:href="#share-fill"></use>
                     </svg>
                     Share Seller Data
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>work-station/received-sellers/received-sellers.php">
+                    <svg class="bi" aria-hidden="true">
+                      <use xlink:href="#shared-sellers"></use>
+                    </svg>
+                    Recived Sellers
                   </a>
                 </li>
                 <li class="nav-item">
@@ -185,7 +192,7 @@
       <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
         <span>About Team</span>
       </h6>
-      <ul class="nav flex-column mb-auto">
+      <ul class="nav flex-column ">
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>target/target.php">
             <svg class="bi" aria-hidden="true">
