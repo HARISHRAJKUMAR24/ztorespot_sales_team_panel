@@ -317,14 +317,13 @@ if (isset($_POST['action'])) {
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th class="sortable" data-sort="id">ID <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                            <th class="sortable" data-sort="entry_date">Date <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                            <th class="sortable" data-sort="work_details_update">Work Details <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                            <th class="sortable" data-sort="phone_number">Phone <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                            <th>Response</th>
-                                            <th>Call Timing</th>
-                                            <th>Status</th>
-                                            <th class="text-center">Actions</th>
+                                            <th class="sortable" data-sort="id" style="width: 5%;">ID <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th class="sortable" data-sort="entry_date" style="width: 10%;">Date <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th class="sortable" data-sort="work_details_update" style="width: 20%;">Work Details <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th class="sortable" data-sort="phone_number" style="width: 10%;">Phone <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th style="width: 12%;">Response</th>
+                                            <th style="width: 28%;">Remembering Notes</th>
+                                            <th class="text-center" style="width: 10%;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tableBody"></tbody>
@@ -388,8 +387,14 @@ if (isset($_POST['action'])) {
             min-width: 250px;
         }
 
-        @media (max-width: 768px) {
+        .remembering-note {
+            max-width: 280px;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
 
+        @media (max-width: 768px) {
             .table td,
             .table th {
                 padding: 0.5rem;
@@ -398,6 +403,10 @@ if (isset($_POST['action'])) {
 
             .btn-sm {
                 padding: 0.25rem 0.4rem;
+            }
+            
+            .remembering-note {
+                max-width: 180px;
             }
         }
     </style>
@@ -552,32 +561,37 @@ if (isset($_POST['action'])) {
                     else if (row.customer_response === 'Call Back AT') badgeClass = 'bg-info';
                     else if (row.customer_response === 'Schedule') badgeClass = 'bg-success';
                     else if (row.customer_response === 'CNP') badgeClass = 'bg-danger';
+                    else if (row.customer_response === 'Plan Upgraded') badgeClass = 'bg-primary';
+                    else if (row.customer_response === 'Plan Interested') badgeClass = 'bg-info';
 
-                    let statusBadge = 'bg-secondary';
-                    if (row.current_status === 'Upgraded') statusBadge = 'bg-success';
-                    else if (row.current_status === 'In Progress') statusBadge = 'bg-info';
-                    else if (row.current_status === 'Not yet') statusBadge = 'bg-warning';
-                    else if (row.current_status === 'Deleted') statusBadge = 'bg-danger';
+                    // Get remembering notes - clean up if needed
+                    let rememberingNotes = row.remembering_notes || '-';
+                    if (rememberingNotes !== '-') {
+                        // Remove JSON strings if present
+                        rememberingNotes = rememberingNotes.replace(/\{"customer_doubts".*?\}/g, '');
+                        rememberingNotes = rememberingNotes.replace(/\n\n+/g, '\n');
+                        rememberingNotes = rememberingNotes.trim();
+                        if (rememberingNotes === '') rememberingNotes = '-';
+                    }
 
                     html += '<tr>';
-                    html += `<td>${escapeHtml(row.id)}</td>`;
+                    html += `<td class="fw-bold">${escapeHtml(row.id)}</td>`;
                     html += `<td>${dateDisplay}</td>`;
-                    html += `<td>${escapeHtml(row.work_details_update || '-')}</td>`;
+                    html += `<td class="fw-medium">${escapeHtml(row.work_details_update || '-')}</td>`;
                     html += `<td>${escapeHtml(row.phone_number || '-')}</td>`;
                     html += `<td><span class="badge ${badgeClass}">${escapeHtml(row.customer_response || '-')}</span></td>`;
-                    html += `<td>${escapeHtml(row.call_timing || '-')}</td>`;
-                    html += `<td><span class="badge ${statusBadge}">${escapeHtml(row.current_status || 'Pending')}</span></td>`;
+                    html += `<td class="remembering-note"><small>${escapeHtml(rememberingNotes)}</small></td>`;
                     html += `<td class="text-center text-nowrap">
-                    <button class="btn btn-sm btn-outline-primary view-btn" data-id="${row.id}" title="View">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    <a href="../sheets_edit_seller.php?id=${row.id}" class="btn btn-sm btn-outline-warning" title="Edit">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                    <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${row.id}" title="Delete">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>`;
+                        <button class="btn btn-sm btn-outline-primary view-btn" data-id="${row.id}" title="View">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <a href="../sheets_edit_seller.php?id=${row.id}" class="btn btn-sm btn-outline-warning" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${row.id}" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>`;
                     html += '</tr>';
                 });
 
@@ -591,22 +605,22 @@ if (isset($_POST['action'])) {
 
                 if (totalPages > 1) {
                     html += `<li class="page-item ${page === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="#" data-page="${page - 1}">&laquo;</a>
-                </li>`;
+                        <a class="page-link" href="#" data-page="${page - 1}">&laquo;</a>
+                    </li>`;
 
                     for (let i = 1; i <= totalPages; i++) {
                         if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
                             html += `<li class="page-item ${i === page ? 'active' : ''}">
-                            <a class="page-link" href="#" data-page="${i}">${i}</a>
-                        </li>`;
+                                <a class="page-link" href="#" data-page="${i}">${i}</a>
+                            </li>`;
                         } else if (i === page - 3 || i === page + 3) {
                             html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
                         }
                     }
 
                     html += `<li class="page-item ${page === totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="#" data-page="${page + 1}">&raquo;</a>
-                </li>`;
+                        <a class="page-link" href="#" data-page="${page + 1}">&raquo;</a>
+                    </li>`;
                 }
 
                 $('#pagination').html(html);
@@ -676,11 +690,19 @@ if (isset($_POST['action'])) {
 
                 fields.forEach(function(field) {
                     if (field[1] && field[1] !== '' && field[1] !== null && field[1] !== '-') {
+                        let displayValue = field[1].toString();
+                        // Clean up JSON if needed
+                        if (field[0] === 'Remembering Notes') {
+                            displayValue = displayValue.replace(/\{"customer_doubts".*?\}/g, '');
+                            displayValue = displayValue.replace(/\n\n+/g, '\n');
+                            displayValue = displayValue.trim();
+                            if (displayValue === '') displayValue = '-';
+                        }
                         html += `
                         <div class="col-12 col-sm-6 mb-3">
                             <div class="p-2 bg-light rounded">
                                 <small class="text-muted d-block">${field[0]}</small>
-                                <strong class="d-block">${escapeHtml(field[1].toString())}</strong>
+                                <strong class="d-block">${escapeHtml(displayValue)}</strong>
                             </div>
                         </div>
                     `;

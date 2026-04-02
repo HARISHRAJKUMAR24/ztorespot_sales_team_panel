@@ -1,4 +1,5 @@
 <?php
+// workstation_add_seller.php - This is the AJAX endpoint for adding a new seller from the Work Station interface.
 require_once "../../config/config.php";
 require_once "../../lib/functions.php";
 
