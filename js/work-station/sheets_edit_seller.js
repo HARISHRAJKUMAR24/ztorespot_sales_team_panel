@@ -34,18 +34,16 @@ $(document).ready(function () {
         // Set call timing hidden field
         $('#callTiming').val(sellerData.call_timing || '');
 
-        // Handle call timing select
+        // Handle call timing select - ONLY for call duration
         const callTiming = sellerData.call_timing || '';
-        if (callTiming) {
-            const standardTimings = ['Morning 9-11 AM', 'Late Morning 11-1 PM', 'Afternoon 2-4 PM', 'Evening 4-6 PM', 'Night 7-9 PM'];
-            if (!standardTimings.includes(callTiming)) {
-                $('#callTimingSelect').val('other');
-                $('#customCallTimingContainer').show();
-                $('#customCallTiming').val(callTiming);
-            } else {
-                $('#callTimingSelect').val(callTiming);
-                $('#customCallTimingContainer').hide();
-            }
+        const standardTimings = ['5 mins', '10 mins', '15 mins', '20 mins', '25 mins', '30 mins', '45 mins', '1 hour', '1.5 hours', '2 hours'];
+        if (callTiming && !standardTimings.includes(callTiming)) {
+            $('#callTimingSelect').val('other');
+            $('#customCallTimingContainer').show();
+            $('#customCallTiming').val(callTiming);
+        } else if (callTiming) {
+            $('#callTimingSelect').val(callTiming);
+            $('#customCallTimingContainer').hide();
         }
     }
 
@@ -60,7 +58,6 @@ $(document).ready(function () {
         const container = $('#dynamicFieldsContainer');
         const customResponseContainer = $('#customResponseContainer');
         
-        // Handle custom response
         if (response === 'other') {
             customResponseContainer.show();
             $('#customResponse').prop('required', true);
@@ -102,12 +99,10 @@ $(document).ready(function () {
         initializeOtherOptionHandlers();
         initializePlanDropdowns();
 
-        // Set existing values
         setTimeout(function () {
             setExistingDynamicValues(response);
         }, 100);
 
-        // Initialize datepickers
         if (response === 'Schedule') {
             initializeDatepicker();
         }
@@ -116,7 +111,6 @@ $(document).ready(function () {
         }
     });
 
-    // Generate Plan Interested Fields - Duration HIDDEN for regular plans
     function generatePlanInterestedFields() {
         let planOptions = '<option value="" selected disabled>Choose a plan</option>';
         
@@ -171,7 +165,6 @@ $(document).ready(function () {
                     </div>
                 </div>
                 
-                <!-- Custom Duration - Only visible for "other" plan -->
                 <div id="customDurationPlanContainer" style="display: none;" class="row mt-3">
                     <div class="col-12">
                         <label class="form-label fw-semibold">
@@ -184,10 +177,8 @@ $(document).ready(function () {
                     </div>
                 </div>
                 
-                <!-- Hidden field for duration -->
                 <input type="hidden" id="selectedDuration" value="">
                 
-                <!-- DOUBTS FIELD -->
                 <div class="row mt-3">
                     <div class="col-12">
                         <label class="form-label fw-semibold">
@@ -196,10 +187,6 @@ $(document).ready(function () {
                         </label>
                         <textarea class="form-control" id="customerDoubts" rows="3" 
                             placeholder="Enter any doubts, questions, or concerns raised by the customer about the plan..."></textarea>
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            These will be stored in JSON format and visible in update history
-                        </small>
                     </div>
                 </div>
                 
@@ -209,7 +196,6 @@ $(document).ready(function () {
         `;
     }
 
-    // Generate Plan Upgraded Fields - Duration HIDDEN for regular plans
     function generatePlanUpgradedFields() {
         let planOptions = '<option value="" selected disabled>Choose upgraded plan</option>';
         
@@ -278,7 +264,6 @@ $(document).ready(function () {
                             min="0" max="999" value="${productsValue}">
                     </div>
                     <div class="col-12 col-md-6">
-                        <!-- Custom Duration - Only visible for "other" plan -->
                         <div id="customDurationContainer" style="display: none;">
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-calendar-check-fill text-info me-1"></i>
@@ -291,10 +276,8 @@ $(document).ready(function () {
                     </div>
                 </div>
                 
-                <!-- Hidden field for duration -->
                 <input type="hidden" id="upgradedDuration" value="">
                 
-                <!-- DOUBTS FIELD -->
                 <div class="row mt-3">
                     <div class="col-12">
                         <label class="form-label fw-semibold">
@@ -303,10 +286,6 @@ $(document).ready(function () {
                         </label>
                         <textarea class="form-control" id="customerDoubts" rows="3" 
                             placeholder="Enter any doubts, questions, or concerns raised by the customer about the plan upgrade..."></textarea>
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            These will be stored in JSON format and visible in update history
-                        </small>
                     </div>
                 </div>
                 
@@ -316,9 +295,7 @@ $(document).ready(function () {
         `;
     }
 
-    // Initialize plan dropdown handlers
     function initializePlanDropdowns() {
-        // For Plan Interested
         $('#selectedPlan').off('change').on('change', function () {
             const selectedValue = $(this).val();
             if (selectedValue === 'other') {
@@ -346,7 +323,6 @@ $(document).ready(function () {
             }
         });
 
-        // For Plan Upgraded
         $('#upgradedPlan').off('change').on('change', function () {
             const selectedValue = $(this).val();
             if (selectedValue === 'other') {
@@ -374,7 +350,6 @@ $(document).ready(function () {
             }
         });
 
-        // Custom duration handlers
         $('#customDurationPlan').off('input').on('input', function () {
             $('#selectedDuration').val($(this).val());
         });
@@ -383,7 +358,6 @@ $(document).ready(function () {
             $('#upgradedDuration').val($(this).val());
         });
 
-        // Custom plan amount handlers
         $('#planAmount').off('input').on('input', function () {
             const amount = $(this).val();
             $('#planAmountDisplay').text(amount ? '₹' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2}) : '₹0.00');
@@ -394,7 +368,6 @@ $(document).ready(function () {
             $('#upgradedPlanAmountDisplay').text(amount ? '₹' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2}) : '₹0.00');
         });
         
-        // Custom plan name handlers
         $('#customPlan').off('input').on('input', function () {
             $('#selectedPlanName').val($(this).val());
         });
@@ -404,7 +377,6 @@ $(document).ready(function () {
         });
     }
 
-    // Generate Later Fields
     function generateLaterFields() {
         return `
             <div class="dynamic-field">
@@ -415,7 +387,7 @@ $(document).ready(function () {
                             Call Back Time <span class="text-danger">*</span>
                         </label>
                         <div class="callback-wrapper">
-                            <select class="form-select" id="callBackTime" >
+                            <select class="form-select" id="callBackTime">
                                 <option value="" selected disabled>Select when to call back</option>
                                 <option value="After 1 hour">After 1 hour</option>
                                 <option value="After 2 hours">After 2 hours</option>
@@ -440,7 +412,6 @@ $(document).ready(function () {
         `;
     }
 
-    // Generate Call Back AT Fields
     function generateCallBackAtFields() {
         return `
             <div class="dynamic-field">
@@ -451,7 +422,7 @@ $(document).ready(function () {
                             Call Back At <span class="text-danger">*</span>
                         </label>
                         <div class="callback-at-wrapper">
-                            <select class="form-select" id="callBackAt" >
+                            <select class="form-select" id="callBackAt">
                                 <option value="" selected disabled>Select call back time</option>
                                 <option value="Morning 9-11 AM">Morning 9-11 AM</option>
                                 <option value="Late Morning 11-1 PM">Late Morning 11-1 PM</option>
@@ -473,7 +444,6 @@ $(document).ready(function () {
         `;
     }
 
-    // Generate Schedule Fields
     function generateScheduleFields() {
         return `
             <div class="dynamic-field">
@@ -484,19 +454,20 @@ $(document).ready(function () {
                             Schedule Date <span class="text-danger">*</span>
                         </label>
                         <div class="schedule-wrapper">
-                            <div class="input-group date" id="scheduleDatePicker">
-                                <span class="input-group-text bg-light" id="calendarIcon">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light" id="calendarIcon" style="cursor: pointer;">
                                     <i class="bi bi-calendar3"></i>
                                 </span>
                                 <input type="text" class="form-control" id="scheduleDate" 
-                                    placeholder="Select schedule date" readonly required>
+                                    placeholder="Select schedule date" readonly
+                                    style="background-color: #fff; cursor: pointer;">
                                 <span class="input-group-text bg-light" id="clearDate" style="cursor: pointer;">
                                     <i class="bi bi-x-lg"></i>
                                 </span>
                             </div>
                             <div class="mt-2 text-muted small">
                                 <i class="bi bi-info-circle me-1"></i>
-                                Select a date for follow-up schedule
+                                Click on calendar icon to select a date
                             </div>
                             <input type="hidden" id="finalScheduleDate">
                         </div>
@@ -506,7 +477,6 @@ $(document).ready(function () {
         `;
     }
 
-    // Generate Refund Fields
     function generateRefundFields() {
         return `
             <div class="dynamic-field">
@@ -555,8 +525,8 @@ $(document).ready(function () {
                             <i class="bi bi-calendar-event text-info me-1"></i>
                             Refund Date
                         </label>
-                        <div class="input-group date" id="refundDatePicker">
-                            <span class="input-group-text bg-light" id="refundCalendarIcon">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light" id="refundCalendarIcon" style="cursor: pointer;">
                                 <i class="bi bi-calendar3"></i>
                             </span>
                             <input type="text" class="form-control" id="refundDate" 
@@ -580,9 +550,28 @@ $(document).ready(function () {
         `;
     }
 
-    // Initialize Datepicker for Schedule
+    // ============================================
+    // FIXED: Initialize Datepicker
+    // ============================================
     function initializeDatepicker() {
         if ($('#scheduleDate').length) {
+            if (typeof $.fn.datepicker === 'undefined') {
+                console.error('Datepicker not loaded. Using native date picker.');
+                $('#scheduleDate').attr('type', 'date');
+                $('#scheduleDate').removeAttr('readonly');
+                $('#scheduleDate').on('change', function() {
+                    let selectedDate = $(this).val();
+                    if (selectedDate) {
+                        const parts = selectedDate.split('-');
+                        if (parts.length === 3) {
+                            const formattedDate = parts[2] + '/' + parts[1] + '/' + parts[0];
+                            $('#finalScheduleDate').val('Schedule at ' + formattedDate);
+                        }
+                    }
+                });
+                return;
+            }
+            
             if ($('#scheduleDate').data('datepicker')) {
                 $('#scheduleDate').datepicker('destroy');
             }
@@ -595,56 +584,50 @@ $(document).ready(function () {
                 orientation: 'bottom'
             });
 
-            $('#scheduleDate').on('change', function () {
+            $('#scheduleDate').off('change').on('change', function () {
                 const selectedDate = $(this).val();
                 if (selectedDate) {
                     $('#finalScheduleDate').val('Schedule at ' + selectedDate);
-                    $('#callTiming').val('Schedule at ' + selectedDate);
                 }
             });
 
-            $('#calendarIcon').click(function () {
+            $('#calendarIcon').off('click').on('click', function () {
                 $('#scheduleDate').datepicker('show');
             });
 
-            $('#clearDate').click(function () {
+            $('#clearDate').off('click').on('click', function () {
                 $('#scheduleDate').val('');
                 $('#finalScheduleDate').val('');
-                $('#callTiming').val('');
             });
 
-            // Set existing schedule date
             setTimeout(function () {
-                if (sellerData && sellerData.call_timing) {
-                    const callTiming = sellerData.call_timing;
-                    if (callTiming && callTiming.startsWith('Schedule at ')) {
-                        const datePart = callTiming.replace('Schedule at ', '');
-                        $('#scheduleDate').val(datePart);
-                        $('#finalScheduleDate').val(callTiming);
-
-                        try {
-                            const dateParts = datePart.split('/');
-                            if (dateParts.length === 3) {
-                                const day = parseInt(dateParts[0], 10);
-                                const month = parseInt(dateParts[1], 10) - 1;
-                                const year = parseInt(dateParts[2], 10);
-                                const date = new Date(year, month, day);
-                                if ($('#scheduleDate').data('datepicker')) {
-                                    $('#scheduleDate').datepicker('setDate', date);
-                                }
-                            }
-                        } catch (e) {
-                            console.error('Error parsing date:', e);
+                if (sellerData && sellerData.latest_update) {
+                    const match = sellerData.latest_update.match(/Schedule at\s+(\d{2}\/\d{2}\/\d{4})/);
+                    if (match && match[1]) {
+                        $('#scheduleDate').val(match[1]);
+                        $('#finalScheduleDate').val('Schedule at ' + match[1]);
+                        const dateParts = match[1].split('/');
+                        if (dateParts.length === 3 && $('#scheduleDate').data('datepicker')) {
+                            const date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+                            $('#scheduleDate').datepicker('setDate', date);
                         }
                     }
                 }
-            }, 200);
+            }, 300);
         }
     }
 
-    // Initialize Refund Datepicker
     function initializeRefundDatepicker() {
         if ($('#refundDate').length) {
+            if (typeof $.fn.datepicker === 'undefined') {
+                $('#refundDate').attr('type', 'date');
+                $('#refundDate').removeAttr('readonly');
+                $('#refundDate').on('change', function() {
+                    updateRefundInfo();
+                });
+                return;
+            }
+            
             if ($('#refundDate').data('datepicker')) {
                 $('#refundDate').datepicker('destroy');
             }
@@ -656,27 +639,22 @@ $(document).ready(function () {
                 orientation: 'bottom'
             });
 
-            $('#refundDate').on('change', function () {
-                const selectedDate = $(this).val();
-                if (selectedDate) {
-                    updateRefundInfo();
-                }
+            $('#refundDate').off('change').on('change', function () {
+                updateRefundInfo();
             });
 
-            $('#refundCalendarIcon').click(function () {
+            $('#refundCalendarIcon').off('click').on('click', function () {
                 $('#refundDate').datepicker('show');
             });
 
-            $('#clearRefundDate').click(function () {
+            $('#clearRefundDate').off('click').on('click', function () {
                 $('#refundDate').val('');
                 updateRefundInfo();
             });
 
-            // Set existing refund date
             setTimeout(function () {
-                if (sellerData && sellerData.customer_response === 'Refund') {
-                    const refundInfo = sellerData.remembering_notes || '';
-                    const dateMatch = refundInfo.match(/Date: (\d{2}\/\d{2}\/\d{4})/);
+                if (sellerData && sellerData.remembering_notes) {
+                    const dateMatch = sellerData.remembering_notes.match(/Date: (\d{2}\/\d{2}\/\d{4})/);
                     if (dateMatch && dateMatch[1]) {
                         $('#refundDate').val(dateMatch[1]);
                     }
@@ -685,7 +663,6 @@ $(document).ready(function () {
         }
     }
 
-    // Update refund info hidden field
     function updateRefundInfo() {
         const plan = $('#finalRefundPlan').val() || $('#refundPlan').val() || '';
         const amount = $('#refundAmount').val() || '0';
@@ -700,7 +677,6 @@ $(document).ready(function () {
         $('#finalRefundInfo').val(refundInfo);
     }
 
-    // Initialize form with existing data
     function initializeFormWithData() {
         if (!sellerData) return;
 
@@ -717,24 +693,53 @@ $(document).ready(function () {
         }
     }
 
-    // Set existing dynamic field values
+    // ============================================
+    // FIXED: setExistingDynamicValues - Extract from latest_update
+    // ============================================
     function setExistingDynamicValues(currentResponse) {
         if (!sellerData) return;
 
-        // Load existing doubts
-        let existingDoubts = '';
-        if (sellerData.remembering_notes) {
-            const doubtsMatch = sellerData.remembering_notes.match(/"customer_doubts":\s*"([^"]*)"/);
-            if (doubtsMatch && doubtsMatch[1]) {
-                existingDoubts = doubtsMatch[1].replace(/\\n/g, '\n');
+        if (currentResponse === 'Later') {
+            const latestUpdate = sellerData.latest_update || '';
+            let callbackTime = '';
+            const match = latestUpdate.match(/Customer asked to call back:\s*(.+?)(?:\n|$)/);
+            if (match && match[1]) {
+                callbackTime = match[1].trim();
+            }
+            
+            if (callbackTime) {
+                const standardTimes = ['After 1 hour', 'After 2 hours', 'After 3 hours', 'After 6 hours', 'Tomorrow', 'After 2 days', 'After 1 week', 'Next month'];
+                if (!standardTimes.includes(callbackTime)) {
+                    $('#callBackTime').val('other').trigger('change');
+                    $('#customCallBackTime').val(callbackTime);
+                    $('#finalCallBackTime').val(callbackTime);
+                } else {
+                    $('#callBackTime').val(callbackTime);
+                    $('#finalCallBackTime').val(callbackTime);
+                }
             }
         }
-        
-        setTimeout(function() {
-            if ($('#customerDoubts').length > 0 && existingDoubts) {
-                $('#customerDoubts').val(existingDoubts);
+
+        if (currentResponse === 'Call Back AT') {
+            const latestUpdate = sellerData.latest_update || '';
+            let callbackTime = '';
+            const match = latestUpdate.match(/Customer asked to call back at:\s*(.+?)(?:\n|$)/);
+            if (match && match[1]) {
+                callbackTime = match[1].trim();
             }
-        }, 200);
+            
+            if (callbackTime) {
+                const standardTimes = ['Morning 9-11 AM', 'Late Morning 11-1 PM', 'Afternoon 2-4 PM', 'Evening 4-6 PM', 'Night 7-9 PM'];
+                if (!standardTimes.includes(callbackTime)) {
+                    $('#callBackAt').val('other').trigger('change');
+                    $('#customCallBackAt').val(callbackTime);
+                    $('#finalCallBackAt').val(callbackTime);
+                } else {
+                    $('#callBackAt').val(callbackTime);
+                    $('#finalCallBackAt').val(callbackTime);
+                }
+            }
+        }
 
         if (currentResponse === 'Plan Interested') {
             const planId = sellerData.plan_id || 0;
@@ -766,7 +771,7 @@ $(document).ready(function () {
             const duration = sellerData.plan_duration || '';
             const amount = sellerData.plan_amount || 0;
             
-            if (sellerData && sellerData.products_uploaded !== undefined && sellerData.products_uploaded !== null && sellerData.products_uploaded > 0) {
+            if (sellerData && sellerData.products_uploaded > 0) {
                 setTimeout(function () {
                     if ($('#productsUploaded').length) {
                         $('#productsUploaded').val(sellerData.products_uploaded);
@@ -792,48 +797,6 @@ $(document).ready(function () {
             }
         }
 
-        if (currentResponse === 'Later' || currentResponse === 'Call Back AT') {
-            const callTiming = sellerData.call_timing || '';
-            if (callTiming && callTiming !== '') {
-                const standardTimes = currentResponse === 'Later'
-                    ? ['After 1 hour', 'After 2 hours', 'After 3 hours', 'After 6 hours', 'Tomorrow', 'After 2 days', 'After 1 week', 'Next month']
-                    : ['Morning 9-11 AM', 'Late Morning 11-1 PM', 'Afternoon 2-4 PM', 'Evening 4-6 PM', 'Night 7-9 PM'];
-
-                if (!standardTimes.includes(callTiming)) {
-                    if (currentResponse === 'Later') {
-                        $('#callBackTime').val('other').trigger('change');
-                        $('#customCallBackTime').val(callTiming);
-                        $('#finalCallBackTime').val(callTiming);
-                    } else {
-                        $('#callBackAt').val('other').trigger('change');
-                        $('#customCallBackAt').val(callTiming);
-                        $('#finalCallBackAt').val(callTiming);
-                    }
-                } else {
-                    if (currentResponse === 'Later') {
-                        $('#callBackTime').val(callTiming);
-                        $('#finalCallBackTime').val(callTiming);
-                    } else {
-                        $('#callBackAt').val(callTiming);
-                        $('#finalCallBackAt').val(callTiming);
-                    }
-                }
-
-                $('#callTiming').val(callTiming);
-            }
-        }
-
-        if (currentResponse === 'Schedule') {
-            const callTiming = sellerData.call_timing || '';
-            if (callTiming && callTiming.startsWith('Schedule at ') && callTiming !== '') {
-                const datePart = callTiming.replace('Schedule at ', '');
-                setTimeout(function () {
-                    $('#scheduleDate').val(datePart);
-                    $('#finalScheduleDate').val(callTiming);
-                }, 200);
-            }
-        }
-
         if (currentResponse === 'Refund') {
             const refundInfo = sellerData.remembering_notes || '';
             const refundPlan = sellerData.plans_interested || '';
@@ -855,12 +818,10 @@ $(document).ready(function () {
                 if (amountMatch && amountMatch[1]) {
                     $('#refundAmount').val(amountMatch[1]);
                 }
-
                 const dateMatch = refundInfo.match(/Date: (\d{2}\/\d{2}\/\d{4})/);
                 if (dateMatch && dateMatch[1]) {
                     $('#refundDate').val(dateMatch[1]);
                 }
-
                 const reasonMatch = refundInfo.match(/Reason: ([^.]+)/);
                 if (reasonMatch && reasonMatch[1]) {
                     $('#refundReason').val(reasonMatch[1].trim());
@@ -873,19 +834,16 @@ $(document).ready(function () {
         }
     }
 
-    // Initialize "Other" option handlers
     function initializeOtherOptionHandlers() {
         $('#callBackTime').off('change').on('change', function () {
             const val = $(this).val();
             if (val === 'other') {
                 $('#customCallBackContainer').show();
                 $('#customCallBackTime').prop('required', true);
-                $('#callTiming').val('');
             } else {
                 $('#customCallBackContainer').hide();
                 $('#customCallBackTime').prop('required', false);
                 $('#finalCallBackTime').val(val);
-                $('#callTiming').val(val);
             }
         });
 
@@ -894,12 +852,10 @@ $(document).ready(function () {
             if (val === 'other') {
                 $('#customCallBackAtContainer').show();
                 $('#customCallBackAt').prop('required', true);
-                $('#callTiming').val('');
             } else {
                 $('#customCallBackAtContainer').hide();
                 $('#customCallBackAt').prop('required', false);
                 $('#finalCallBackAt').val(val);
-                $('#callTiming').val(val);
             }
         });
 
@@ -929,49 +885,35 @@ $(document).ready(function () {
         });
 
         $('#customCallBackTime').off('input').on('input', function () {
-            const val = $(this).val();
-            $('#finalCallBackTime').val(val);
-            $('#callTiming').val(val);
+            $('#finalCallBackTime').val($(this).val());
         });
 
         $('#customCallBackAt').off('input').on('input', function () {
-            const val = $(this).val();
-            $('#finalCallBackAt').val(val);
-            $('#callTiming').val(val);
-        });
-        
-        $('#customPlan').off('input').on('input', function () {
-            $('#selectedPlanName').val($(this).val());
-        });
-        
-        $('#customUpgradedPlan').off('input').on('input', function () {
-            $('#upgradedPlanName').val($(this).val());
-        });
-        
-        $('#customDurationPlan').off('input').on('input', function () {
-            $('#selectedDuration').val($(this).val());
-        });
-        
-        $('#customDuration').off('input').on('input', function () {
-            $('#upgradedDuration').val($(this).val());
+            $('#finalCallBackAt').val($(this).val());
         });
     }
 
-    // Call Timing Handler
+    // Call Timing Handler - FIXED
     $('#callTimingSelect').off('change').on('change', function () {
-        if ($(this).val() === 'other') {
+        const selectedValue = $(this).val();
+        console.log('Call timing selected:', selectedValue);
+        
+        if (selectedValue === 'other') {
             $('#customCallTimingContainer').show();
             $('#customCallTiming').prop('required', true);
             $('#callTiming').val('');
         } else {
             $('#customCallTimingContainer').hide();
             $('#customCallTiming').prop('required', false);
-            $('#callTiming').val($(this).val());
+            $('#callTiming').val(selectedValue);
+            console.log('Call timing set to:', selectedValue);
         }
     });
 
     $('#customCallTiming').off('input').on('input', function () {
-        $('#callTiming').val($(this).val());
+        const customValue = $(this).val();
+        $('#callTiming').val(customValue);
+        console.log('Custom call timing set to:', customValue);
     });
 
     // Phone number validation
@@ -979,12 +921,14 @@ $(document).ready(function () {
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
     });
 
-    // Form Submit Handler
+    // ============================================
+    // FIXED: Form Submit Handler
+    // ============================================
     $('#sellerForm').on('submit', function (e) {
         e.preventDefault();
 
-        const businessName = $('#businessName').val();
-        const phoneNumber = $('#phoneNumber').val();
+        const businessName = $('#businessName').val().trim();
+        const phoneNumber = $('#phoneNumber').val().trim();
         let customerResponse = $('#customerResponse').val();
         
         if (customerResponse === 'other') {
@@ -997,19 +941,19 @@ $(document).ready(function () {
             customerResponse = customResponse;
         }
 
-        if (!businessName || businessName.trim() === '') {
+        if (!businessName) {
             showToast('warning', 'Warning!', 'Business Name is required');
             $('#businessName').focus();
             return;
         }
 
-        if (!phoneNumber || phoneNumber.trim() === '') {
+        if (!phoneNumber) {
             showToast('warning', 'Warning!', 'Phone Number is required');
             $('#phoneNumber').focus();
             return;
         }
 
-        if (!customerResponse || customerResponse === '') {
+        if (!customerResponse) {
             showToast('warning', 'Warning!', 'Customer Response is required');
             $('#customerResponse').focus();
             return;
@@ -1028,14 +972,15 @@ $(document).ready(function () {
             return;
         }
 
+        // Get all form values
         let rememberingNotes = $('#rememberingNotes').val() || '';
         let callTiming = $('#callTiming').val() || '';
-        let latestUpdate = $('#latestUpdate').val() || customerResponse;
+        let latestUpdateText = $('#latestUpdate').val() || '';
         let currentStatus = $('#currentStatus').val() || '';
         let customerQueries = $('#customerQueries').val() || '';
         let entryDate = $('#entryDate').val() || '';
         let sellerType = $('#sellerType').val() || '';
-        let sellerID = $('#sellerID').val() || '';
+        let sellerIDVal = $('#sellerID').val() || '';
         let productsUploaded = $('#productsUploaded').length ? $('#productsUploaded').val() || '0' : '0';
         let refundInfo = $('#finalRefundInfo').length ? $('#finalRefundInfo').val() || '' : '';
         let customerDoubts = $('#customerDoubts').length ? $('#customerDoubts').val() || '' : '';
@@ -1059,29 +1004,60 @@ $(document).ready(function () {
             planAmount = parseFloat($('#upgradedPlanAmount').val()) || 0;
         }
 
-        let cleanNotes = rememberingNotes;
-        cleanNotes = cleanNotes.replace(/Call Duration: [^\n]*(\n|$)/g, '');
-        cleanNotes = cleanNotes.replace(/Upgraded Duration: [^\n]*(\n|$)/g, '');
-        cleanNotes = cleanNotes.replace(/Plan Duration: [^\n]*(\n|$)/g, '');
-        cleanNotes = cleanNotes.replace(/Plan Amount: ₹[^\n]*(\n|$)/g, '');
-        cleanNotes = cleanNotes.replace(/Refund - Plan:.*?(\n|$)/g, '');
-        cleanNotes = cleanNotes.replace(/"customer_doubts":\s*"[^"]*"/g, '');
-        cleanNotes = cleanNotes.replace(/\n\s*\n/g, '\n');
-        cleanNotes = cleanNotes.trim();
+        // Build latest_update based on customer response
+        let latestUpdate = '';
+        
+        switch (customerResponse) {
+            case 'Plan Upgraded':
+                latestUpdate = `Customer upgraded to ${planName} for ${planDuration} (₹${planAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})})`;
+                if (customerDoubts) latestUpdate += `\n📝 Doubts: ${customerDoubts}`;
+                if (callTiming) latestUpdate += `\n⏱️ Call Duration: ${callTiming}`;
+                break;
+            case 'Plan Interested':
+                latestUpdate = `Customer interested in ${planName} (₹${planAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})})`;
+                if (customerDoubts) latestUpdate += `\n📝 Doubts: ${customerDoubts}`;
+                if (callTiming) latestUpdate += `\n⏱️ Call Duration: ${callTiming}`;
+                break;
+            case 'Later':
+                const laterTime = $('#finalCallBackTime').val() || $('#callBackTime').val();
+                latestUpdate = `Customer asked to call back: ${laterTime}`;
+                if (callTiming) latestUpdate += `\n⏱️ Call Duration: ${callTiming}`;
+                break;
+            case 'Call Back AT':
+                const callBackAtTime = $('#finalCallBackAt').val() || $('#callBackAt').val();
+                latestUpdate = `Customer asked to call back at: ${callBackAtTime}`;
+                if (callTiming) latestUpdate += `\n⏱️ Call Duration: ${callTiming}`;
+                break;
+            case 'Schedule':
+                const scheduleDate = $('#finalScheduleDate').val();
+                latestUpdate = scheduleDate || latestUpdateText;
+                if (callTiming && !latestUpdate.includes('Call Duration')) {
+                    latestUpdate += `\n⏱️ Call Duration: ${callTiming}`;
+                }
+                break;
+            case 'Refund':
+                latestUpdate = refundInfo;
+                if (callTiming) latestUpdate += `\n⏱️ Call Duration: ${callTiming}`;
+                break;
+            default:
+                latestUpdate = customerResponse;
+                if (callTiming) latestUpdate += `\n⏱️ Call Duration: ${callTiming}`;
+        }
 
-        let finalNotes = cleanNotes;
+        // Set current status
+        if (customerResponse === 'Plan Upgraded' && !currentStatus) currentStatus = 'Upgraded';
+        if (customerResponse === 'Refund' && !currentStatus) currentStatus = 'Refunded';
 
-        let doubtsData = {};
+        // Clean remembering notes
+        let finalNotes = rememberingNotes;
+        
+        // Add doubts JSON
         if (customerDoubts && (customerResponse === 'Plan Interested' || customerResponse === 'Plan Upgraded')) {
-            doubtsData = {
+            const doubtsJson = JSON.stringify({
                 customer_doubts: customerDoubts,
                 added_on: new Date().toLocaleString('en-IN'),
                 user: sellerData ? sellerData.name : 'User'
-            };
-        }
-
-        if (Object.keys(doubtsData).length > 0) {
-            const doubtsJson = JSON.stringify(doubtsData);
+            });
             if (finalNotes) {
                 finalNotes = finalNotes + '\n\n' + doubtsJson;
             } else {
@@ -1089,6 +1065,7 @@ $(document).ready(function () {
             }
         }
 
+        // Add refund info
         if (refundInfo && customerResponse === 'Refund') {
             if (finalNotes) {
                 finalNotes = refundInfo + '\n' + finalNotes;
@@ -1097,12 +1074,18 @@ $(document).ready(function () {
             }
         }
 
+        console.log('=== SUBMITTING FORM ===');
+        console.log('Customer Response:', customerResponse);
+        console.log('Call Timing (Duration):', callTiming);
+        console.log('Latest Update:', latestUpdate);
+        console.log('Remembering Notes:', finalNotes);
+
         const formData = {
             id: sellerId,
-            business_name: businessName.trim(),
+            business_name: businessName,
             seller_type: sellerType,
             phone_number: cleanPhone,
-            seller_id: sellerID,
+            seller_id: sellerIDVal,
             customer_response: customerResponse,
             plan_id: planId,
             plan_name: planName,
@@ -1115,7 +1098,7 @@ $(document).ready(function () {
             latest_update: latestUpdate,
             current_status: currentStatus,
             customer_queries: customerQueries,
-            customer_doubts_json: JSON.stringify(doubtsData),
+            customer_doubts: customerDoubts,
             call_timing: callTiming,
             entry_date: entryDate
         };
@@ -1153,12 +1136,8 @@ $(document).ready(function () {
     function processDynamicFieldValues() {
         if ($('#selectedPlan').length > 0) {
             if ($('#selectedPlan').val() === 'other') {
-                if ($('#customPlan').length > 0) {
-                    $('#selectedPlanName').val($('#customPlan').val());
-                }
-                if ($('#customDurationPlan').length > 0) {
-                    $('#selectedDuration').val($('#customDurationPlan').val());
-                }
+                if ($('#customPlan').length > 0) $('#selectedPlanName').val($('#customPlan').val());
+                if ($('#customDurationPlan').length > 0) $('#selectedDuration').val($('#customDurationPlan').val());
             } else {
                 const selectedOption = $('#selectedPlan').find('option:selected');
                 $('#selectedPlanName').val(selectedOption.data('plan-name') || selectedOption.parent().attr('label') || '');
@@ -1168,12 +1147,8 @@ $(document).ready(function () {
 
         if ($('#upgradedPlan').length > 0) {
             if ($('#upgradedPlan').val() === 'other') {
-                if ($('#customUpgradedPlan').length > 0) {
-                    $('#upgradedPlanName').val($('#customUpgradedPlan').val());
-                }
-                if ($('#customDuration').length > 0) {
-                    $('#upgradedDuration').val($('#customDuration').val());
-                }
+                if ($('#customUpgradedPlan').length > 0) $('#upgradedPlanName').val($('#customUpgradedPlan').val());
+                if ($('#customDuration').length > 0) $('#upgradedDuration').val($('#customDuration').val());
             } else {
                 const selectedOption = $('#upgradedPlan').find('option:selected');
                 $('#upgradedPlanName').val(selectedOption.data('plan-name') || selectedOption.parent().attr('label') || '');
@@ -1183,9 +1158,7 @@ $(document).ready(function () {
 
         if ($('#callBackTime').length > 0) {
             if ($('#callBackTime').val() === 'other') {
-                if ($('#customCallBackTime').length > 0) {
-                    $('#finalCallBackTime').val($('#customCallBackTime').val());
-                }
+                if ($('#customCallBackTime').length > 0) $('#finalCallBackTime').val($('#customCallBackTime').val());
             } else {
                 $('#finalCallBackTime').val($('#callBackTime').val());
             }
@@ -1193,9 +1166,7 @@ $(document).ready(function () {
 
         if ($('#callBackAt').length > 0) {
             if ($('#callBackAt').val() === 'other') {
-                if ($('#customCallBackAt').length > 0) {
-                    $('#finalCallBackAt').val($('#customCallBackAt').val());
-                }
+                if ($('#customCallBackAt').length > 0) $('#finalCallBackAt').val($('#customCallBackAt').val());
             } else {
                 $('#finalCallBackAt').val($('#callBackAt').val());
             }
@@ -1207,9 +1178,7 @@ $(document).ready(function () {
 
         if ($('#refundPlan').length > 0) {
             if ($('#refundPlan').val() === 'other') {
-                if ($('#customRefundPlan').length > 0) {
-                    $('#finalRefundPlan').val($('#customRefundPlan').val());
-                }
+                if ($('#customRefundPlan').length > 0) $('#finalRefundPlan').val($('#customRefundPlan').val());
             } else {
                 $('#finalRefundPlan').val($('#refundPlan').val());
             }
@@ -1218,15 +1187,9 @@ $(document).ready(function () {
     }
 
     function getFinalCallBackValue() {
-        if ($('#finalCallBackTime').length > 0 && $('#finalCallBackTime').val()) {
-            return $('#finalCallBackTime').val();
-        }
-        if ($('#finalCallBackAt').length > 0 && $('#finalCallBackAt').val()) {
-            return $('#finalCallBackAt').val();
-        }
-        if ($('#finalScheduleDate').length > 0 && $('#finalScheduleDate').val()) {
-            return $('#finalScheduleDate').val();
-        }
+        if ($('#finalCallBackTime').length > 0 && $('#finalCallBackTime').val()) return $('#finalCallBackTime').val();
+        if ($('#finalCallBackAt').length > 0 && $('#finalCallBackAt').val()) return $('#finalCallBackAt').val();
+        if ($('#finalScheduleDate').length > 0 && $('#finalScheduleDate').val()) return $('#finalScheduleDate').val();
         return '';
     }
 
@@ -1239,7 +1202,6 @@ $(document).ready(function () {
             const customPlan = $('#customPlan').val();
             const planAmount = $('#planAmount').val();
             const duration = $('#selectedDuration').val();
-            
             if ((!planId || planId == 0) && (!customPlan || customPlan === '')) {
                 showToast('warning', 'Warning!', 'Please select or enter a plan');
                 return false;
@@ -1259,7 +1221,6 @@ $(document).ready(function () {
             const customPlan = $('#customUpgradedPlan').val();
             const planAmount = $('#upgradedPlanAmount').val();
             const duration = $('#upgradedDuration').val();
-            
             if ((!planId || planId == 0) && (!customPlan || customPlan === '')) {
                 showToast('warning', 'Warning!', 'Please select or enter the upgraded plan');
                 return false;
@@ -1286,7 +1247,6 @@ $(document).ready(function () {
         if (actualResponse === 'Refund') {
             const plan = $('#finalRefundPlan').val() || $('#refundPlan').val();
             const amount = $('#refundAmount').val();
-
             if (!plan || plan === '') {
                 showToast('warning', 'Warning!', 'Please select or enter the plan to refund');
                 return false;
@@ -1303,7 +1263,6 @@ $(document).ready(function () {
     function showToast(type, title, message) {
         const id = 'toast-' + Date.now();
         let bgClass = 'bg-info';
-
         if (type === 'success') bgClass = 'bg-success';
         else if (type === 'danger') bgClass = 'bg-danger';
         else if (type === 'warning') bgClass = 'bg-warning';
@@ -1322,7 +1281,6 @@ $(document).ready(function () {
         `;
 
         $('.toast-container').append(toastHtml);
-
         const toastElement = document.getElementById(id);
         if (toastElement) {
             const toast = new bootstrap.Toast(toastElement);

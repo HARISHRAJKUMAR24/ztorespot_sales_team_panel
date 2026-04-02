@@ -48,22 +48,6 @@ if (!empty($seller['update_history'])) {
     }
 }
 
-// Decode customer_doubts JSON
-$customer_doubts = [];
-if (!empty($seller['remembering_notes'])) {
-    // Try to extract doubts from JSON in notes
-    if (preg_match('/"customer_doubts":\s*({[^}]+})/', $seller['remembering_notes'], $matches)) {
-        try {
-            $customer_doubts = json_decode($matches[1], true);
-            if (!is_array($customer_doubts)) {
-                $customer_doubts = [];
-            }
-        } catch (Exception $e) {
-            $customer_doubts = [];
-        }
-    }
-}
-
 // Map database fields to form fields
 $form_data = [
     'business_name' => $seller['work_details_update'] ?? '',
@@ -97,6 +81,123 @@ $current_indian_time = date('d M Y, h:i A');
 <html lang="en" data-bs-theme="auto">
 
 <?php template('head-tag'); ?>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Seller - Work Station</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap Datepicker CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
+    
+    <style>
+        :root {
+            --success-color: #10b981;
+            --success-hover: #059669;
+            --primary-color: #4f46e5;
+            --warning-color: #f59e0b;
+        }
+
+        body {
+            background: #f3f4f6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .input-group-text {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+        }
+
+        .form-control,
+        .form-select {
+            border: 1px solid #e5e7eb;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .card {
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            border-bottom: 1px solid #eef2ff;
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            padding: 0.625rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .dynamic-field {
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+            border-left: 4px solid var(--warning-color);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            transition: background 0.2s;
+        }
+
+        .list-group-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .toast {
+            border-radius: 0.75rem;
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .datepicker {
+            z-index: 9999 !important;
+        }
+    </style>
+</head>
 
 <body class="bg-light">
     <!-- SVG Icons -->
@@ -159,7 +260,7 @@ $current_indian_time = date('d M Y, h:i A');
                                         </div>
                                     </div>
 
-                                    <!-- Row 2: Seller Type and Seller ID (2x2 Grid) -->
+                                    <!-- Row 2: Seller Type and Seller ID -->
                                     <div class="row mb-4">
                                         <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
@@ -194,14 +295,10 @@ $current_indian_time = date('d M Y, h:i A');
                                                     placeholder="Enter seller ID (optional)"
                                                     id="sellerID" value="<?= htmlspecialchars($seller['seller_id'] ?? '') ?>">
                                             </div>
-                                            <div class="form-text text-muted small">
-                                                <i class="bi bi-info-circle me-1"></i>
-                                                You can enter any seller ID or leave it empty
-                                            </div>
                                         </div>
                                     </div>
 
-                                    <!-- Row 3: Phone Number and Customer Response (2x2 Grid) -->
+                                    <!-- Row 3: Phone Number and Customer Response -->
                                     <div class="row mb-4">
                                         <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
@@ -245,7 +342,6 @@ $current_indian_time = date('d M Y, h:i A');
                                                     <option value="other">Other (Custom Response)</option>
                                                 </select>
                                             </div>
-                                            <!-- Custom Response Text Field (hidden by default) -->
                                             <div id="customResponseContainer" style="display: none;" class="mt-2">
                                                 <div class="input-group">
                                                     <span class="input-group-text bg-light">
@@ -258,12 +354,29 @@ $current_indian_time = date('d M Y, h:i A');
                                         </div>
                                     </div>
 
-                                    <!-- Dynamic Fields Container (Plan Details, Call Back, etc.) -->
+                                    <!-- Dynamic Fields Container -->
                                     <div id="dynamicFieldsContainer" class="mb-4"></div>
 
-                                    <!-- Row 4: Remembering Notes and Latest Update (2x2 Grid) -->
+                                    <!-- Row 4: Remembering Notes and Latest Update -->
                                     <div class="row mb-4">
-
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                            <label class="form-label fw-semibold">
+                                                <i class="bi bi-journal-bookmark-fill text-success me-1"></i>
+                                                Remembering Notes
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0" style="align-items: flex-start; padding-top: 0.75rem;">
+                                                    <i class="bi bi-bookmark"></i>
+                                                </span>
+                                                <textarea class="form-control border-start-0"
+                                                    placeholder="Enter remembering notes..."
+                                                    id="rememberingNotes" rows="3"><?= htmlspecialchars($form_data['remembering_notes']) ?></textarea>
+                                            </div>
+                                            <div class="form-text text-muted small">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                Your custom notes will be saved here
+                                            </div>
+                                        </div>
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-arrow-up-circle text-success me-1"></i>
@@ -280,7 +393,7 @@ $current_indian_time = date('d M Y, h:i A');
                                         </div>
                                     </div>
 
-                                    <!-- Row 5: Customer Queries and Call Timing (2x2 Grid) -->
+                                    <!-- Row 5: Customer Queries and Additional Notes -->
                                     <div class="row mb-4">
                                         <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
@@ -298,6 +411,28 @@ $current_indian_time = date('d M Y, h:i A');
                                         </div>
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold">
+                                                <i class="bi bi-journal-text text-success me-1"></i>
+                                                Additional Notes / Remarks
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0" style="align-items: flex-start; padding-top: 0.75rem;">
+                                                    <i class="bi bi-pencil"></i>
+                                                </span>
+                                                <textarea class="form-control border-start-0"
+                                                    placeholder="Enter any additional notes or remarks..."
+                                                    id="additionalNotes" rows="3"><?= htmlspecialchars($form_data['remarks']) ?></textarea>
+                                            </div>
+                                            <div class="form-text text-muted small">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                These notes will be saved in the remarks field
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 6: Call Timing and Current Status -->
+                                    <div class="row mb-4">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                            <label class="form-label fw-semibold">
                                                 <i class="bi bi-clock text-success me-1"></i>
                                                 Call Timing
                                             </label>
@@ -308,11 +443,16 @@ $current_indian_time = date('d M Y, h:i A');
                                                     </span>
                                                     <select class="form-select border-start-0" id="callTimingSelect">
                                                         <option value="" selected disabled>Select call timing</option>
-                                                        <option value="Morning 9-11 AM" <?= $form_data['call_timing'] == 'Morning 9-11 AM' ? 'selected' : '' ?>>Morning 9-11 AM</option>
-                                                        <option value="Late Morning 11-1 PM" <?= $form_data['call_timing'] == 'Late Morning 11-1 PM' ? 'selected' : '' ?>>Late Morning 11-1 PM</option>
-                                                        <option value="Afternoon 2-4 PM" <?= $form_data['call_timing'] == 'Afternoon 2-4 PM' ? 'selected' : '' ?>>Afternoon 2-4 PM</option>
-                                                        <option value="Evening 4-6 PM" <?= $form_data['call_timing'] == 'Evening 4-6 PM' ? 'selected' : '' ?>>Evening 4-6 PM</option>
-                                                        <option value="Night 7-9 PM" <?= $form_data['call_timing'] == 'Night 7-9 PM' ? 'selected' : '' ?>>Night 7-9 PM</option>
+                                                        <option value="5 mins" <?= $form_data['call_timing'] == '5 mins' ? 'selected' : '' ?>>5 mins</option>
+                                                        <option value="10 mins" <?= $form_data['call_timing'] == '10 mins' ? 'selected' : '' ?>>10 mins</option>
+                                                        <option value="15 mins" <?= $form_data['call_timing'] == '15 mins' ? 'selected' : '' ?>>15 mins</option>
+                                                        <option value="20 mins" <?= $form_data['call_timing'] == '20 mins' ? 'selected' : '' ?>>20 mins</option>
+                                                        <option value="25 mins" <?= $form_data['call_timing'] == '25 mins' ? 'selected' : '' ?>>25 mins</option>
+                                                        <option value="30 mins" <?= $form_data['call_timing'] == '30 mins' ? 'selected' : '' ?>>30 mins</option>
+                                                        <option value="45 mins" <?= $form_data['call_timing'] == '45 mins' ? 'selected' : '' ?>>45 mins</option>
+                                                        <option value="1 hour" <?= $form_data['call_timing'] == '1 hour' ? 'selected' : '' ?>>1 hour</option>
+                                                        <option value="1.5 hours" <?= $form_data['call_timing'] == '1.5 hours' ? 'selected' : '' ?>>1.5 hours</option>
+                                                        <option value="2 hours" <?= $form_data['call_timing'] == '2 hours' ? 'selected' : '' ?>>2 hours</option>
                                                         <option value="other">Other (Custom)</option>
                                                     </select>
                                                 </div>
@@ -323,17 +463,13 @@ $current_indian_time = date('d M Y, h:i A');
                                                         </span>
                                                         <input type="text" class="form-control"
                                                             placeholder="Enter custom call timing"
-                                                            id="customCallTiming" value="<?= !in_array($form_data['call_timing'], ['Morning 9-11 AM', 'Late Morning 11-1 PM', 'Afternoon 2-4 PM', 'Evening 4-6 PM', 'Night 7-9 PM']) ? htmlspecialchars($form_data['call_timing']) : '' ?>">
+                                                            id="customCallTiming" value="<?= !in_array($form_data['call_timing'], ['5 mins', '10 mins', '15 mins', '20 mins', '25 mins', '30 mins', '45 mins', '1 hour', '1.5 hours', '2 hours']) ? htmlspecialchars($form_data['call_timing']) : '' ?>">
                                                     </div>
                                                 </div>
                                                 <input type="hidden" id="callTiming" name="call_timing" value="<?= htmlspecialchars($form_data['call_timing']) ?>">
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <!-- Row 6: Current Status and Entry Date (2x2 Grid) -->
-                                    <div class="row mb-4">
-                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                        <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-flag text-success me-1"></i>
                                                 Current Status
@@ -351,6 +487,10 @@ $current_indian_time = date('d M Y, h:i A');
                                                 </select>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    <!-- Row 7: Entry Date -->
+                                    <div class="row mb-4">
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-calendar-date text-success me-1"></i>
@@ -438,181 +578,31 @@ $current_indian_time = date('d M Y, h:i A');
         </div>
     </div>
 
-    <!-- Toast Container for Notifications -->
+    <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3"></div>
 
-    <!-- Bootstrap Datepicker CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
-
-    <style>
-        :root {
-            --success-color: #10b981;
-            --success-hover: #059669;
-            --primary-color: #4f46e5;
-            --warning-color: #f59e0b;
-        }
-
-        body {
-            background: #f3f4f6;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        .form-label {
-            font-size: 0.875rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #1f2937;
-        }
-
-        .input-group-text {
-            background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
-            color: #6b7280;
-        }
-
-        .form-control, .form-select {
-            border: 1px solid #e5e7eb;
-            padding: 0.625rem 0.875rem;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .card {
-            border-radius: 1rem;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .card:hover {
-            box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.05) !important;
-        }
-
-        .card-header {
-            border-bottom: 1px solid #eef2ff;
-            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success-color), #059669);
-            border: none;
-            padding: 0.625rem 1.5rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .btn-success:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-            background: linear-gradient(135deg, var(--success-hover), #047857);
-        }
-
-        .btn-outline-secondary {
-            border: 1px solid #e5e7eb;
-            color: #4b5563;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-outline-secondary:hover {
-            background-color: #f9fafb;
-            border-color: #d1d5db;
-            transform: translateY(-1px);
-        }
-
-        .dynamic-field {
-            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
-            border-left: 4px solid var(--warning-color);
-            padding: 1.25rem;
-            border-radius: 0.75rem;
-            margin-bottom: 1rem;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .custom-field {
-            margin-top: 0.75rem;
-            padding: 0.875rem;
-            background-color: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .badge-optional {
-            background-color: #f3f4f6;
-            color: #6b7280;
-            font-weight: 500;
-            font-size: 0.7rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 20px;
-        }
-
-        .text-muted {
-            color: #6b7280 !important;
-        }
-
-        .form-text {
-            font-size: 0.7rem;
-            margin-top: 0.375rem;
-        }
-
-        .list-group-item {
-            border-left: none;
-            border-right: none;
-            transition: background 0.2s;
-        }
-
-        .list-group-item:hover {
-            background-color: #f9fafb;
-        }
-
-        @media (max-width: 768px) {
-            .card-body {
-                padding: 1.25rem !important;
-            }
-            
-            .btn {
-                padding: 0.5rem 1rem;
-            }
-        }
-
-        /* Toast styling */
-        .toast {
-            border-radius: 0.75rem;
-            border: none;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-        }
-    </style>
-
-    <!-- SweetAlert2 -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Bootstrap JS -->
+    <!-- ============================================ -->
+    <!-- SCRIPTS - CORRECT ORDER IS CRITICAL -->
+    <!-- ============================================ -->
+    
+    <!-- 1. jQuery FIRST -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="<?= ASSETS_URL ?>dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Bootstrap Datepicker JS -->
+    
+    <!-- 2. Bootstrap JS (depends on jQuery) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 3. Bootstrap Datepicker (depends on jQuery) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
-    <script src="<?= BASE_URL ?>js/work-station/sheets_edit_seller.js"></script>
-    <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
-
-    <!-- Pass subscription plans to JavaScript -->
+    
+    <!-- 4. Pass PHP variables to JavaScript -->
     <script>
         const subscriptionPlans = <?= json_encode($subscription_plans) ?>;
         console.log('Subscription Plans loaded:', subscriptionPlans);
     </script>
+    
+    <!-- 5. Your custom JavaScript LAST -->
+    <script src="<?= BASE_URL ?>js/work-station/sheets_edit_seller.js"></script>
+    <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
+    
 </body>
 </html>

@@ -45,12 +45,15 @@ try {
     $additional_notes = trim($_POST['additional_notes'] ?? '');
     $customer_doubts = trim($_POST['customer_doubts'] ?? '');
     $refund_info = trim($_POST['refund_info'] ?? '');
+    
+    // IMPORTANT: Get user's input from remembering_notes field
+    $remembering_notes_user = trim($_POST['remembering_notes'] ?? '');
 
     // Log received data for debugging
     error_log("=== Received POST data ===");
-    error_log(print_r($_POST, true));
-    error_log("Plan ID: $plan_id, Plan Name: $plan_name, Duration: $plan_duration, Amount: $plan_amount, Is Custom: $is_custom_duration");
-    error_log("Customer Doubts: $customer_doubts");
+    error_log("Remembering Notes (User Input): " . $remembering_notes_user);
+    error_log("Call Duration: " . $call_duration);
+    error_log("Call Back Time: " . $call_back_time);
 
     // Validate required fields
     if (empty($business_name)) {
@@ -111,7 +114,7 @@ try {
         $plan_stmt = $pdo->prepare($plan_sql);
         $plan_stmt->execute([$plan_id]);
         $plan_data_db = $plan_stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($plan_data_db) {
             $plan_name = $plan_data_db['plan_name'];
             $plan_duration = $plan_data_db['duration'];
@@ -132,46 +135,44 @@ try {
             'is_custom_duration' => $is_custom_duration,
             'added_date' => date('Y-m-d H:i:s')
         ];
-        
+
         // Add doubts to plan_data if present
         if (!empty($customer_doubts)) {
             $plan_data_array['customer_doubts'] = $customer_doubts;
         }
-        
+
         $plan_data = json_encode($plan_data_array);
         error_log("Plan data JSON: " . $plan_data);
     }
 
-    // Build remembering_notes with doubts in JSON format
-    $remembering_notes = [];
-    if (!empty($call_duration)) {
-        $remembering_notes[] = "Call Duration: " . $call_duration;
-    }
-    if (!empty($plan_duration)) {
-        $remembering_notes[] = "Plan Duration: " . $plan_duration;
-    }
-    if ($final_plan_amount > 0) {
-        $remembering_notes[] = "Plan Amount: ₹" . number_format($final_plan_amount, 2);
-    }
+    // ============================================
+    // FIXED: Remembering Notes - ONLY save user input
+    // Do NOT add any auto-generated content
+    // ============================================
+    $remembering_notes_final = '';
     
-    // Add doubts as JSON if present
-    if (!empty($customer_doubts) && ($customer_response == 'Plan Interested' || $customer_response == 'Plan Upgraded')) {
-        $doubts_json = json_encode([
-            'customer_doubts' => $customer_doubts,
-            'added_on' => date('d M Y, h:i A'),
-            'user' => $user_uid
-        ], JSON_UNESCAPED_UNICODE);
-        $remembering_notes[] = $doubts_json;
+    if (!empty($remembering_notes_user)) {
+        // Save exactly what user typed
+        $remembering_notes_final = $remembering_notes_user;
+        error_log("Saving user's remembering notes as is: " . $remembering_notes_final);
+    } else {
+        // If user didn't type anything, save empty string
+        $remembering_notes_final = '';
+        error_log("No remembering notes provided by user");
     }
-    
-    // Add refund info if present
-    if (!empty($refund_info) && $customer_response == 'Refund') {
-        $remembering_notes[] = $refund_info;
-    }
-    
-    $remembering_notes_str = implode("\n\n", array_filter($remembering_notes));
 
-    // Build latest_update
+    // ============================================
+    // Call Timing - ONLY store call duration
+    // ============================================
+    $final_call_timing = '';
+    if (!empty($call_duration)) {
+        $final_call_timing = $call_duration;
+        error_log("Call Timing set to: " . $final_call_timing);
+    }
+
+    // ============================================
+    // Build latest_update - This can include callback info and call duration
+    // ============================================
     $latest_update = '';
     switch ($customer_response) {
         case 'Plan Upgraded':
@@ -179,52 +180,70 @@ try {
             if (!empty($customer_doubts)) {
                 $latest_update .= "\n📝 Doubts: " . $customer_doubts;
             }
+            if (!empty($call_duration)) {
+                $latest_update .= "\n⏱️ Call Duration: " . $call_duration;
+            }
             break;
         case 'Plan Interested':
             $latest_update = "Customer interested in " . $plan_name . " (₹" . number_format($final_plan_amount, 2) . ")";
             if (!empty($customer_doubts)) {
                 $latest_update .= "\n📝 Doubts: " . $customer_doubts;
             }
+            if (!empty($call_duration)) {
+                $latest_update .= "\n⏱️ Call Duration: " . $call_duration;
+            }
             break;
         case 'Later':
         case 'Call Back AT':
             $latest_update = "Customer asked to call back: " . $call_back_time;
+            if (!empty($call_duration)) {
+                $latest_update .= "\n⏱️ Call Duration: " . $call_duration;
+            }
             break;
         case 'Schedule':
             $latest_update = "Scheduled for: " . $call_back_time;
+            if (!empty($call_duration)) {
+                $latest_update .= "\n⏱️ Call Duration: " . $call_duration;
+            }
             break;
         case 'Refund':
             $latest_update = $refund_info;
+            if (!empty($call_duration)) {
+                $latest_update .= "\n⏱️ Call Duration: " . $call_duration;
+            }
             break;
         default:
             $latest_update = $customer_response;
+            if (!empty($call_duration)) {
+                $latest_update .= "\n⏱️ Call Duration: " . $call_duration;
+            }
     }
 
     // Insert into sales_person_sellers
     $sql = "INSERT INTO sales_person_sellers (
-                user_uid, 
-                work_details_update, 
-                source_type, 
-                registration_status, 
-                phone_number, 
-                seller_id,
-                plans_interested, 
-                plan_duration,
-                plan_amount,
-                plan_data,
-                products_uploaded,
-                customer_response, 
-                remembering_notes, 
-                latest_update, 
-                current_status, 
-                customer_queries, 
-                call_timing, 
-                remarks,
-                entry_date, 
-                created_at
-            ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), NOW()
-            )";
+            user_uid, 
+            work_details_update, 
+            source_type, 
+            registration_status, 
+            phone_number, 
+            seller_id,
+            plans_interested, 
+            plan_duration,
+            plan_amount,
+            plan_data,
+            products_uploaded,
+            customer_response, 
+            remembering_notes, 
+            latest_update, 
+            current_status, 
+            customer_queries, 
+            call_timing, 
+            remarks,
+            entry_date, 
+            created_at
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), NOW()
+        )";
 
     $stmt = $pdo->prepare($sql);
 
@@ -241,15 +260,19 @@ try {
         $plan_data,
         $products_uploaded,
         $customer_response,
-        $remembering_notes_str,
+        $remembering_notes_final,  // ONLY user input, nothing auto-added
         $latest_update,
         $customer_status,
         $customer_queries,
-        $call_back_time,
+        $final_call_timing,        // ONLY call duration
         $additional_notes
     ];
 
-    error_log("Insert params: " . print_r($params, true));
+    error_log("=== Final Insert Parameters ===");
+    error_log("Remembering Notes (User Input Only): " . $remembering_notes_final);
+    error_log("Call Timing: " . $final_call_timing);
+    error_log("Latest Update: " . $latest_update);
+    error_log(print_r($params, true));
 
     $result = $stmt->execute($params);
 
@@ -264,20 +287,12 @@ try {
 
     // ============================================
     // UPDATE TARGET SETTINGS - ONLY FOR PLAN UPGRADED
-    // Plan Interested does NOT update target settings
     // ============================================
     $target_updated = false;
     if ($final_plan_amount > 0 && $customer_response == 'Plan Upgraded') {
         error_log("=== UPDATING TARGET SETTINGS ===");
-        error_log("Plan Upgraded detected - Amount: $final_plan_amount");
         $target_updated = updateTargetProgress($pdo, $user_uid, $final_plan_amount, $inserted_id, $plan_data, $plan_name, $plan_duration, $customer_doubts);
         error_log("Target update result: " . ($target_updated ? "Success" : "Failed"));
-    } else {
-        error_log("=== SKIPPING TARGET UPDATE ===");
-        error_log("Response: $customer_response, Amount: $final_plan_amount");
-        if ($customer_response == 'Plan Interested') {
-            error_log("Plan Interested - NOT updating target settings (only upgrades count)");
-        }
     }
 
     ob_end_clean();
@@ -287,7 +302,8 @@ try {
         'id' => $inserted_id,
         'plan_amount' => $final_plan_amount,
         'target_updated' => $target_updated,
-        'doubts_saved' => !empty($customer_doubts)
+        'remembering_notes_saved' => $remembering_notes_final,
+        'call_timing_saved' => $final_call_timing
     ]);
     
 } catch (PDOException $e) {
@@ -309,13 +325,12 @@ try {
 /**
  * Update target progress for the user (ONLY called for Plan Upgraded)
  */
-function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, $plan_name, $plan_duration, $customer_doubts) {
+function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, $plan_name, $plan_duration, $customer_doubts)
+{
     try {
         error_log("=== UPDATING TARGET PROGRESS ===");
         error_log("User: $user_uid, Amount: $amount, Seller ID: $seller_id");
-        error_log("Plan: $plan_name, Duration: $plan_duration");
-        error_log("Doubts: " . $customer_doubts);
-        
+
         // Get current active target for the user
         $target_sql = "SELECT id, target_amount, achieved_amount, achievement_percentage, plan_data 
                        FROM target_settings 
@@ -326,20 +341,20 @@ function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, 
         $target_stmt = $pdo->prepare($target_sql);
         $target_stmt->execute([$user_uid]);
         $target = $target_stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($target) {
             error_log("Found active target - ID: {$target['id']}");
             error_log("Target Amount: {$target['target_amount']}");
             error_log("Current Achieved: {$target['achieved_amount']}");
-            
+
             // Update achieved amount
             $new_achieved = $target['achieved_amount'] + $amount;
             $new_percentage = ($new_achieved / $target['target_amount']) * 100;
             $new_percentage = round($new_percentage, 2);
-            
+
             error_log("New Achieved: $new_achieved");
             error_log("New Percentage: $new_percentage%");
-            
+
             // Update plan_data JSON
             $existing_plan_data = [];
             if (!empty($target['plan_data'])) {
@@ -348,10 +363,10 @@ function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, 
                     $existing_plan_data = [];
                 }
             }
-            
+
             // Parse the plan data
             $plan_info = json_decode($plan_data, true);
-            
+
             $new_plan_entry = [
                 'seller_id' => $seller_id,
                 'plan_name' => $plan_name,
@@ -363,7 +378,7 @@ function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, 
             ];
             $existing_plan_data[] = $new_plan_entry;
             $updated_plan_data = json_encode($existing_plan_data, JSON_PRETTY_PRINT);
-            
+
             // Update target settings
             $update_sql = "UPDATE target_settings 
                            SET achieved_amount = ?, 
@@ -372,11 +387,9 @@ function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, 
                            WHERE id = ?";
             $update_stmt = $pdo->prepare($update_sql);
             $update_result = $update_stmt->execute([$new_achieved, $new_percentage, $updated_plan_data, $target['id']]);
-            
+
             if ($update_result) {
                 error_log("✅ Target updated successfully!");
-                error_log("New Achieved: $new_achieved");
-                error_log("Achievement Percentage: $new_percentage%");
                 return true;
             } else {
                 error_log("❌ Failed to update target");
@@ -384,7 +397,6 @@ function updateTargetProgress($pdo, $user_uid, $amount, $seller_id, $plan_data, 
             }
         } else {
             error_log("⚠️ No active target found for user: $user_uid");
-            error_log("Target will not be updated - no active target exists");
             return false;
         }
     } catch (Exception $e) {

@@ -161,6 +161,15 @@
                 </li>
 
                 <li class="nav-item">
+                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>reports/call-reports.php">
+                    <svg class="bi" aria-hidden="true" width="14" height="14">
+                      <use xlink:href="#calls-reports"></use>
+                    </svg>
+                    Call Reports
+                  </a>
+                </li>
+
+                <li class="nav-item">
                   <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>reports/plan-reports.php">
                     <svg class="bi" aria-hidden="true" width="14" height="14">
                       <use xlink:href="#plan-reports"></use>

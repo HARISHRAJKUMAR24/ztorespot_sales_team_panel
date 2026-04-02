@@ -47,7 +47,7 @@ try {
     $latest_update = trim($_POST['latest_update'] ?? '');
     $current_status = trim($_POST['current_status'] ?? '');
     $customer_queries = trim($_POST['customer_queries'] ?? '');
-    $customer_doubts_json = trim($_POST['customer_doubts_json'] ?? '');
+    $customer_doubts = trim($_POST['customer_doubts'] ?? '');
     $call_timing = trim($_POST['call_timing'] ?? '');
     $entry_date = trim($_POST['entry_date'] ?? '');
 
@@ -126,39 +126,102 @@ try {
         }
     }
 
-    // Determine final call timing
-    $final_call_timing = !empty($call_timing) ? $call_timing : $call_back_time;
+    // ============================================
+    // HANDLE SCHEDULE DATE CORRECTLY
+    // ============================================
+    
+    // Check if this is a Schedule response
+    $is_schedule = ($customer_response == 'Schedule');
+    $schedule_date = '';
+    
+    // Extract schedule date from call_timing or latest_update
+    if ($is_schedule) {
+        // Check if call_timing contains "Schedule at"
+        if (strpos($call_timing, 'Schedule at ') !== false) {
+            $schedule_date = str_replace('Schedule at ', '', $call_timing);
+        } 
+        // Check if latest_update contains schedule info
+        elseif (strpos($latest_update, 'Schedule at ') !== false) {
+            $schedule_date = str_replace('Schedule at ', '', $latest_update);
+        }
+        
+        // If we have a schedule date, store it properly
+        if (!empty($schedule_date)) {
+            // Store the full schedule info in latest_update
+            $latest_update = "Schedule at " . $schedule_date;
+            // Do NOT store schedule date in call_timing - call_timing is for duration only
+            // Keep call_timing as empty or preserve existing duration
+            if (empty($call_timing) || strpos($call_timing, 'Schedule') !== false) {
+                $call_timing = ''; // Clear call_timing for schedule
+            }
+        }
+    }
+    
+    // For non-schedule responses, ensure call_timing is only duration
+    if (!$is_schedule) {
+        // call_timing should only be duration (like "5 mins", "10 mins", etc.)
+        // If it contains "Schedule", clear it
+        if (strpos($call_timing, 'Schedule') !== false) {
+            $call_timing = '';
+        }
+    }
 
-    // Clean remembering notes
-    $clean_notes = $remembering_notes;
-    $clean_notes = preg_replace('/Call Duration: [^\n]*(\n|$)/', '', $clean_notes);
-    $clean_notes = preg_replace('/Upgraded Duration: [^\n]*(\n|$)/', '', $clean_notes);
-    $clean_notes = preg_replace('/Plan Duration: [^\n]*(\n|$)/', '', $clean_notes);
-    $clean_notes = preg_replace('/Plan Amount: ₹[^\n]*(\n|$)/', '', $clean_notes);
-    $clean_notes = preg_replace('/Refund - Plan:.*?(\n|$)/', '', $clean_notes);
-    $clean_notes = preg_replace('/{"customer_doubts":.*?}/s', '', $clean_notes);
-    $clean_notes = preg_replace('/\n\s*\n/', "\n", $clean_notes);
-    $clean_notes = trim($clean_notes);
+    // Final call timing (only for duration)
+    $final_call_timing = $call_timing;
+    
+    // If no call timing was provided and it's not a schedule, keep existing duration
+    if (empty($final_call_timing) && !$is_schedule && !empty($existing['call_timing'])) {
+        $duration_patterns = ['mins', 'hour', 'hours'];
+        $is_duration = false;
+        foreach ($duration_patterns as $pattern) {
+            if (strpos($existing['call_timing'], $pattern) !== false) {
+                $is_duration = true;
+                break;
+            }
+        }
+        if ($is_duration) {
+            $final_call_timing = $existing['call_timing'];
+        }
+    }
 
-    $final_remembering_notes = $clean_notes;
-
-    // Add refund info if present
+    // ============================================
+    // Save remembering notes EXACTLY as user typed
+    // ============================================
+    $final_remembering_notes = $remembering_notes;
+    
+    // Only add refund info if it's a refund and user didn't already include it
     if (!empty($refund_info) && $customer_response == 'Refund') {
-        if (!empty($final_remembering_notes)) {
-            $final_remembering_notes = $refund_info . "\n" . $final_remembering_notes;
-        } else {
+        if (empty($final_remembering_notes)) {
             $final_remembering_notes = $refund_info;
+        } elseif (strpos($final_remembering_notes, 'Refund - Plan:') === false) {
+            $final_remembering_notes = $refund_info . "\n\n" . $final_remembering_notes;
+        }
+    }
+    
+    // Only add customer doubts if they exist and user didn't already include them
+    if (!empty($customer_doubts) && ($customer_response == 'Plan Interested' || $customer_response == 'Plan Upgraded')) {
+        if (strpos($final_remembering_notes, $customer_doubts) === false) {
+            $doubts_json = json_encode([
+                'customer_doubts' => $customer_doubts,
+                'added_on' => date('d M Y, h:i A'),
+                'user' => $user_uid
+            ], JSON_UNESCAPED_UNICODE);
+            
+            if (empty($final_remembering_notes)) {
+                $final_remembering_notes = $doubts_json;
+            } else {
+                $final_remembering_notes = $final_remembering_notes . "\n\n" . $doubts_json;
+            }
         }
     }
 
-    // Add doubts JSON to notes
-    if (!empty($customer_doubts_json) && ($customer_response == 'Plan Interested' || $customer_response == 'Plan Upgraded')) {
-        if (!empty($final_remembering_notes)) {
-            $final_remembering_notes = $final_remembering_notes . "\n\n" . $customer_doubts_json;
-        } else {
-            $final_remembering_notes = $customer_doubts_json;
-        }
-    }
+    error_log("=== SAVING RECORD ===");
+    error_log("Customer Response: " . $customer_response);
+    error_log("Is Schedule: " . ($is_schedule ? 'Yes' : 'No'));
+    error_log("Schedule Date: " . $schedule_date);
+    error_log("Call Timing (Duration only): " . $final_call_timing);
+    error_log("Latest Update: " . $latest_update);
+    error_log("Remembering Notes: " . $final_remembering_notes);
 
     // Create plan_data JSON with doubts
     $plan_data = null;
@@ -172,12 +235,8 @@ try {
             'added_date' => date('Y-m-d H:i:s')
         ];
         
-        // Add doubts if present
-        if (!empty($customer_doubts_json)) {
-            $doubts_data = json_decode($customer_doubts_json, true);
-            if ($doubts_data) {
-                $plan_data_array['customer_doubts'] = $doubts_data;
-            }
+        if (!empty($customer_doubts)) {
+            $plan_data_array['customer_doubts'] = $customer_doubts;
         }
         
         $plan_data = json_encode($plan_data_array);
@@ -203,26 +262,10 @@ try {
         'plan_amount' => ['label' => 'Plan Amount', 'old' => $existing['plan_amount'] ?? 0, 'new' => $plan_amount],
         'products_uploaded' => ['label' => 'Products Uploaded', 'old' => $existing['products_uploaded'], 'new' => $products_uploaded],
         'current_status' => ['label' => 'Current Status', 'old' => $existing['current_status'], 'new' => $current_status],
-        'call_timing' => ['label' => 'Call Timing', 'old' => $existing['call_timing'], 'new' => $final_call_timing]
+        'call_timing' => ['label' => 'Call Timing (Duration)', 'old' => $existing['call_timing'], 'new' => $final_call_timing],
+        'latest_update' => ['label' => 'Latest Update', 'old' => $existing['latest_update'], 'new' => $latest_update],
+        'remembering_notes' => ['label' => 'Remembering Notes', 'old' => $existing['remembering_notes'], 'new' => $final_remembering_notes]
     ];
-    
-    // Add doubts to history if changed
-    if (!empty($customer_doubts_json)) {
-        $old_doubts = '';
-        if (preg_match('/"customer_doubts":\s*"([^"]*)"/', $existing['remembering_notes'], $matches)) {
-            $old_doubts = $matches[1];
-        }
-        $doubts_data = json_decode($customer_doubts_json, true);
-        $new_doubts = $doubts_data['customer_doubts'] ?? '';
-        
-        if ($old_doubts !== $new_doubts) {
-            $fields_to_track['customer_doubts'] = [
-                'label' => 'Customer Doubts',
-                'old' => $old_doubts ?: '-',
-                'new' => $new_doubts ?: '-'
-            ];
-        }
-    }
 
     foreach ($fields_to_track as $field => $data) {
         $old_val = trim((string)($data['old'] ?? ''));
@@ -317,29 +360,20 @@ try {
 
     $rowCount = $stmt->rowCount();
 
-    // ============================================
-    // UPDATE TARGET SETTINGS - ONLY FOR PLAN UPGRADED
-    // ============================================
+    // Update target settings for Plan Upgraded
     $target_updated = false;
     $target_message = '';
 
-    // Check if this is a Plan Upgraded and amount has changed
     if ($customer_response == 'Plan Upgraded' && $plan_amount > 0) {
-        // Calculate the difference between new and old amount
         $amount_difference = $plan_amount - $old_plan_amount;
         
         if ($amount_difference != 0) {
             error_log("Updating target settings - User: $user_uid, Amount Difference: $amount_difference");
-            
-            // Call function to update target progress
             $target_updated = updateTargetProgressEdit($pdo, $user_uid, $amount_difference, $id, $plan_data, $plan_name, $plan_duration);
             $target_message = $target_updated ? " Target progress updated." : " Target progress could not be updated.";
         } else {
             $target_message = " No change in plan amount, target unchanged.";
         }
-    } else {
-        error_log("Skipping target update - Response: $customer_response, Amount: $plan_amount");
-        $target_message = " Not a plan upgrade, target unchanged.";
     }
 
     ob_end_clean();
@@ -369,15 +403,11 @@ try {
     ]);
 }
 
-/**
- * Update target progress for edit (with amount difference)
- */
 function updateTargetProgressEdit($pdo, $user_uid, $amount_difference, $seller_id, $plan_data, $plan_name, $plan_duration) {
     try {
         error_log("=== UPDATING TARGET PROGRESS FROM EDIT ===");
         error_log("User: $user_uid, Amount Difference: $amount_difference");
         
-        // Get current active target
         $target_sql = "SELECT id, target_amount, achieved_amount, achievement_percentage, plan_data 
                        FROM target_settings 
                        WHERE user_uid = ? 
@@ -389,12 +419,10 @@ function updateTargetProgressEdit($pdo, $user_uid, $amount_difference, $seller_i
         $target = $target_stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($target) {
-            // Update achieved amount with the difference
             $new_achieved = $target['achieved_amount'] + $amount_difference;
             $new_percentage = ($new_achieved / $target['target_amount']) * 100;
             $new_percentage = round($new_percentage, 2);
             
-            // Update plan_data JSON
             $existing_plan_data = [];
             if (!empty($target['plan_data'])) {
                 $existing_plan_data = json_decode($target['plan_data'], true);
@@ -416,7 +444,6 @@ function updateTargetProgressEdit($pdo, $user_uid, $amount_difference, $seller_i
             $existing_plan_data[] = $new_plan_entry;
             $updated_plan_data = json_encode($existing_plan_data, JSON_PRETTY_PRINT);
             
-            // Update target settings
             $update_sql = "UPDATE target_settings 
                            SET achieved_amount = ?, 
                                achievement_percentage = ?,
@@ -427,14 +454,10 @@ function updateTargetProgressEdit($pdo, $user_uid, $amount_difference, $seller_i
             
             if ($update_result) {
                 error_log("✅ Target updated successfully!");
-                error_log("New Achieved: $new_achieved, New Percentage: $new_percentage%");
                 return true;
             }
-        } else {
-            error_log("⚠️ No active target found for user: $user_uid");
         }
         return false;
-        
     } catch (Exception $e) {
         error_log("❌ Error updating target progress: " . $e->getMessage());
         return false;

@@ -168,7 +168,7 @@ $profile_image = !empty($user['profile_image'])
                                                     <option value="Renewals">Renewals</option>
                                                     <option value="Schedule">Schedule (Select Date)</option>
                                                     <option value="Refund">Refund</option>
-                                                    <option value="other">Other (Custom Response)</option>
+                                                    <option value="other">Custom Response</option>
                                                 </select>
                                             </div>
                                             <!-- Custom Response Text Field (hidden by default) -->
@@ -191,16 +191,20 @@ $profile_image = !empty($user['profile_image'])
                                     <div class="row mb-4">
                                         <div class="col-12 col-md-6 mb-3 mb-md-0">
                                             <label class="form-label fw-semibold">
-                                                <i class="bi bi-question-circle text-primary me-1"></i>
-                                                Customer Queries
+                                                <i class="bi bi-journal-bookmark-fill text-primary me-1"></i>
+                                                Remembering Notes
                                             </label>
                                             <div class="input-group">
-                                                <span class="input-group-text bg-light border-end-0" style="align-items: flex-start; padding-top: 0.75rem;">
-                                                    <i class="bi bi-pencil-square"></i>
+                                                <span class="input-group-text bg-light border-end-0">
+                                                    <i class="bi bi-bookmark"></i>
                                                 </span>
-                                                <textarea class="form-control border-start-0"
-                                                    placeholder="Enter customer questions or queries..."
-                                                    id="customerQueries" rows="3"></textarea>
+                                                <input type="text" class="form-control border-start-0"
+                                                    placeholder="Enter remembering notes..."
+                                                    id="rememberingNotes">
+                                            </div>
+                                            <div class="form-text text-muted small">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                These notes will be stored in JSON format
                                             </div>
                                         </div>
                                         <div class="col-12 col-md-6">
@@ -243,9 +247,24 @@ $profile_image = !empty($user['profile_image'])
                                         </div>
                                     </div>
 
-                                    <!-- Row 5: Additional Notes (Full Width) -->
+                                    <!-- Row 5: Remembering Notes and Additional Notes (2x2 Grid) -->
                                     <div class="row mb-4">
-                                        <div class="col-12">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                            <label class="form-label fw-semibold">
+                                                <i class="bi bi-question-circle text-primary me-1"></i>
+                                                Customer Queries
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border-end-0" style="align-items: flex-start; padding-top: 0.75rem;">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </span>
+                                                <textarea class="form-control border-start-0"
+                                                    placeholder="Enter customer questions or queries..."
+                                                    id="customerQueries" rows="3"></textarea>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-journal-text text-primary me-1"></i>
                                                 Additional Notes
@@ -315,14 +334,16 @@ $profile_image = !empty($user['profile_image'])
             color: #6b7280;
         }
 
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             border: 1px solid #e5e7eb;
             padding: 0.625rem 0.875rem;
             font-size: 0.875rem;
             transition: all 0.2s;
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
@@ -391,6 +412,7 @@ $profile_image = !empty($user['profile_image'])
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -419,7 +441,7 @@ $profile_image = !empty($user['profile_image'])
             .card-body {
                 padding: 1.25rem !important;
             }
-            
+
             .btn {
                 padding: 0.5rem 1rem;
             }
@@ -433,7 +455,9 @@ $profile_image = !empty($user['profile_image'])
         }
 
         /* Callback options */
-        .callback-wrapper, .callback-at-wrapper, .schedule-wrapper {
+        .callback-wrapper,
+        .callback-at-wrapper,
+        .schedule-wrapper {
             width: 100%;
         }
 
@@ -459,4 +483,5 @@ $profile_image = !empty($user['profile_image'])
         console.log('Subscription Plans loaded:', subscriptionPlans);
     </script>
 </body>
+
 </html>
