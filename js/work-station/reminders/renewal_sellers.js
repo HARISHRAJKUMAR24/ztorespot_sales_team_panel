@@ -369,3 +369,157 @@ $(document).ready(function () {
         $(`#${id}`).on('hidden.bs.toast', function () { $(this).remove(); });
     }
 });
+
+
+// Delete seller function
+$(document).on('click', '.delete-btn', function () {
+    const id = $(this).data('id');
+    const name = $(this).data('name');
+    
+    Swal.fire({
+        title: 'Delete Seller?',
+        text: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading
+            Swal.fire({
+                title: 'Deleting...',
+                text: 'Please wait',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            $.ajax({
+                url: BASE_URL + 'ajax/work-station/reminders/renewal_sellers.php',
+                type: 'POST',
+                data: { action: 'delete', id: id },
+                dataType: 'json',
+                success: function (response) {
+                    Swal.close();
+                    if (response.status === 'success') {
+                        Swal.fire('Deleted!', response.message, 'success').then(() => {
+                            loadData(); // Reload the table
+                        });
+                    } else {
+                        Swal.fire('Error!', response.message, 'error');
+                    }
+                },
+                error: function () {
+                    Swal.close();
+                    Swal.fire('Error!', 'Failed to delete seller. Please try again.', 'error');
+                }
+            });
+        }
+    });
+});
+
+// Update the renderTable function to include delete button
+function renderTable(rows) {
+    let html = '';
+    let activeCount = 0, alertCount = 0, nearExpiryCount = 0, expiredCount = 0;
+    
+    rows.forEach(function (row) {
+        const renewalInfo = row.renewal_info || {
+            days_remaining: null,
+            status: 'unknown',
+            formatted_date: 'N/A',
+            start_date: 'N/A',
+            duration: 'N/A',
+            alert_days: 0
+        };
+        
+        const daysRemaining = renewalInfo.days_remaining;
+        const status = renewalInfo.status;
+        
+        // Update counters
+        if (status === 'active') activeCount++;
+        else if (status === 'renewal_alert') alertCount++;
+        else if (status === 'near_expiry') nearExpiryCount++;
+        else if (status === 'expired') expiredCount++;
+        
+        // Get status badge
+        let statusBadge = '';
+        let daysText = '';
+        let badgeClass = '';
+        
+        if (daysRemaining === null) {
+            statusBadge = '<span class="badge bg-secondary">Unknown</span>';
+            daysText = 'N/A';
+            badgeClass = 'bg-secondary';
+        } else if (daysRemaining < 0) {
+            statusBadge = '<span class="badge bg-danger">Expired</span>';
+            daysText = Math.abs(daysRemaining) + ' days ago';
+            badgeClass = 'bg-danger';
+        } else if (daysRemaining === 0) {
+            statusBadge = '<span class="badge bg-warning text-dark">Due Today</span>';
+            daysText = 'Today';
+            badgeClass = 'bg-warning';
+        } else if (daysRemaining <= renewalInfo.alert_days) {
+            statusBadge = '<span class="badge bg-warning">Renewal Alert</span>';
+            daysText = daysRemaining + ' days left';
+            badgeClass = 'bg-warning';
+        } else if (daysRemaining <= 30) {
+            statusBadge = '<span class="badge bg-info">Near Expiry</span>';
+            daysText = daysRemaining + ' days left';
+            badgeClass = 'bg-info';
+        } else {
+            statusBadge = '<span class="badge bg-success">Active</span>';
+            daysText = daysRemaining + ' days left';
+            badgeClass = 'bg-success';
+        }
+        
+        // Get plan badge
+        let planBadge = '';
+        const plan = (row.plans_interested || '').toLowerCase();
+        if (plan.includes('welcome')) {
+            planBadge = '<span class="badge bg-success">Welcome Plan</span>';
+        } else if (plan.includes('starter')) {
+            planBadge = '<span class="badge bg-info">Starter Plan</span>';
+        } else if (plan.includes('intermediate')) {
+            planBadge = '<span class="badge bg-warning text-dark">Intermediate Plan</span>';
+        } else if (plan.includes('professional')) {
+            planBadge = '<span class="badge bg-primary">Professional Plan</span>';
+        } else {
+            planBadge = '<span class="badge bg-secondary">' + escapeHtml(row.plans_interested || 'N/A') + '</span>';
+        }
+        
+        html += '<tr>';
+        html += `<td>${escapeHtml(row.id)}</td>`;
+        html += `<td><a href="../sheets_edit_seller.php?id=${row.id}" class="text-decoration-none fw-semibold">${escapeHtml(row.work_details_update || '-')}</a></td>`;
+        html += `<td>${escapeHtml(row.phone_number || '-')}</td>`;
+        html += `<td>${planBadge}</td>`;
+        html += `<td>${escapeHtml(renewalInfo.start_date || 'N/A')}</td>`;
+        html += `<td>${escapeHtml(renewalInfo.duration || 'N/A')}</td>`;
+        html += `<td><span class="badge bg-secondary">${escapeHtml(renewalInfo.formatted_date || 'N/A')}</span></td>`;
+        html += `<td><span class="badge days-badge ${badgeClass}">${escapeHtml(daysText)}</span></td>`;
+        html += `<td>${statusBadge}</td>`;
+        html += `<td class="text-center text-nowrap">
+            <button class="btn btn-sm btn-outline-info view-btn" data-id="${row.id}" title="View Details">
+                <i class="bi bi-eye"></i>
+            </button>
+            <a href="../sheets_edit_seller.php?id=${row.id}" class="btn btn-sm btn-outline-warning" title="Edit">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${row.id}" data-name="${escapeHtml(row.work_details_update)}" title="Delete">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>`;
+        html += '</tr>';
+    });
+    
+    $('#tableBody').html(html);
+    
+    // Update stats
+    $('#activeCount').text(activeCount);
+    $('#alertCount').text(alertCount);
+    $('#nearExpiryCount').text(nearExpiryCount);
+    $('#expiredCount').text(expiredCount);
+}

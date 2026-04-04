@@ -303,6 +303,51 @@ $profile_image = !empty($user['profile_image'])
     <!-- Toast Container for Notifications -->
     <div class="toast-container position-fixed top-0 end-0 p-3"></div>
 
+    <!-- WhatsApp Modal -->
+    <div class="modal fade" id="whatsappModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-whatsapp me-2"></i>
+                        WhatsApp Message Preview
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-semibold">Select Template Type</label>
+                            <select class="form-select" id="templateType">
+                                <option value="register">Register Seller Template</option>
+                                <option value="aisensy">Aisensy / WP Chat Seller Ads</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-semibold">Recipient Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">+91</span>
+                                <input type="text" class="form-control" id="whatsappPhoneNumber" readonly>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Message Preview</label>
+                            <div class="border rounded p-3 bg-light" id="messagePreview" style="min-height: 300px; white-space: pre-wrap; font-family: monospace; font-size: 13px;">
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="sendWhatsappBtn">
+                        <i class="bi bi-whatsapp me-2"></i>Open WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap Datepicker CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
 
@@ -477,12 +522,16 @@ $profile_image = !empty($user['profile_image'])
     <script src="<?= BASE_URL ?>js/work-station/workstation_add_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 
-    <!-- Pass subscription plans to JavaScript -->
+    <!-- Pass subscription plans and user data to JavaScript -->
     <script>
         // Make sure subscriptionPlans is defined globally
         window.subscriptionPlans = <?= json_encode($subscription_plans) ?>;
+        window.currentUser = {
+            name: '<?= addslashes($user['name'] ?? 'Barani tharan') ?>',
+            phone: '<?= $user['phone'] ?? '9952852208' ?>'
+        };
         console.log('Subscription Plans loaded:', window.subscriptionPlans);
-        console.log('Subscription Plans count:', window.subscriptionPlans ? window.subscriptionPlans.length : 0);
+        console.log('Current User:', window.currentUser);
     </script>
 </body>
 

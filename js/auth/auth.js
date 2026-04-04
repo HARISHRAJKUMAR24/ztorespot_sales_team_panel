@@ -1,7 +1,26 @@
-// js/auth.js
 document.addEventListener("DOMContentLoaded", function() {
     console.log("Auth.js loaded");
     
+    // ========== PASSWORD VISIBILITY TOGGLE ==========
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
+    
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener("click", function() {
+            // Toggle password type
+            const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+            passwordInput.setAttribute("type", type);
+            
+            // Toggle icon
+            const icon = this.querySelector("i");
+            if (icon) {
+                icon.classList.toggle("bi-eye");
+                icon.classList.toggle("bi-eye-slash");
+            }
+        });
+    }
+    
+    // ========== LOGIN FORM HANDLER ==========
     const loginForm = document.getElementById("loginForm");
     
     if (loginForm) {
@@ -84,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
     
-    // Function to show Bootstrap toast
+    // ========== TOAST FUNCTION ==========
     function showToast(type, title, message) {
         // Get or create toast container
         let toastContainer = document.querySelector('.toast-container');

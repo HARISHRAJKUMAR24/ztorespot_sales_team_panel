@@ -35,12 +35,23 @@ if (isset($_COOKIE['remember_token'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - <?= APP_NAME ?></title>
     <link href="<?= ASSETS_URL ?>dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         .toast-container {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 1050;
+        }
+        .input-group .btn {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        .password-toggle-btn {
+            cursor: pointer;
+        }
+        .password-toggle-btn:hover {
+            background-color: #e9ecef;
         }
     </style>
     <script>
@@ -66,7 +77,12 @@ if (isset($_COOKIE['remember_token'])) {
 
                             <div class="mb-3">
                                 <label>Password</label>
-                                <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                                <div class="input-group">
+                                    <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
+                                    <button type="button" class="btn btn-outline-secondary password-toggle-btn" id="togglePassword">
+                                        <i class="bi bi-eye-slash"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <button type="submit" class="btn btn-primary w-100" id="loginBtn">

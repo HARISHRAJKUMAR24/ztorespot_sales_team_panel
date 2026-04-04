@@ -1,3 +1,4 @@
+// sheets_edit_seller.js
 $(document).ready(function () {
     const sellerId = $('#sellerId').val();
 
@@ -50,6 +51,7 @@ $(document).ready(function () {
     // Initialize form after page load
     setTimeout(function () {
         initializeFormWithData();
+        initializeWhatsAppEvents();
     }, 100);
 
     // Customer Response Change Handler
@@ -91,6 +93,9 @@ $(document).ready(function () {
                 html = generateRefundFields();
                 $('#currentStatus').val('Refunded');
                 break;
+            case 'Whatsapp Details sent':
+                html = generateWhatsappFields();
+                break;
             default:
                 break;
         }
@@ -110,6 +115,170 @@ $(document).ready(function () {
             initializeRefundDatepicker();
         }
     });
+
+    // ============================================
+    // WHATSAPP FUNCTIONALITY
+    // ============================================
+
+    // Generate WhatsApp message
+    function generateWhatsAppMessage(templateType, phoneNumber) {
+        const userName = window.currentUser?.name || 'Barani tharan';
+        const userPhone = window.currentUser?.phone || '9952852208';
+        const currentDate = new Date();
+        const month = currentDate.toLocaleString('default', { month: 'long' });
+        const year = currentDate.getFullYear();
+
+        if (templateType === 'register') {
+            return `I hope this message finds you well.
+
+This is ${userName} from Ztorespot.com, reaching out to inform you that your registration with us has been successfully completed. However, to fully utilize our platform and start uploading products, you'll need to upgrade your account.
+
+We have a range of plans to fit any budget or requirement:
+
+•) Welcome Plan: Rs.199 for 1 month
+•) Starter Plan: Rs.599 for 3 months
+•) Intermediate Plan: Rs.2000 for 1 year
+•) Professional Plan: Rs.3421 for 1 year
+
+Upgrade now to easily move your offline business and social media pages online. Act quickly to grab the Rs.199/- plan before it expires in ${month} ${year}.
+
+At Ztorespot.com, our team is here to support you every step of the way, making sure you make the most out of our platform.
+
+If you have any questions or run into any problems, don't hesitate to reach out to us anytime. You can contact us via mobile or WhatsApp at +91 ${userPhone}.
+
+Thank you for choosing Ztorespot.com. We're excited to help you expand your online presence!
+
+Best regards,
+${userName}
+Ztorespot.com`;
+        } else {
+            return `I hope you're doing well. 
+
+I'm ${userName} from 1 Milestone Technology Solution Pvt Ltd, and I'm excited to tell you about Ztorespot.com – an advanced e-commerce platform. You can easily create your online store in just 5 minutes, even without any coding skills. It's a game-changer that makes e-commerce simple. Check it out at www.ztorespot.com & Sign up by using your Mobile Number, it doesn't take more than 5 minutes.
+
+You can try it out for just Rs.199/- for 1 month. It's user-friendly and offers more value compared to Whatsapp orders. If you're interested, you can upgrade to our pricing plans, starting from Rs.599/- for 3 months up to Rs.3421/- for 1 year.
+
+Register link:
+•) https://web.ztorespot.com/register
+
+Best regards,
+${userName}
+1 Milestone Technology Solution Pvt Ltd
+Mobile/Whatsapp No: +91 ${userPhone}
+
+•) Youtube: https://www.youtube.com/@Ztorespot
+•) Facebook: https://www.facebook.com/ztorespot
+•) Instagram: https://www.instagram.com/ztorespot
+
+Thank You!`;
+        }
+    }
+
+    function openWhatsAppModal(phoneNumber) {
+        if (!phoneNumber) {
+            showToast('warning', 'Warning', 'Phone number is required');
+            return false;
+        }
+
+        $('#whatsappPhoneNumber').val(phoneNumber);
+        updateWhatsAppPreview();
+
+        const modal = new bootstrap.Modal(document.getElementById('whatsappModal'));
+        modal.show();
+        return true;
+    }
+
+    function updateWhatsAppPreview() {
+        const templateType = $('#templateType').val();
+        const phoneNumber = $('#whatsappPhoneNumber').val();
+        const message = generateWhatsAppMessage(templateType, phoneNumber);
+        $('#messagePreview').html(message.replace(/\n/g, '<br>'));
+    }
+
+    function sendWhatsApp() {
+        const phoneNumber = $('#whatsappPhoneNumber').val();
+        const templateType = $('#templateType').val();
+        const message = generateWhatsAppMessage(templateType, phoneNumber);
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/91${phoneNumber}?text=${encodedMessage}`;
+        window.open(whatsappUrl, '_blank');
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('whatsappModal'));
+        if (modal) modal.hide();
+        
+        // Update latest_update field to indicate WhatsApp was sent
+        const currentLatestUpdate = $('#latestUpdate').val() || '';
+        const whatsappNote = `WhatsApp message sent to customer (${templateType === 'register' ? 'Registration' : 'Aisensy/WP Chat'} template)`;
+        if (!currentLatestUpdate.includes(whatsappNote)) {
+            const newLatestUpdate = currentLatestUpdate 
+                ? currentLatestUpdate + '\n📱 ' + whatsappNote 
+                : '📱 ' + whatsappNote;
+            $('#latestUpdate').val(newLatestUpdate);
+        }
+    }
+
+    function generateWhatsappFields() {
+        return `
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>WhatsApp Message Ready!</strong><br>
+                            Click the button below to send WhatsApp message to the customer with plan details.
+                        </div>
+                        <button type="button" class="btn btn-success w-100" id="sendWhatsAppTemplateBtn">
+                            <i class="bi bi-whatsapp me-2"></i> Send WhatsApp Message
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function initializeWhatsAppEvents() {
+        // Send WhatsApp button (main)
+        $('#sendWhatsAppBtn').off('click').on('click', function () {
+            const phoneNumber = $('#phoneNumber').val().trim();
+            if (!phoneNumber) {
+                showToast('warning', 'Warning!', 'Please enter phone number first');
+                $('#phoneNumber').focus();
+                return;
+            }
+            if (!/^\d{10}$/.test(phoneNumber)) {
+                showToast('warning', 'Warning!', 'Please enter a valid 10-digit phone number');
+                $('#phoneNumber').focus();
+                return;
+            }
+            openWhatsAppModal(phoneNumber);
+        });
+
+        // Send WhatsApp template button (dynamic)
+        $(document).off('click', '#sendWhatsAppTemplateBtn').on('click', '#sendWhatsAppTemplateBtn', function () {
+            const phoneNumber = $('#phoneNumber').val().trim();
+            if (!phoneNumber) {
+                showToast('warning', 'Warning!', 'Please enter phone number first');
+                $('#phoneNumber').focus();
+                return;
+            }
+            if (!/^\d{10}$/.test(phoneNumber)) {
+                showToast('warning', 'Warning!', 'Please enter a valid 10-digit phone number');
+                $('#phoneNumber').focus();
+                return;
+            }
+            openWhatsAppModal(phoneNumber);
+        });
+
+        // Template type change
+        $('#templateType').off('change').on('change', function () {
+            updateWhatsAppPreview();
+        });
+
+        // Send button in modal
+        $('#sendWhatsappMsgBtn').off('click').on('click', function () {
+            sendWhatsApp();
+        });
+    }
 
     function generatePlanInterestedFields() {
         let planOptions = '<option value="" selected disabled>Choose a plan</option>';
@@ -550,9 +719,7 @@ $(document).ready(function () {
         `;
     }
 
-    // ============================================
-    // FIXED: Initialize Datepicker
-    // ============================================
+    // Initialize Datepicker
     function initializeDatepicker() {
         if ($('#scheduleDate').length) {
             if (typeof $.fn.datepicker === 'undefined') {
@@ -693,9 +860,6 @@ $(document).ready(function () {
         }
     }
 
-    // ============================================
-    // FIXED: setExistingDynamicValues - Extract from latest_update
-    // ============================================
     function setExistingDynamicValues(currentResponse) {
         if (!sellerData) return;
 
@@ -893,7 +1057,7 @@ $(document).ready(function () {
         });
     }
 
-    // Call Timing Handler - FIXED
+    // Call Timing Handler
     $('#callTimingSelect').off('change').on('change', function () {
         const selectedValue = $(this).val();
         console.log('Call timing selected:', selectedValue);
@@ -921,9 +1085,7 @@ $(document).ready(function () {
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
     });
 
-    // ============================================
-    // FIXED: Form Submit Handler
-    // ============================================
+    // Form Submit Handler
     $('#sellerForm').on('submit', function (e) {
         e.preventDefault();
 
@@ -1037,6 +1199,10 @@ $(document).ready(function () {
                 break;
             case 'Refund':
                 latestUpdate = refundInfo;
+                if (callTiming) latestUpdate += `\n⏱️ Call Duration: ${callTiming}`;
+                break;
+            case 'Whatsapp Details sent':
+                latestUpdate = `WhatsApp details sent to customer`;
                 if (callTiming) latestUpdate += `\n⏱️ Call Duration: ${callTiming}`;
                 break;
             default:

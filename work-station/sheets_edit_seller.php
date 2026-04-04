@@ -1,4 +1,5 @@
 <?php
+// sheets_edit_seller.php
 // Set Indian timezone
 date_default_timezone_set('Asia/Kolkata');
 
@@ -86,14 +87,14 @@ $current_indian_time = date('d M Y, h:i A');
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Edit Seller - Work Station</title>
-    
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Bootstrap Datepicker CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
-    
+
     <style>
         :root {
             --success-color: #10b981;
@@ -171,6 +172,7 @@ $current_indian_time = date('d M Y, h:i A');
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -192,7 +194,7 @@ $current_indian_time = date('d M Y, h:i A');
             border: none;
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
         }
-        
+
         .datepicker {
             z-index: 9999 !important;
         }
@@ -506,6 +508,7 @@ $current_indian_time = date('d M Y, h:i A');
                                         </div>
                                     </div>
 
+
                                     <!-- Form Actions -->
                                     <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 pt-3 border-top">
                                         <a href="sheets_followup_list.php" class="btn btn-outline-secondary px-5 py-2">
@@ -581,28 +584,79 @@ $current_indian_time = date('d M Y, h:i A');
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3"></div>
 
+    <!-- WhatsApp Modal -->
+    <div class="modal fade" id="whatsappModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-whatsapp me-2"></i>
+                        WhatsApp Message
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-semibold">Template Type</label>
+                            <select class="form-select" id="templateType">
+                                <option value="register">Register Seller</option>
+                                <option value="aisensy">Aisensy / WP Chat Seller</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-semibold">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">+91</span>
+                                <input type="text" class="form-control" id="whatsappPhoneNumber" readonly>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Message Preview</label>
+                            <div class="border rounded p-3 bg-light" id="messagePreview" style="min-height: 300px; white-space: pre-wrap; font-family: monospace; font-size: 13px;">
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="sendWhatsappMsgBtn">
+                        <i class="bi bi-whatsapp me-2"></i> Send WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ============================================ -->
     <!-- SCRIPTS - CORRECT ORDER IS CRITICAL -->
     <!-- ============================================ -->
-    
+
     <!-- 1. jQuery FIRST -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    
+
     <!-- 2. Bootstrap JS (depends on jQuery) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- 3. Bootstrap Datepicker (depends on jQuery) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
-    
+
     <!-- 4. Pass PHP variables to JavaScript -->
     <script>
         const subscriptionPlans = <?= json_encode($subscription_plans) ?>;
+        window.currentUser = {
+            name: '<?= addslashes($user['name'] ?? 'Barani tharan') ?>',
+            phone: '<?= $user['phone'] ?? '9952852208' ?>'
+        };
         console.log('Subscription Plans loaded:', subscriptionPlans);
+        console.log('Current User:', window.currentUser);
     </script>
-    
+
     <!-- 5. Your custom JavaScript LAST -->
     <script src="<?= BASE_URL ?>js/work-station/sheets_edit_seller.js"></script>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
-    
+
 </body>
+
 </html>

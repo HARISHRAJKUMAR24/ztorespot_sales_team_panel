@@ -1,19 +1,19 @@
-// workstation_add_seller.js
+//workstation_add_seller.js
 $(document).ready(function () {
     // Store subscription plans data - Use the global variable from PHP
     let subscriptionPlans = window.subscriptionPlans || [];
-    
+
     console.log('Subscription Plans loaded in JS:', subscriptionPlans);
 
     // Function to generate plan options for dropdown
     function generatePlanOptions() {
         let planOptions = '<option value="" selected disabled>Choose a plan</option>';
-        
+
         if (!subscriptionPlans || subscriptionPlans.length === 0) {
             console.warn('No subscription plans loaded');
             return planOptions + '<option value="other">Other (Custom Plan)</option>';
         }
-        
+
         // Group plans by name
         const groupedPlans = {};
         subscriptionPlans.forEach(plan => {
@@ -22,7 +22,7 @@ $(document).ready(function () {
             }
             groupedPlans[plan.plan_name].push(plan);
         });
-        
+
         // Create optgroups for each plan with duration and amount
         for (const [planName, durations] of Object.entries(groupedPlans)) {
             planOptions += `<optgroup label="${planName}">`;
@@ -36,9 +36,9 @@ $(document).ready(function () {
             });
             planOptions += `</optgroup>`;
         }
-        
+
         planOptions += '<option value="other">Other (Custom Plan)</option>';
-        
+
         return planOptions;
     }
 
@@ -82,6 +82,9 @@ $(document).ready(function () {
                 html = generateRefundFields();
                 $('#customerStatus').val('Refunded');
                 break;
+            case 'Whatsapp Details sent':
+                html = generateWhatsappFields();
+                break;
             case 'other':
                 // No dynamic fields for custom response
                 break;
@@ -102,10 +105,30 @@ $(document).ready(function () {
         }
     });
 
+    // Generate WhatsApp Fields
+    function generateWhatsappFields() {
+        return `
+            <div class="dynamic-field">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>WhatsApp Message Ready!</strong><br>
+                            Click the button below to send WhatsApp message to the customer with plan details.
+                        </div>
+                        <button type="button" class="btn btn-success w-100" id="sendWhatsAppTemplateBtn">
+                            <i class="bi bi-whatsapp me-2"></i> Send WhatsApp Message
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     // Generate Plan Interested Fields
     function generatePlanInterestedFields() {
         const planOptions = generatePlanOptions();
-        
+
         return `
             <div class="dynamic-field">
                 <div class="row">
@@ -179,7 +202,7 @@ $(document).ready(function () {
     function generatePlanUpgradedFields() {
         const planOptions = generatePlanOptions();
         const productsValue = 0;
-        
+
         return `
             <div class="dynamic-field">
                 <div class="row">
@@ -694,6 +717,119 @@ $(document).ready(function () {
         $('#customerResponse').val('');
     });
 
+    // WhatsApp Template Generator - WITHOUT HEADINGS
+    function generateWhatsAppMessage(templateType, phoneNumber) {
+        const userName = window.currentUser?.name || 'Barani tharan';
+        const userPhone = window.currentUser?.phone || '9952852208';
+        const currentDate = new Date();
+        const month = currentDate.toLocaleString('default', { month: 'long' });
+        const year = currentDate.getFullYear();
+
+        if (templateType === 'register') {
+            return `I hope this message finds you well.
+
+This is ${userName} from Ztorespot.com, reaching out to inform you that your registration with us has been successfully completed. However, to fully utilize our platform and start uploading products, you'll need to upgrade your account.
+
+We have a range of plans to fit any budget or requirement:
+
+•) Welcome Plan: Rs.199 for 1 month
+•) Starter Plan: Rs.599 for 3 months
+•) Intermediate Plan: Rs.2000 for 1 year
+•) Professional Plan: Rs.3421 for 1 year
+
+Upgrade now to easily move your offline business and social media pages online. Act quickly to grab the Rs.199/- plan before it expires in ${month} ${year}.
+
+At Ztorespot.com, our team is here to support you every step of the way, making sure you make the most out of our platform.
+
+If you have any questions or run into any problems, don't hesitate to reach out to us anytime. You can contact us via mobile or WhatsApp at +91 ${userPhone}.
+
+Thank you for choosing Ztorespot.com. We're excited to help you expand your online presence!
+
+Best regards,
+${userName}
+Ztorespot.com
+
+`;
+        } else {
+            return `I hope you're doing well. 
+
+I'm ${userName} from 1 Milestone Technology Solution Pvt Ltd, and I'm excited to tell you about Ztorespot.com – an advanced e-commerce platform. You can easily create your online store in just 5 minutes, even without any coding skills. It's a game-changer that makes e-commerce simple. Check it out at www.ztorespot.com & Sign up by using your Mobile Number, it doesn't take more than 5 minutes.
+
+You can try it out for just Rs.199/- for 1 month. It's user-friendly and offers more value compared to Whatsapp orders. If you're interested, you can upgrade to our pricing plans, starting from Rs.599/- for 3 months up to Rs.3421/- for 1 year.
+
+Register link:
+•) https://web.ztorespot.com/register
+
+Best regards,
+${userName}
+1 Milestone Technology Solution Pvt Ltd
+Mobile/Whatsapp No: +91 ${userPhone}
+
+•) Youtube: https://www.youtube.com/@Ztorespot
+•) Facebook: https://www.facebook.com/ztorespot
+•) Instagram: https://www.instagram.com/ztorespot
+
+Thank You!`;
+        }
+    }
+
+    function openWhatsAppModal(phoneNumber) {
+        if (!phoneNumber) {
+            showToast('warning', 'Warning', 'Phone number is required');
+            return false;
+        }
+
+        document.getElementById('whatsappPhoneNumber').value = phoneNumber;
+        updateWhatsAppPreview();
+
+        const modal = new bootstrap.Modal(document.getElementById('whatsappModal'));
+        modal.show();
+        return true;
+    }
+
+    function updateWhatsAppPreview() {
+        const templateType = document.getElementById('templateType').value;
+        const phoneNumber = document.getElementById('whatsappPhoneNumber').value;
+        const message = generateWhatsAppMessage(templateType, phoneNumber);
+        document.getElementById('messagePreview').innerHTML = message.replace(/\n/g, '<br>');
+    }
+
+    function sendWhatsApp() {
+        const phoneNumber = document.getElementById('whatsappPhoneNumber').value;
+        const templateType = document.getElementById('templateType').value;
+        const message = generateWhatsAppMessage(templateType, phoneNumber);
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/91${phoneNumber}?text=${encodedMessage}`;
+        window.open(whatsappUrl, '_blank');
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('whatsappModal'));
+        if (modal) modal.hide();
+    }
+
+    // Event Listeners for WhatsApp
+    $(document).on('click', '#sendWhatsAppTemplateBtn', function () {
+        const phoneNumber = $('#phoneNumber').val().trim();
+        if (!phoneNumber) {
+            showToast('warning', 'Warning!', 'Please enter phone number first');
+            $('#phoneNumber').focus();
+            return;
+        }
+        if (!/^\d{10}$/.test(phoneNumber)) {
+            showToast('warning', 'Warning!', 'Please enter a valid 10-digit phone number');
+            $('#phoneNumber').focus();
+            return;
+        }
+        openWhatsAppModal(phoneNumber);
+    });
+
+    $('#templateType').on('change', function () {
+        updateWhatsAppPreview();
+    });
+
+    $('#sendWhatsappBtn').on('click', function () {
+        sendWhatsApp();
+    });
+
     // Form Submit Handler
     $('#sellerForm').on('submit', function (e) {
         e.preventDefault();
@@ -702,7 +838,7 @@ $(document).ready(function () {
         const phoneNumber = $('#phoneNumber').val().trim();
         let customerResponse = $('#customerResponse').val();
         const sellerID = $('#sellerID').val().trim() || '';
-        
+
         // Get the EXACT user input from remembering notes field
         const rememberingNotes = $('#rememberingNotes').val().trim() || '';
 
@@ -858,6 +994,11 @@ $(document).ready(function () {
             formData.refund_info = refundInfo;
             formData.plan_name = $('#finalRefundPlan').val() || $('#refundPlan').val();
             formData.plan_amount = parseFloat($('#refundAmount').val()) || 0;
+        }
+
+        if (customerResponse === 'Whatsapp Details sent') {
+            formData.call_back_time = 'WhatsApp message sent';
+            formData.additional_notes = (formData.additional_notes ? formData.additional_notes + '\n' : '') + 'WhatsApp message sent to customer';
         }
 
         console.log('Final Form Data:', formData);

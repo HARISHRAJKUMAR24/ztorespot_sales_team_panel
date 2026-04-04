@@ -71,14 +71,7 @@
         </li>
 
 
-        <li class="nav-item">
-          <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/reminders/renewal_sellers.php">
-            <svg class="bi" aria-hidden="true">
-              <use xlink:href="#renewal"></use>
-            </svg>
-            Renewel sellers
-          </a>
-        </li>
+
 
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="<?= BASE_URL ?>work-station/reminders/upgrade_sellers.php">
@@ -134,7 +127,7 @@
                 </li>
 
 
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                   <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>work-station/share-sellers/share-seller.php">
                     <svg class="bi" aria-hidden="true" width="14" height="14">
                       <use xlink:href="#share-fill"></use>
@@ -150,13 +143,22 @@
                     </svg>
                     Recived Sellers
                   </a>
-                </li>
+                </li> -->
                 <li class="nav-item">
                   <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>sellers/organic-seller.php">
                     <svg class="bi" aria-hidden="true" width="14" height="14">
                       <use xlink:href="#organic-sellers"></use>
                     </svg>
                     Organic Sellers
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link d-flex align-items-center gap-2 ps-4" href="<?= BASE_URL ?>work-station/reminders/renewal_sellers.php">
+                    <svg class="bi" aria-hidden="true">
+                      <use xlink:href="#renewal"></use>
+                    </svg>
+                    Renewel sellers
                   </a>
                 </li>
 
@@ -177,6 +179,7 @@
                     Plan Reports
                   </a>
                 </li>
+
               </ul>
             </div>
           </div>
@@ -207,7 +210,7 @@
             -->
 
       <hr class="my-1" />
-      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-3 mb-1 text-body-secondary text-uppercase">
         <span>About Team</span>
       </h6>
       <ul class="nav flex-column ">
@@ -219,14 +222,14 @@
             Targets
           </a>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="#">
             <svg class="bi" aria-hidden="true">
               <use xlink:href="#graph-up"></use>
             </svg>
             Sales Team Reports
           </a>
-        </li>
+        </li> -->
       </ul>
 
       <!-- <hr class="my-1" />
