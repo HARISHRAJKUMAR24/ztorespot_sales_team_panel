@@ -293,7 +293,7 @@ $(document).ready(function () {
                             Call Back At <span class="text-danger">*</span>
                         </label>
                         <div class="callback-at-wrapper">
-                            <select class="form-select" id="callBackAt" required>
+                            <select class="form-select" id="callBackAt">
                                 <option value="" selected disabled>Select call back time</option>
                                 <option value="Morning 9-11 AM">Morning 9-11 AM</option>
                                 <option value="Late Morning 11-1 PM">Late Morning 11-1 PM</option>
@@ -567,11 +567,11 @@ $(document).ready(function () {
             const val = $(this).val();
             if (val === 'other') {
                 $('#customCallBackAtContainer').show();
-                $('#customCallBackAt').prop('required', true);
+               // $('#customCallBackAt').prop('required', true);
                 $('#finalCallBackAt').val('');
             } else {
                 $('#customCallBackAtContainer').hide();
-                $('#customCallBackAt').prop('required', false);
+               // $('#customCallBackAt').prop('required', false);
                 $('#finalCallBackAt').val(val);
             }
         });
@@ -967,14 +967,7 @@ Thank You!`;
             formData.call_back_time = callBackTime;
         }
 
-        if (customerResponse === 'Call Back AT') {
-            const callBackAt = $('#finalCallBackAt').val() || $('#callBackAt').val();
-            if (!callBackAt) {
-                showToast('warning', 'Warning!', 'Please select or enter call back time');
-                return;
-            }
-            formData.call_back_time = callBackAt;
-        }
+
 
         if (customerResponse === 'Schedule') {
             const scheduleDate = $('#finalScheduleDate').val();
@@ -1165,13 +1158,6 @@ Thank You!`;
             }
         }
 
-        if (customerResponse === 'Call Back AT') {
-            const callBack = $('#finalCallBackAt').val() || $('#callBackAt').val();
-            if (!callBack || callBack === '') {
-                showToast('warning', 'Warning!', 'Please select or enter call back time');
-                return false;
-            }
-        }
 
         if (customerResponse === 'Schedule') {
             const scheduleDate = $('#finalScheduleDate').val();
