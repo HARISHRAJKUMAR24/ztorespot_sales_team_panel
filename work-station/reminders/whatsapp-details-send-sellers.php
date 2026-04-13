@@ -23,12 +23,12 @@ $from_date = isset($_GET['from_date']) ? $_GET['from_date'] : '';
 $to_date = isset($_GET['to_date']) ? $_GET['to_date'] : '';
 $filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : 'entry_date';
 
-// Build query for Switch Off sellers
+// Build query for WhatsApp Details sent sellers
 $count_sql = "SELECT COUNT(*) FROM sales_person_sellers 
-              WHERE user_uid = ? AND customer_response = 'Switch Off'";
+              WHERE user_uid = ? AND customer_response = 'Whatsapp Details sent'";
 
 $sql = "SELECT * FROM sales_person_sellers 
-        WHERE user_uid = ? AND customer_response = 'Switch Off'";
+        WHERE user_uid = ? AND customer_response = 'Whatsapp Details sent'";
 
 $params = [$user_uid];
 $count_params = [$user_uid];
@@ -93,7 +93,7 @@ $count_stmt->execute($count_params);
 $total_records = $count_stmt->fetchColumn();
 $total_pages = ceil($total_records / $limit);
 
-// Get Switch Off sellers
+// Get WhatsApp sellers
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $sellers = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -109,6 +109,13 @@ function formatDateForInput($date) {
     if (empty($date)) return '';
     return date('d/m/Y', strtotime($date));
 }
+
+// Truncate text function
+function truncateText($text, $maxLength = 60) {
+    if (empty($text)) return '-';
+    if (strlen($text) <= $maxLength) return $text;
+    return substr($text, 0, $maxLength) . '...';
+}
 ?>
 
 <!doctype html>
@@ -119,7 +126,7 @@ function formatDateForInput($date) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Switch Off Sellers - Work Station</title>
+    <title>WhatsApp Details Sent - Work Station</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -147,17 +154,18 @@ function formatDateForInput($date) {
             padding: 0.5em 0.75em;
         }
         .page-link {
-            color: #6c757d;
+            color: #0dcaf0;
         }
         .page-item.active .page-link {
-            background-color: #6c757d;
-            border-color: #6c757d;
+            background-color: #0dcaf0;
+            border-color: #0dcaf0;
+            color: #000;
         }
         .table-hover tbody tr:hover {
-            background-color: rgba(108, 117, 125, 0.05);
+            background-color: rgba(13, 202, 240, 0.05);
         }
         .text-truncate {
-            max-width: 200px;
+            max-width: 250px;
         }
         .datepicker {
             cursor: pointer;
@@ -166,9 +174,17 @@ function formatDateForInput($date) {
         .datepicker-dropdown {
             z-index: 9999 !important;
         }
+        .remembering-notes-cell {
+            max-width: 300px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
         @media (max-width: 768px) {
             .text-truncate {
                 max-width: 120px;
+            }
+            .remembering-notes-cell {
+                max-width: 150px;
             }
         }
     </style>
@@ -192,16 +208,55 @@ function formatDateForInput($date) {
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap flex-md-nowrap pt-3 pb-2 mb-4 border-bottom gap-2">
                     <div>
                         <h1 class="h2 mb-1">
-                            <i class="bi bi-power text-secondary me-2"></i>
-                            Switch Off Sellers
+                            <i class="bi bi-whatsapp text-info me-2"></i>
+                            WhatsApp Details Sent
                         </h1>
                         <p class="text-muted mb-0">
                             <i class="bi bi-info-circle me-1"></i>
-                            Total: <?= $total_records ?> sellers with switched off phones
+                            Total: <?= $total_records ?> sellers
                         </p>
                     </div>
+                    <div>
+                        <a href="sheets_followup_list.php" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Back
+                        </a>
+                    </div>
+                </div>
 
-                    
+                <!-- Stats Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-info bg-opacity-10 border-info h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-info mb-2">Total WhatsApp Sent</span>
+                                        <h2 class="mb-0"><?= $total_records ?></h2>
+                                        <small class="text-muted">Sellers received details</small>
+                                    </div>
+                                    <div class="bg-info bg-opacity-25 p-3 rounded-circle">
+                                        <i class="bi bi-whatsapp fs-1 text-info"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-success bg-opacity-10 border-success h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-success mb-2">Upgraded</span>
+                                        <h2 class="mb-0" id="upgradedCount">0</h2>
+                                        <small class="text-muted">Successfully converted</small>
+                                    </div>
+                                    <div class="bg-success bg-opacity-25 p-3 rounded-circle">
+                                        <i class="bi bi-graph-up-arrow fs-1 text-success"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Search and Filter Bar -->
@@ -266,11 +321,11 @@ function formatDateForInput($date) {
                                     <!-- Action Buttons -->
                                     <div class="col-12 col-md-2">
                                         <div class="d-grid gap-2 d-md-flex">
-                                            <button class="btn btn-secondary" type="submit">
+                                            <button class="btn btn-info" type="submit">
                                                 <i class="bi bi-search me-1"></i>Filter
                                             </button>
                                             <?php if (!empty($search) || !empty($from_date) || !empty($to_date)): ?>
-                                                <a href="switchoff_sellers.php" class="btn btn-outline-secondary">
+                                                <a href="whatsapp_sellers.php" class="btn btn-outline-secondary">
                                                     <i class="bi bi-x-circle me-1"></i>Clear
                                                 </a>
                                             <?php endif; ?>
@@ -311,7 +366,7 @@ function formatDateForInput($date) {
                                                 <?php endif; ?>
                                                 <?php if (!empty($from_date) && !empty($to_date)): ?>
                                                     <span class="badge bg-info me-1">
-                                                        <?= $filter_type == 'entry_date' ? 'Entry Date' : 'Last Update Date' ?>: 
+                                                        <?= $filter_type == 'entry_date' ? 'Entry Date' : 'Last Update' ?>: 
                                                         <?= formatDate($from_date) ?> - <?= formatDate($to_date) ?>
                                                     </span>
                                                 <?php elseif (!empty($from_date)): ?>
@@ -346,11 +401,11 @@ function formatDateForInput($date) {
                                             <tr>
                                                 <th class="px-3 py-3">#</th>
                                                 <th class="px-3 py-3">Entry Date</th>
-                                                <th class="px-3 py-3">Last Update</th>
                                                 <th class="px-3 py-3">Business Name</th>
                                                 <th class="px-3 py-3">Phone Number</th>
                                                 <th class="px-3 py-3">Seller Type</th>
-                                                <th class="px-3 py-3">Status</th>
+                                                <th class="px-3 py-3">WhatsApp Status</th>
+                                                <th class="px-3 py-3 remembering-notes-cell">Remembering Notes</th>
                                                 <th class="px-3 py-3 text-center">Actions</th>
                                             </tr>
                                         </thead>
@@ -359,25 +414,33 @@ function formatDateForInput($date) {
                                                 <tr>
                                                     <td colspan="8" class="text-center py-5">
                                                         <div class="py-4">
-                                                            <i class="bi bi-power fs-1 text-muted d-block mb-3"></i>
-                                                            <h5 class="text-muted mb-2">No Switch Off Sellers Found</h5>
+                                                            <i class="bi bi-whatsapp fs-1 text-muted d-block mb-3"></i>
+                                                            <h5 class="text-muted mb-2">No WhatsApp Details Found</h5>
                                                             <p class="text-muted mb-3">
                                                                 <?php if (!empty($search) || !empty($from_date) || !empty($to_date)): ?>
                                                                     Try changing your filter criteria
                                                                 <?php else: ?>
-                                                                    No switch off records available
+                                                                    No sellers with WhatsApp details sent
                                                                 <?php endif; ?>
                                                             </p>
                                                             <?php if (!empty($search) || !empty($from_date) || !empty($to_date)): ?>
-                                                                <a href="switchoff_sellers.php" class="btn btn-outline-secondary">
+                                                                <a href="whatsapp_sellers.php" class="btn btn-outline-secondary">
                                                                     <i class="bi bi-x-circle me-1"></i>Clear Filters
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <a href="sheets_followup_list.php" class="btn btn-info">
+                                                                    <i class="bi bi-arrow-left me-1"></i>Back to Follow Up
                                                                 </a>
                                                             <?php endif; ?>
                                                         </div>
                                                     </td>
                                                 </tr>
                                             <?php else: ?>
-                                                <?php foreach ($sellers as $index => $seller): ?>
+                                                <?php 
+                                                $upgradedCount = 0;
+                                                foreach ($sellers as $index => $seller): 
+                                                    if ($seller['current_status'] == 'Upgraded') $upgradedCount++;
+                                                ?>
                                                     <tr>
                                                         <td class="px-3"><?= $offset + $index + 1 ?></td>
                                                         <td class="px-3">
@@ -389,15 +452,6 @@ function formatDateForInput($date) {
                                                             <?php else: ?>
                                                                 <span class="text-muted">-</span>
                                                             <?php endif; ?>
-                                                        </td>
-                                                        <td class="px-3">
-                                                            <?php 
-                                                            $lastUpdate = !empty($seller['updated_at']) ? date('d M Y', strtotime($seller['updated_at'])) : '-';
-                                                            ?>
-                                                            <span class="badge bg-info bg-opacity-10 text-info">
-                                                                <i class="bi bi-clock-history me-1"></i>
-                                                                <?= $lastUpdate ?>
-                                                            </span>
                                                         </td>
                                                         <td class="px-3">
                                                             <div class="fw-semibold"><?= htmlspecialchars($seller['work_details_update'] ?? 'N/A') ?></div>
@@ -420,22 +474,20 @@ function formatDateForInput($date) {
                                                             </span>
                                                         </td>
                                                         <td class="px-3">
-                                                            <?php
-                                                            $status = $seller['current_status'] ?? 'Not yet';
-                                                            $status_class = 'secondary';
-                                                            if ($status == 'Upgraded') $status_class = 'success';
-                                                            elseif ($status == 'In Progress') $status_class = 'info';
-                                                            elseif ($status == 'Not yet') $status_class = 'warning';
-                                                            elseif ($status == 'Deleted') $status_class = 'danger';
-                                                            ?>
-                                                            <span class="badge bg-<?= $status_class ?> bg-opacity-10 text-<?= $status_class ?>">
-                                                                <?= htmlspecialchars($status) ?>
+                                                            <span class="badge bg-success bg-opacity-10 text-success">
+                                                                <i class="bi bi-check-circle-fill me-1"></i> Sent
                                                             </span>
+                                                            <small class="text-muted d-block mt-1">via WhatsApp</small>
+                                                        </td>
+                                                        <td class="px-3 remembering-notes-cell">
+                                                            <div class="small" title="<?= htmlspecialchars($seller['remembering_notes'] ?? '') ?>">
+                                                                <?= nl2br(htmlspecialchars(truncateText($seller['remembering_notes'] ?? '-', 80))) ?>
+                                                            </div>
                                                         </td>
                                                         <td class="px-3 text-center">
                                                             <div class="btn-group btn-group-sm">
                                                                 <a href="<?= BASE_URL ?>work-station/sheets_edit_seller.php?id=<?= $seller['id'] ?>" 
-                                                                   class="btn btn-outline-secondary" 
+                                                                   class="btn btn-outline-info" 
                                                                    title="Edit Seller">
                                                                     <i class="bi bi-pencil-square"></i>
                                                                 </a>
@@ -449,6 +501,9 @@ function formatDateForInput($date) {
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
+                                                <script>
+                                                    document.getElementById('upgradedCount').innerText = '<?= $upgradedCount ?>';
+                                                </script>
                                             <?php endif; ?>
                                         </tbody>
                                     </table>
@@ -512,16 +567,16 @@ function formatDateForInput($date) {
     <div class="modal fade" id="viewSellerModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-secondary bg-opacity-10">
+                <div class="modal-header bg-info bg-opacity-10">
                     <h5 class="modal-title">
-                        <i class="bi bi-person-badge text-secondary me-2"></i>
+                        <i class="bi bi-person-badge text-info me-2"></i>
                         Seller Details
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="sellerDetails">
                     <div class="text-center py-4">
-                        <div class="spinner-border text-secondary" role="status">
+                        <div class="spinner-border text-info" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
@@ -530,7 +585,7 @@ function formatDateForInput($date) {
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i>Close
                     </button>
-                    <a href="#" id="editFromModal" class="btn btn-secondary">
+                    <a href="#" id="editFromModal" class="btn btn-info">
                         <i class="bi bi-pencil-square me-1"></i>Edit Seller
                     </a>
                 </div>
@@ -544,7 +599,7 @@ function formatDateForInput($date) {
     <!-- Custom JS -->
     <script>
     $(document).ready(function() {
-        // Initialize datepickers with proper settings
+        // Initialize datepickers
         $('.datepicker').datepicker({
             format: 'dd/mm/yyyy',
             autoclose: true,
@@ -613,7 +668,7 @@ function formatDateForInput($date) {
             
             $('#sellerDetails').html(`
                 <div class="text-center py-4">
-                    <div class="spinner-border text-secondary" role="status">
+                    <div class="spinner-border text-info" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                     <p class="mt-2 text-muted">Loading seller details...</p>
@@ -672,9 +727,20 @@ function formatDateForInput($date) {
             
             const html = `
                 <div class="container-fluid px-0">
+                    <!-- WhatsApp Alert -->
+                    <div class="alert alert-success mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-whatsapp fs-3 me-3"></i>
+                            <div>
+                                <h6 class="mb-0">WhatsApp Details Sent</h6>
+                                <small class="text-muted">WhatsApp information has been shared with this seller</small>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="card mb-3 border-0 bg-light">
                         <div class="card-body">
-                            <h6 class="card-title text-secondary mb-3">
+                            <h6 class="card-title text-info mb-3">
                                 <i class="bi bi-info-circle-fill me-2"></i>Basic Information
                             </h6>
                             <div class="row">
@@ -705,21 +771,17 @@ function formatDateForInput($date) {
                     
                     <div class="card mb-3 border-0 bg-light">
                         <div class="card-body">
-                            <h6 class="card-title text-secondary mb-3">
+                            <h6 class="card-title text-info mb-3">
                                 <i class="bi bi-chat-dots-fill me-2"></i>Response Information
                             </h6>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="text-muted small mb-1">Customer Response</label>
-                                    <div><span class="badge bg-secondary">${escapeHtml(seller.customer_response || 'N/A')}</span></div>
+                                    <div><span class="badge bg-info">${escapeHtml(seller.customer_response || 'N/A')}</span></div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="text-muted small mb-1">Plans Interested</label>
                                     <div>${escapeHtml(seller.plans_interested || 'None')}</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="text-muted small mb-1">Call Timing</label>
-                                    <div>${escapeHtml(seller.call_timing || 'Not set')}</div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="text-muted small mb-1">Current Status</label>
@@ -731,7 +793,7 @@ function formatDateForInput($date) {
                     
                     <div class="card mb-3 border-0 bg-light">
                         <div class="card-body">
-                            <h6 class="card-title text-secondary mb-3">
+                            <h6 class="card-title text-info mb-3">
                                 <i class="bi bi-journal-text me-2"></i>Notes & Updates
                             </h6>
                             <div class="row">
@@ -757,7 +819,7 @@ function formatDateForInput($date) {
                     
                     <div class="card border-0 bg-light">
                         <div class="card-body">
-                            <h6 class="card-title text-secondary mb-3">
+                            <h6 class="card-title text-info mb-3">
                                 <i class="bi bi-calendar3 me-2"></i>Dates
                             </h6>
                             <div class="row">

@@ -23,12 +23,12 @@ $from_date = isset($_GET['from_date']) ? $_GET['from_date'] : '';
 $to_date = isset($_GET['to_date']) ? $_GET['to_date'] : '';
 $filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : 'entry_date';
 
-// Build query for Switch Off sellers
+// Build query for Call Back AT sellers
 $count_sql = "SELECT COUNT(*) FROM sales_person_sellers 
-              WHERE user_uid = ? AND customer_response = 'Switch Off'";
+              WHERE user_uid = ? AND customer_response = 'Call Back AT'";
 
 $sql = "SELECT * FROM sales_person_sellers 
-        WHERE user_uid = ? AND customer_response = 'Switch Off'";
+        WHERE user_uid = ? AND customer_response = 'Call Back AT'";
 
 $params = [$user_uid];
 $count_params = [$user_uid];
@@ -70,13 +70,15 @@ if (!empty($from_date) && !empty($to_date)) {
 
 // Add search filter
 if (!empty($search)) {
-    $count_sql .= " AND (work_details_update LIKE ? OR phone_number LIKE ? OR customer_queries LIKE ? OR source_type LIKE ?)";
-    $sql .= " AND (work_details_update LIKE ? OR phone_number LIKE ? OR customer_queries LIKE ? OR source_type LIKE ?)";
+    $count_sql .= " AND (work_details_update LIKE ? OR phone_number LIKE ? OR customer_queries LIKE ? OR source_type LIKE ? OR latest_update LIKE ?)";
+    $sql .= " AND (work_details_update LIKE ? OR phone_number LIKE ? OR customer_queries LIKE ? OR source_type LIKE ? OR latest_update LIKE ?)";
     $search_param = "%$search%";
     $params[] = $search_param;
     $params[] = $search_param;
     $params[] = $search_param;
     $params[] = $search_param;
+    $params[] = $search_param;
+    $count_params[] = $search_param;
     $count_params[] = $search_param;
     $count_params[] = $search_param;
     $count_params[] = $search_param;
@@ -93,10 +95,29 @@ $count_stmt->execute($count_params);
 $total_records = $count_stmt->fetchColumn();
 $total_pages = ceil($total_records / $limit);
 
-// Get Switch Off sellers
+// Get Call Back AT sellers
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $sellers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Function to extract call back time from latest_update
+function getCallBackTime($seller) {
+    // First check if call_timing has value
+    if (!empty($seller['call_timing'])) {
+        return $seller['call_timing'];
+    }
+    
+    // Extract from latest_update
+    $latest_update = $seller['latest_update'] ?? '';
+    if (!empty($latest_update)) {
+        // Pattern: "Customer asked to call back at: Morning 9-11 AM"
+        if (preg_match('/Customer asked to call back at:\s*(.+)/', $latest_update, $matches)) {
+            return trim($matches[1]);
+        }
+    }
+    
+    return 'Not set';
+}
 
 // Format dates for display
 function formatDate($date) {
@@ -109,6 +130,13 @@ function formatDateForInput($date) {
     if (empty($date)) return '';
     return date('d/m/Y', strtotime($date));
 }
+
+// Truncate text function
+function truncateText($text, $maxLength = 60) {
+    if (empty($text)) return '-';
+    if (strlen($text) <= $maxLength) return $text;
+    return substr($text, 0, $maxLength) . '...';
+}
 ?>
 
 <!doctype html>
@@ -119,7 +147,7 @@ function formatDateForInput($date) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Switch Off Sellers - Work Station</title>
+    <title>Call Back AT - Work Station</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -147,17 +175,15 @@ function formatDateForInput($date) {
             padding: 0.5em 0.75em;
         }
         .page-link {
-            color: #6c757d;
+            color: #6f42c1;
         }
         .page-item.active .page-link {
-            background-color: #6c757d;
-            border-color: #6c757d;
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+            color: #fff;
         }
         .table-hover tbody tr:hover {
-            background-color: rgba(108, 117, 125, 0.05);
-        }
-        .text-truncate {
-            max-width: 200px;
+            background-color: rgba(111, 66, 193, 0.05);
         }
         .datepicker {
             cursor: pointer;
@@ -166,9 +192,22 @@ function formatDateForInput($date) {
         .datepicker-dropdown {
             z-index: 9999 !important;
         }
+        .remembering-notes-cell {
+            max-width: 300px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .call-time-badge {
+            font-size: 0.85rem;
+            padding: 0.35rem 0.65rem;
+        }
         @media (max-width: 768px) {
-            .text-truncate {
-                max-width: 120px;
+            .remembering-notes-cell {
+                max-width: 150px;
+            }
+            .call-time-badge {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.5rem;
             }
         }
     </style>
@@ -192,16 +231,67 @@ function formatDateForInput($date) {
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center flex-wrap flex-md-nowrap pt-3 pb-2 mb-4 border-bottom gap-2">
                     <div>
                         <h1 class="h2 mb-1">
-                            <i class="bi bi-power text-secondary me-2"></i>
-                            Switch Off Sellers
+                            <i class="bi bi-telephone-forward text-purple me-2"></i>
+                            Call Back AT
                         </h1>
                         <p class="text-muted mb-0">
                             <i class="bi bi-info-circle me-1"></i>
-                            Total: <?= $total_records ?> sellers with switched off phones
+                            Total: <?= $total_records ?> sellers waiting for specific time callback
                         </p>
                     </div>
 
-                    
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-purple bg-opacity-10 border-purple h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-purple mb-2">Total Call Back AT</span>
+                                        <h2 class="mb-0"><?= $total_records ?></h2>
+                                        <small class="text-muted">Specific time callbacks</small>
+                                    </div>
+                                    <div class="bg-purple bg-opacity-25 p-3 rounded-circle">
+                                        <i class="bi bi-telephone-forward fs-1 text-purple"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning bg-opacity-10 border-warning h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-warning mb-2">Morning</span>
+                                        <h2 class="mb-0" id="morningCount">0</h2>
+                                        <small class="text-muted">9 AM - 1 PM</small>
+                                    </div>
+                                    <div class="bg-warning bg-opacity-25 p-3 rounded-circle">
+                                        <i class="bi bi-sunrise fs-1 text-warning"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info bg-opacity-10 border-info h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-info mb-2">Afternoon</span>
+                                        <h2 class="mb-0" id="afternoonCount">0</h2>
+                                        <small class="text-muted">2 PM - 6 PM</small>
+                                    </div>
+                                    <div class="bg-info bg-opacity-25 p-3 rounded-circle">
+                                        <i class="bi bi-sunset fs-1 text-info"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Search and Filter Bar -->
@@ -218,7 +308,7 @@ function formatDateForInput($date) {
                                             </span>
                                             <input type="text" class="form-control" 
                                                    name="search" 
-                                                   placeholder="Search by name, phone, queries..." 
+                                                   placeholder="Search by name, phone, call time..." 
                                                    value="<?= htmlspecialchars($search) ?>">
                                         </div>
                                     </div>
@@ -266,11 +356,11 @@ function formatDateForInput($date) {
                                     <!-- Action Buttons -->
                                     <div class="col-12 col-md-2">
                                         <div class="d-grid gap-2 d-md-flex">
-                                            <button class="btn btn-secondary" type="submit">
+                                            <button class="btn btn-purple" type="submit" style="background-color: #6f42c1; border-color: #6f42c1; color: white;">
                                                 <i class="bi bi-search me-1"></i>Filter
                                             </button>
                                             <?php if (!empty($search) || !empty($from_date) || !empty($to_date)): ?>
-                                                <a href="switchoff_sellers.php" class="btn btn-outline-secondary">
+                                                <a href="callback_at_sellers.php" class="btn btn-outline-secondary">
                                                     <i class="bi bi-x-circle me-1"></i>Clear
                                                 </a>
                                             <?php endif; ?>
@@ -311,7 +401,7 @@ function formatDateForInput($date) {
                                                 <?php endif; ?>
                                                 <?php if (!empty($from_date) && !empty($to_date)): ?>
                                                     <span class="badge bg-info me-1">
-                                                        <?= $filter_type == 'entry_date' ? 'Entry Date' : 'Last Update Date' ?>: 
+                                                        <?= $filter_type == 'entry_date' ? 'Entry Date' : 'Last Update' ?>: 
                                                         <?= formatDate($from_date) ?> - <?= formatDate($to_date) ?>
                                                     </span>
                                                 <?php elseif (!empty($from_date)): ?>
@@ -346,11 +436,11 @@ function formatDateForInput($date) {
                                             <tr>
                                                 <th class="px-3 py-3">#</th>
                                                 <th class="px-3 py-3">Entry Date</th>
-                                                <th class="px-3 py-3">Last Update</th>
                                                 <th class="px-3 py-3">Business Name</th>
                                                 <th class="px-3 py-3">Phone Number</th>
                                                 <th class="px-3 py-3">Seller Type</th>
-                                                <th class="px-3 py-3">Status</th>
+                                                <th class="px-3 py-3">Call Back Time</th>
+                                                <th class="px-3 py-3 remembering-notes-cell">Remembering Notes</th>
                                                 <th class="px-3 py-3 text-center">Actions</th>
                                             </tr>
                                         </thead>
@@ -359,17 +449,17 @@ function formatDateForInput($date) {
                                                 <tr>
                                                     <td colspan="8" class="text-center py-5">
                                                         <div class="py-4">
-                                                            <i class="bi bi-power fs-1 text-muted d-block mb-3"></i>
-                                                            <h5 class="text-muted mb-2">No Switch Off Sellers Found</h5>
+                                                            <i class="bi bi-telephone-forward fs-1 text-muted d-block mb-3"></i>
+                                                            <h5 class="text-muted mb-2">No Call Back AT Sellers Found</h5>
                                                             <p class="text-muted mb-3">
                                                                 <?php if (!empty($search) || !empty($from_date) || !empty($to_date)): ?>
                                                                     Try changing your filter criteria
                                                                 <?php else: ?>
-                                                                    No switch off records available
+                                                                    No sellers waiting for specific time callback
                                                                 <?php endif; ?>
                                                             </p>
                                                             <?php if (!empty($search) || !empty($from_date) || !empty($to_date)): ?>
-                                                                <a href="switchoff_sellers.php" class="btn btn-outline-secondary">
+                                                                <a href="callback_at_sellers.php" class="btn btn-outline-secondary">
                                                                     <i class="bi bi-x-circle me-1"></i>Clear Filters
                                                                 </a>
                                                             <?php endif; ?>
@@ -377,7 +467,17 @@ function formatDateForInput($date) {
                                                     </td>
                                                 </tr>
                                             <?php else: ?>
-                                                <?php foreach ($sellers as $index => $seller): ?>
+                                                <?php 
+                                                $morningCount = 0;
+                                                $afternoonCount = 0;
+                                                foreach ($sellers as $index => $seller): 
+                                                    $callTime = getCallBackTime($seller);
+                                                    if (stripos($callTime, 'Morning') !== false || (stripos($callTime, 'AM') !== false && stripos($callTime, '9') !== false)) {
+                                                        $morningCount++;
+                                                    } elseif (stripos($callTime, 'Afternoon') !== false || (stripos($callTime, 'PM') !== false)) {
+                                                        $afternoonCount++;
+                                                    }
+                                                ?>
                                                     <tr>
                                                         <td class="px-3"><?= $offset + $index + 1 ?></td>
                                                         <td class="px-3">
@@ -389,15 +489,6 @@ function formatDateForInput($date) {
                                                             <?php else: ?>
                                                                 <span class="text-muted">-</span>
                                                             <?php endif; ?>
-                                                        </td>
-                                                        <td class="px-3">
-                                                            <?php 
-                                                            $lastUpdate = !empty($seller['updated_at']) ? date('d M Y', strtotime($seller['updated_at'])) : '-';
-                                                            ?>
-                                                            <span class="badge bg-info bg-opacity-10 text-info">
-                                                                <i class="bi bi-clock-history me-1"></i>
-                                                                <?= $lastUpdate ?>
-                                                            </span>
                                                         </td>
                                                         <td class="px-3">
                                                             <div class="fw-semibold"><?= htmlspecialchars($seller['work_details_update'] ?? 'N/A') ?></div>
@@ -421,22 +512,26 @@ function formatDateForInput($date) {
                                                         </td>
                                                         <td class="px-3">
                                                             <?php
-                                                            $status = $seller['current_status'] ?? 'Not yet';
-                                                            $status_class = 'secondary';
-                                                            if ($status == 'Upgraded') $status_class = 'success';
-                                                            elseif ($status == 'In Progress') $status_class = 'info';
-                                                            elseif ($status == 'Not yet') $status_class = 'warning';
-                                                            elseif ($status == 'Deleted') $status_class = 'danger';
+                                                            $timeClass = 'secondary';
+                                                            if (stripos($callTime, 'Morning') !== false) $timeClass = 'warning';
+                                                            elseif (stripos($callTime, 'Afternoon') !== false) $timeClass = 'info';
                                                             ?>
-                                                            <span class="badge bg-<?= $status_class ?> bg-opacity-10 text-<?= $status_class ?>">
-                                                                <?= htmlspecialchars($status) ?>
+                                                            <span class="badge bg-<?= $timeClass ?> bg-opacity-10 text-<?= $timeClass ?> call-time-badge">
+                                                                <i class="bi bi-clock me-1"></i>
+                                                                <?= htmlspecialchars($callTime) ?>
                                                             </span>
+                                                        </td>
+                                                        <td class="px-3 remembering-notes-cell">
+                                                            <div class="small" title="<?= htmlspecialchars($seller['remembering_notes'] ?? '') ?>">
+                                                                <?= nl2br(htmlspecialchars(truncateText($seller['remembering_notes'] ?? '-', 80))) ?>
+                                                            </div>
                                                         </td>
                                                         <td class="px-3 text-center">
                                                             <div class="btn-group btn-group-sm">
                                                                 <a href="<?= BASE_URL ?>work-station/sheets_edit_seller.php?id=<?= $seller['id'] ?>" 
-                                                                   class="btn btn-outline-secondary" 
-                                                                   title="Edit Seller">
+                                                                   class="btn btn-outline-purple" 
+                                                                   title="Edit Seller"
+                                                                   style="border-color: #6f42c1; color: #6f42c1;">
                                                                     <i class="bi bi-pencil-square"></i>
                                                                 </a>
                                                                 <button type="button" 
@@ -447,8 +542,12 @@ function formatDateForInput($date) {
                                                                 </button>
                                                             </div>
                                                         </td>
-                                                    </tr>
+                                                    <tr>
                                                 <?php endforeach; ?>
+                                                <script>
+                                                    document.getElementById('morningCount').innerText = '<?= $morningCount ?>';
+                                                    document.getElementById('afternoonCount').innerText = '<?= $afternoonCount ?>';
+                                                </script>
                                             <?php endif; ?>
                                         </tbody>
                                     </table>
@@ -512,16 +611,16 @@ function formatDateForInput($date) {
     <div class="modal fade" id="viewSellerModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-secondary bg-opacity-10">
+                <div class="modal-header bg-purple bg-opacity-10">
                     <h5 class="modal-title">
-                        <i class="bi bi-person-badge text-secondary me-2"></i>
+                        <i class="bi bi-person-badge text-purple me-2"></i>
                         Seller Details
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="sellerDetails">
                     <div class="text-center py-4">
-                        <div class="spinner-border text-secondary" role="status">
+                        <div class="spinner-border text-purple" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
@@ -530,7 +629,7 @@ function formatDateForInput($date) {
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i>Close
                     </button>
-                    <a href="#" id="editFromModal" class="btn btn-secondary">
+                    <a href="#" id="editFromModal" class="btn btn-purple" style="background-color: #6f42c1; border-color: #6f42c1; color: white;">
                         <i class="bi bi-pencil-square me-1"></i>Edit Seller
                     </a>
                 </div>
@@ -544,7 +643,7 @@ function formatDateForInput($date) {
     <!-- Custom JS -->
     <script>
     $(document).ready(function() {
-        // Initialize datepickers with proper settings
+        // Initialize datepickers
         $('.datepicker').datepicker({
             format: 'dd/mm/yyyy',
             autoclose: true,
@@ -613,7 +712,7 @@ function formatDateForInput($date) {
             
             $('#sellerDetails').html(`
                 <div class="text-center py-4">
-                    <div class="spinner-border text-secondary" role="status">
+                    <div class="spinner-border text-purple" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                     <p class="mt-2 text-muted">Loading seller details...</p>
@@ -669,12 +768,24 @@ function formatDateForInput($date) {
             const entryDate = seller.entry_date ? new Date(seller.entry_date).toLocaleDateString('en-GB') : 'Not set';
             const createdDate = seller.created_at ? new Date(seller.created_at).toLocaleString() : 'Unknown';
             const updatedDate = seller.updated_at ? new Date(seller.updated_at).toLocaleString() : 'Never';
+            const callBackTime = getCallBackTimeFromSeller(seller);
             
             const html = `
                 <div class="container-fluid px-0">
+                    <!-- Call Back AT Alert -->
+                    <div class="alert alert-purple mb-3" style="background-color: rgba(111, 66, 193, 0.1); border-color: #6f42c1;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-telephone-forward fs-3 me-3 text-purple"></i>
+                            <div>
+                                <h6 class="mb-0 text-purple">Call Back AT</h6>
+                                <small class="text-muted">Customer requested callback at specific time: ${escapeHtml(callBackTime)}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="card mb-3 border-0 bg-light">
                         <div class="card-body">
-                            <h6 class="card-title text-secondary mb-3">
+                            <h6 class="card-title text-purple mb-3">
                                 <i class="bi bi-info-circle-fill me-2"></i>Basic Information
                             </h6>
                             <div class="row">
@@ -705,21 +816,21 @@ function formatDateForInput($date) {
                     
                     <div class="card mb-3 border-0 bg-light">
                         <div class="card-body">
-                            <h6 class="card-title text-secondary mb-3">
+                            <h6 class="card-title text-purple mb-3">
                                 <i class="bi bi-chat-dots-fill me-2"></i>Response Information
                             </h6>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="text-muted small mb-1">Customer Response</label>
-                                    <div><span class="badge bg-secondary">${escapeHtml(seller.customer_response || 'N/A')}</span></div>
+                                    <div><span class="badge bg-purple">${escapeHtml(seller.customer_response || 'N/A')}</span></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="text-muted small mb-1">Call Back Time</label>
+                                    <div><span class="badge bg-warning bg-opacity-25 text-dark">${escapeHtml(callBackTime)}</span></div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="text-muted small mb-1">Plans Interested</label>
                                     <div>${escapeHtml(seller.plans_interested || 'None')}</div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="text-muted small mb-1">Call Timing</label>
-                                    <div>${escapeHtml(seller.call_timing || 'Not set')}</div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="text-muted small mb-1">Current Status</label>
@@ -731,7 +842,7 @@ function formatDateForInput($date) {
                     
                     <div class="card mb-3 border-0 bg-light">
                         <div class="card-body">
-                            <h6 class="card-title text-secondary mb-3">
+                            <h6 class="card-title text-purple mb-3">
                                 <i class="bi bi-journal-text me-2"></i>Notes & Updates
                             </h6>
                             <div class="row">
@@ -757,7 +868,7 @@ function formatDateForInput($date) {
                     
                     <div class="card border-0 bg-light">
                         <div class="card-body">
-                            <h6 class="card-title text-secondary mb-3">
+                            <h6 class="card-title text-purple mb-3">
                                 <i class="bi bi-calendar3 me-2"></i>Dates
                             </h6>
                             <div class="row">
@@ -782,21 +893,34 @@ function formatDateForInput($date) {
             $('#sellerDetails').html(html);
         }
         
+        function getCallBackTimeFromSeller(seller) {
+            if (seller.call_timing && seller.call_timing.trim() !== '') {
+                return seller.call_timing;
+            }
+            if (seller.latest_update) {
+                var match = seller.latest_update.match(/Customer asked to call back at:\s*(.+)/);
+                if (match) {
+                    return match[1];
+                }
+            }
+            return 'Not set';
+        }
+        
         function escapeHtml(text) {
             if (!text) return '';
-            const div = document.createElement('div');
+            var div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
         
         function showToast(type, title, message) {
-            const id = 'toast-' + Date.now();
-            let bgClass = 'bg-info';
+            var id = 'toast-' + Date.now();
+            var bgClass = 'bg-info';
             if (type === 'success') bgClass = 'bg-success';
             else if (type === 'danger') bgClass = 'bg-danger';
             else if (type === 'warning') bgClass = 'bg-warning';
             
-            const toastHtml = `
+            var toastHtml = `
                 <div id="${id}" class="toast text-white ${bgClass}" role="alert" aria-live="assertive" 
                      aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
                     <div class="toast-header ${bgClass} text-white border-0">
@@ -810,9 +934,9 @@ function formatDateForInput($date) {
             `;
             
             $('.toast-container').append(toastHtml);
-            const toastElement = document.getElementById(id);
+            var toastElement = document.getElementById(id);
             if (toastElement) {
-                const toast = new bootstrap.Toast(toastElement);
+                var toast = new bootstrap.Toast(toastElement);
                 toast.show();
                 $(toastElement).on('hidden.bs.toast', function() {
                     $(this).remove();
@@ -821,6 +945,42 @@ function formatDateForInput($date) {
         }
     });
     </script>
+    <style>
+        .btn-purple {
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+            color: white;
+        }
+        .btn-purple:hover {
+            background-color: #5a32a3;
+            border-color: #5a32a3;
+            color: white;
+        }
+        .btn-outline-purple {
+            border-color: #6f42c1;
+            color: #6f42c1;
+        }
+        .btn-outline-purple:hover {
+            background-color: #6f42c1;
+            color: white;
+        }
+        .text-purple {
+            color: #6f42c1 !important;
+        }
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
+        .bg-purple.bg-opacity-10 {
+            background-color: rgba(111, 66, 193, 0.1) !important;
+        }
+        .bg-purple.bg-opacity-25 {
+            background-color: rgba(111, 66, 193, 0.25) !important;
+        }
+        .alert-purple {
+            background-color: rgba(111, 66, 193, 0.1);
+            border-color: #6f42c1;
+        }
+    </style>
     <script src="<?= BASE_URL ?>js/auth/logout.js"></script>
 </body>
 

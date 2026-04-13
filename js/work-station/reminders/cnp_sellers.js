@@ -1,11 +1,44 @@
 $(document).ready(function() {
     
+    // Initialize datepickers
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        orientation: 'bottom'
+    });
+    
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
-
+    
+    // Quick date filter buttons
+    $('.quick-date').on('click', function() {
+        var days = $(this).data('days');
+        var toDate = new Date();
+        var fromDate = new Date();
+        fromDate.setDate(toDate.getDate() - days);
+        
+        // Format dates as YYYY-MM-DD
+        var fromDateStr = fromDate.toISOString().split('T')[0];
+        var toDateStr = toDate.toISOString().split('T')[0];
+        
+        $('input[name="from_date"]').val(fromDateStr);
+        $('input[name="to_date"]').val(toDateStr);
+        
+        // Submit the form
+        $('#filterForm').submit();
+    });
+    
+    // Clear dates button
+    $('#clearDatesBtn').on('click', function() {
+        $('input[name="from_date"]').val('');
+        $('input[name="to_date"]').val('');
+        $('#filterForm').submit();
+    });
+    
     // View Seller Details
     $('.view-seller').on('click', function() {
         const sellerId = $(this).data('id');
@@ -59,7 +92,7 @@ $(document).ready(function() {
             }
         });
     });
-
+    
     // Display seller details in modal
     function displaySellerDetails(seller) {
         if (!seller) return;
@@ -192,7 +225,7 @@ $(document).ready(function() {
         
         $('#sellerDetails').html(html);
     }
-
+    
     // Helper function to escape HTML
     function escapeHtml(text) {
         if (!text) return '';
@@ -200,7 +233,7 @@ $(document).ready(function() {
         div.textContent = text;
         return div.innerHTML;
     }
-
+    
     // Toast notification function
     function showToast(type, title, message) {
         const id = 'toast-' + Date.now();
@@ -235,7 +268,7 @@ $(document).ready(function() {
             });
         }
     }
-
+    
     // Handle delete confirmation if needed
     $('.delete-seller').on('click', function(e) {
         e.preventDefault();
@@ -246,7 +279,7 @@ $(document).ready(function() {
             window.location.href = 'delete_seller.php?id=' + sellerId;
         }
     });
-
+    
     // Auto-hide alerts after 5 seconds
     setTimeout(function() {
         $('.alert-dismissible').alert('close');

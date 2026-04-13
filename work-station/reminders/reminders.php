@@ -16,6 +16,7 @@ $pdo = db();
 $statuses = [
     'cnp' => "customer_response = 'CNP'",
     'not_interested' => "customer_response = 'Not interested'",
+    'call_back_at' => "customer_response = 'Call Back AT'",  // Add this line
     'later' => "customer_response = 'Later'",
     'schedule' => "customer_response = 'Schedule' OR customer_response = 'Shedule'", // Handle both spellings
     'switch_off' => "customer_response = 'Switch Off'",
@@ -71,7 +72,7 @@ $total_count = $stmt->fetchColumn();
                         <span class="badge bg-primary rounded-pill px-3 py-2">
                             Total: <?= $total_count ?>
                         </span>
-                        
+
                     </div>
                 </div>
 
@@ -95,6 +96,29 @@ $total_count = $stmt->fetchColumn();
                                 </div>
                                 <div class="mt-2 text-end">
                                     <a href="cnp_sellers.php" class="btn btn-outline-danger btn-sm rounded-pill px-3">View</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Call Back AT - Purple/Indigo (Place this after Later Call card) -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card border-0 shadow-sm rounded-3 h-100 card-hover">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-purple bg-opacity-10 p-2 rounded-circle">
+                                            <i class="bi bi-telephone-forward text-purple fs-4"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-0 small">Call Back AT</h6>
+                                        <h3 class="fw-bold text-purple mb-0"><?= $counts['call_back_at'] ?? 0 ?></h3>
+                                        <small class="text-muted">Specific Time Call Back</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-end">
+                                    <a href="callback_at_sellers.php" class="btn btn-outline-purple btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>
@@ -209,7 +233,7 @@ $total_count = $stmt->fetchColumn();
                                     </div>
                                 </div>
                                 <div class="mt-2 text-end">
-                                    <a href="filtered_list.php?status=Whatsapp%20Details%20sent" class="btn btn-outline-success btn-sm rounded-pill px-3">View</a>
+                                    <a href="whatsapp-details-send-sellers.php" class="btn btn-outline-success btn-sm rounded-pill px-3">View</a>
                                 </div>
                             </div>
                         </div>

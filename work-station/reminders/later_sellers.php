@@ -31,7 +31,8 @@ if (isset($_POST['action'])) {
             $params = [$user_uid];
             
             if (!empty($search)) {
-                $where .= " AND (work_details_update LIKE ? OR phone_number LIKE ?)";
+                $where .= " AND (work_details_update LIKE ? OR phone_number LIKE ? OR remembering_notes LIKE ?)";
+                $params[] = "%$search%";
                 $params[] = "%$search%";
                 $params[] = "%$search%";
             }
@@ -215,7 +216,7 @@ if (isset($_POST['action'])) {
                                         <i class="bi bi-search text-warning"></i>
                                     </span>
                                     <input type="text" class="form-control border-start-0" id="searchInput" 
-                                           placeholder="Search by name or phone...">
+                                           placeholder="Search by name, phone or notes...">
                                 </div>
                                 <select class="form-select form-select-sm" id="perPage" style="min-width: 70px;">
                                     <option value="10">10</option>
@@ -246,8 +247,7 @@ if (isset($_POST['action'])) {
                                             <th class="sortable" data-sort="work_details_update">Business Name <i class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th class="sortable" data-sort="phone_number">Phone <i class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th>Call Timing</th>
-                                            <th>Response</th>
-                                            <th>Status</th>
+                                            <th>Remembering Notes</th>
                                             <th class="text-center">Actions</th>
                                         </tr>
                                     </thead>
@@ -304,9 +304,16 @@ if (isset($_POST['action'])) {
         .toast { min-width: 250px; }
         .card { transition: transform 0.2s; }
         .card:hover { transform: translateY(-2px); }
+        .notes-cell {
+            max-width: 250px;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
         @media (max-width: 768px) {
             .table td, .table th { padding: 0.5rem; font-size: 0.875rem; }
             .btn-sm { padding: 0.25rem 0.4rem; }
+            .notes-cell { max-width: 150px; }
         }
     </style>
 
@@ -418,12 +425,11 @@ if (isset($_POST['action'])) {
             
             rows.forEach(function (row) {
                 let dateDisplay = row.entry_date ? new Date(row.entry_date + 'T00:00:00').toLocaleDateString('en-GB') : '-';
-                
-                let statusBadge = 'bg-secondary';
-                if (row.current_status === 'Upgraded') statusBadge = 'bg-success';
-                else if (row.current_status === 'In Progress') statusBadge = 'bg-info';
-                else if (row.current_status === 'Not yet') statusBadge = 'bg-warning';
-                else if (row.current_status === 'Deleted') statusBadge = 'bg-danger';
+                let rememberingNotes = row.remembering_notes || '-';
+                // Truncate long notes
+                if (rememberingNotes.length > 80) {
+                    rememberingNotes = rememberingNotes.substring(0, 80) + '...';
+                }
                 
                 html += '<tr>';
                 html += `<td>${escapeHtml(row.id)}</td>`;
@@ -431,8 +437,7 @@ if (isset($_POST['action'])) {
                 html += `<td>${escapeHtml(row.work_details_update || '-')}</td>`;
                 html += `<td>${escapeHtml(row.phone_number || '-')}</td>`;
                 html += `<td><span class="badge bg-warning bg-opacity-25 text-dark">${escapeHtml(row.call_timing || 'Not set')}</span></td>`;
-                html += `<td><span class="badge bg-warning">Later</span></td>`;
-                html += `<td><span class="badge ${statusBadge}">${escapeHtml(row.current_status || 'Pending')}</span></td>`;
+                html += `<td class="notes-cell" title="${escapeHtml(row.remembering_notes || '-')}">${escapeHtml(rememberingNotes)}</td>`;
                 html += `<td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-outline-info view-btn" data-id="${row.id}" title="View">
                         <i class="bi bi-eye"></i>
